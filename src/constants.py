@@ -61,22 +61,32 @@ PACMAN_MOVE_ANIMATION  = "./assets/images/Pac-Man Movement Animation Sequence.pn
 PACMAN_DEATH_ANIMATION = "./assets/images/Pac-Man Death Animation Sequence.png"
 
 # Duration of each frame in the animations, in seconds.
-ANIMATION_PERIOD_SECS = 0.05
+ANIMATION_PERIOD_SECS = 0.033333
 
 # Size of Pac-Man and Ghost sprites expressed in pixels.
 PACMAN_GHOSTS_SPRITES_PX_SIZE = 16
 
+# Index of frame in PACMAN_MOVE_ANIMATION to use when Pac-Man is stuck.
+PACMAN_STUCK_FRAME_IDX = 2
+
+
 # --------------------------------------------------------------------
 
 
 # --------------------------------------------------------------------
-# Constants related to the game.
+# Constants related to Pac-Man.
 # --------------------------------------------------------------------
+
+# Pac-Man states.
+PacManStates = IntEnum('PacManStates', ['SPAWNING', 'MOVING', 'STUCK', 'DEAD'])
 
 # Speed at which Pac-Man moves.
-PACMAN_MOVE_SPEED_TILES = 11
+PACMAN_MOVE_SPEED_TILES = 11 * 0.1
 
 # Coordinates of tile where Pac-Man starts the game.
-PACMAN_START_TILE = (13.5, 23)
+PACMAN_START_TILE = (14, 23.5)
 
 # --------------------------------------------------------------------
+
+
+

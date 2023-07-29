@@ -11,7 +11,9 @@ from src.constants import (MAZE_START_IMAGE,
                            PACMAN_MOVE_ANIMATION,
                            PACMAN_DEATH_ANIMATION,
                            PACMAN_GHOSTS_SPRITES_PX_SIZE,
-                           ANIMATION_PERIOD_SECS)
+                           ANIMATION_PERIOD_SECS,
+                           PacManStates,
+                           PACMAN_STUCK_FRAME_IDX)
 from src.utils import Vector2
 
 
@@ -35,38 +37,52 @@ class Painter:
         image.blit(0, 0)
 
 
-    def draw_game(self, pacman_maze_position, pacman_direction):
+    def draw_game(self, pacman):
         self.maze_image.blit(0, 0)
 
         # Convert in-game coordinates to render space coordinates.
-        pacman_position = self.calculate_coords_sprites(pacman_maze_position)
+        pacman_coords = self.calculate_coords_sprites(pacman.position)
 
         # Determine rotation of Pac-Man sprite.
-        if pacman_direction == Vector2.LEFT:
-            rotation = 180
-        elif pacman_direction == Vector2.UP:
-            rotation = 90
-        elif pacman_direction == Vector2.DOWN:
-            rotation = -90
-        elif pacman_direction == Vector2.RIGHT:
-            rotation = 0
-        else:
-            raise ValueError('Unvalid direction provided for Pac-Man to Painter')
+        match pacman.direction:
+            case Vector2.LEFT:
+                rotation = 180
+            case Vector2.UP:
+                rotation = 90
+            case Vector2.DOWN:
+                rotation = -90
+            case Vector2.RIGHT:
+                rotation = 0
+            case _:
+                raise ValueError('Unvalid direction provided for Pac-Man to Painter')
+
+        # If Pac-Man is stuck, freeze the animation on the correct frame.
+        if pacman.state == PacManStates.STUCK:
+            self.pacman_move_sprite.frame_index = PACMAN_STUCK_FRAME_IDX
 
         # Update Pac-Man position and rotation.
-        self.pacman_move_sprite.update(x=pacman_position.x, y=pacman_position.y, rotation=rotation)
+        self.pacman_move_sprite.update(x=pacman_coords.x, y=pacman_coords.y, rotation=rotation)
         self.pacman_move_sprite.draw()
+
+
+
 
         for c in range(-160, 160, 8):
             pyglet.shapes.Line(c, -160, c, 160, width=1, color=(155, 0, 0)).draw()
             pyglet.shapes.Line(-160, c-4, 160, c-4, width=1, color=(155, 0, 0)).draw()
-        pyglet.shapes.Circle(pacman_position.x, pacman_position.y, 2, color = (0, 155, 0)).draw()
+        pyglet.shapes.Circle(pacman_coords.x, pacman_coords.y, 2, color = (0, 155, 0)).draw()
+        
+        origin = self.calculate_coords_sprites(Vector2(0, 0))
+        pyglet.shapes.Circle(origin.x, origin.y, 2, color = (255, 0, 0)).draw()
+
+        coll_box_coords = self.calculate_coords_sprites(pacman.collision_box_position)
+        pyglet.shapes.Circle(coll_box_coords.x, coll_box_coords.y, 2, color = (0, 155, 155)).draw()
       
    
     @staticmethod
     def calculate_coords_sprites(maze_coords):
-        new_coords = Vector2(x = (- MAZE_TILES_COLS / 2 + maze_coords.x + 0.5) * MAZE_TILE_PX_SIZE,
-                             y = (+ MAZE_TILES_ROWS / 2 - maze_coords.y - 0.5) * MAZE_TILE_PX_SIZE)
+        new_coords = Vector2(x = (- MAZE_TILES_COLS / 2 + maze_coords.x) * MAZE_TILE_PX_SIZE,
+                             y = (+ MAZE_TILES_ROWS / 2 - maze_coords.y) * MAZE_TILE_PX_SIZE)
         return new_coords
 
     @staticmethod

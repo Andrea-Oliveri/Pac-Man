@@ -4,8 +4,7 @@ from src.utils import Vector2
 from src.constants import (MazeTiles,
                            MAZE_START_TILES,
                            MAZE_TILES_COLS,
-                           MAZE_TILES_ROWS,
-                           MAZE_TILE_PX_SIZE)
+                           MAZE_TILES_ROWS)
 
 
 class Maze:
@@ -43,8 +42,8 @@ class Maze:
             row, col = index
         elif isinstance(index, Vector2):
             # If a Vector2 instance, convert to tile coordinates by dividing tile size.
-            row = int(index.y // MAZE_TILE_PX_SIZE)
-            col = int(index.x // MAZE_TILE_PX_SIZE)
+            row = int(index.y)
+            col = int(index.x)
         else:
             raise IndexError(f"Unsupported indexing value for class Maze: {index}")
 
@@ -55,9 +54,9 @@ class Maze:
         return row * MAZE_TILES_COLS + col
 
 
-    def tile_is_walkable(self, index):
-        """Function that returns True if the tile at desired index is walkable (not a wall)."""
-        return self[index] != MazeTiles.WALL
+    def tile_is_wall(self, index):
+        """Function that returns True if the tile at desired index is not walkable (is a wall)."""
+        return self[index] == MazeTiles.WALL
     
 
     def update_tile(self, pacman_position):
@@ -70,7 +69,7 @@ class Maze:
             print(tile, 'eaten')
             return True
         
-        return False            
+        return False
     
     def completed(self):
         """Function that returns True if all the pellets were eaten, False otherwise."""

@@ -25,7 +25,7 @@ class Game(Activity):
     def event_draw_screen(self):
         """Override of method from Activity class, drawing the controls menu
         on the screen."""
-        self._painter.draw_game(self._pacman.position, self._pacman.direction)
+        self._painter.draw_game(self._pacman)
         
     def event_update_state(self, dt):
         """Override of method from Activity class, updating the state of the
@@ -40,10 +40,10 @@ class Game(Activity):
         """Override of method from Activity class, reacting to key presses.
         Returns True if the game should start and False otherwise."""
         if symbol == key.UP:
-            self._pacman.set_direction(Vector2.DOWN)
+            self._pacman.direction = Vector2.DOWN
         elif symbol == key.DOWN:
-            self._pacman.set_direction(Vector2.UP)
+            self._pacman.direction = Vector2.UP
         elif symbol == key.LEFT:
-            self._pacman.set_direction(Vector2.LEFT)
+            self._pacman.direction = Vector2.LEFT
         elif symbol == key.RIGHT:
-            self._pacman.set_direction(Vector2.RIGHT)
+            self._pacman.direction = Vector2.RIGHT
