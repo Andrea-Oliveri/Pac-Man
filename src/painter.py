@@ -122,6 +122,32 @@ class Painter:
             case _:
                 raise ValueError('Unvalid state provided for Pac-Man to Painter')
 
+
+    def set_empty_tile(self, idx):
+        maze_row = idx // MAZE_TILES_COLS
+        maze_col = idx % MAZE_TILES_COLS
+
+        destination_left_px   = maze_col * MAZE_TILE_PX_SIZE
+        destination_bottom_px = (MAZE_TILES_ROWS - maze_row - 1) * MAZE_TILE_PX_SIZE
+
+        source_texture      = self._maze_empty_tile.get_texture()
+        destination_texture = self._maze_image.get_texture()
+
+        pyglet.gl.glCopyImageSubData(source_texture.id,
+ 	                                 source_texture.target,
+ 	                                 source_texture.level,
+                                     0,
+                                     0,
+                                     0,
+                                     destination_texture.id,
+                                     destination_texture.target,
+                                     destination_texture.level,
+                                     destination_left_px, 
+                                     destination_bottom_px,
+                                     0,
+                                     source_texture.width,
+                                     source_texture.height,
+                                     1)
                
     @staticmethod
     def _calculate_coords_sprites(maze_coords):
@@ -160,8 +186,9 @@ class Painter:
         image.anchor_y = image.height // 2
 
         # Interpolate avoiding blur.
-        pyglet.gl.glBindTexture(pyglet.gl.GL_TEXTURE_2D, image.get_texture().id)
-        pyglet.gl.glTexParameteri(pyglet.gl.GL_TEXTURE_2D, pyglet.gl.GL_TEXTURE_MAG_FILTER, pyglet.gl.GL_NEAREST)
+        texture = image.get_texture()
+        pyglet.gl.glBindTexture(texture.target, texture.id)
+        pyglet.gl.glTexParameteri(texture.target, pyglet.gl.GL_TEXTURE_MAG_FILTER, pyglet.gl.GL_NEAREST)
 
         return image
 

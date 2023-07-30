@@ -60,16 +60,17 @@ class Maze:
     
 
     def update_tile(self, pacman_position):
-        """Updates maze if needed by replacing a pellet with an empty tile. Returns True if such
-        a replacement was performed, False otherwise."""
-        tile = self[pacman_position]
+        """Updates maze if needed by replacing a pellet with an empty tile. Returns the index of
+        the tile in the array if such a replacement was performed, None otherwise."""
+        index = self._index_convert(pacman_position)
+        tile = self._tiles[index]
 
         if tile in (MazeTiles.PELLET, MazeTiles.POWER_PELLET):
-            self[pacman_position] = MazeTiles.EMPTY
+            self._tiles[index] = MazeTiles.EMPTY
             print(tile.name, 'eaten')
-            return True
+            return index
         
-        return False
+        return None
     
     def completed(self):
         """Function that returns True if all the pellets were eaten, False otherwise."""

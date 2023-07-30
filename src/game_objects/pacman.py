@@ -21,27 +21,29 @@ class PacMan:
 
         self._direction_input = None
 
-
-    def update(self, dt, maze):
         # -----------------------------------------
         # Placeholder to go from spawning to moving.
         # -----------------------------------------
-        self._i = getattr(self, '_i', 0) + 1
-        self._deactivate = getattr(self, '_deactivate', False)
-        if self._i > 100 and not self._deactivate:
-            self._deactivate = True
+        import pyglet
+        def f(_):
             self._state = PacManStates.MOVING
+        pyglet.clock.schedule_once(f, 1.5) 
         # -----------------------------------------
 
         # -----------------------------------------
         # DEBUG: collision.
         # -----------------------------------------
-        if not self._i % 100:
+        def print_collision_debug(_):
             try:
                 print(self.position, self.collision_point_1, self.collision_point_2)
             except:
                 pass
+        pyglet.clock.schedule_interval(print_collision_debug, 1)
         # -----------------------------------------
+
+
+    def update(self, dt, maze):
+
 
 
 
@@ -70,12 +72,19 @@ class PacMan:
 
 
     def update_direction(self, maze):
-        # TODO: more complex logic to change direction.
-        if self._direction_input is None:
+        # Note that reversing direction is allowed in Pac-Man.
+
+        new_direction = self._direction_input
+        self._direction_input = None
+        
+        if new_direction is None or new_direction == self._direction:
             return
 
-        self._direction = self._direction_input
-        self._direction_input = None
+        # Check if turn allowed in that direction.
+        if maze.tile_is_wall(self._position + new_direction):
+            return
+        
+        self._direction = new_direction
 
 
 

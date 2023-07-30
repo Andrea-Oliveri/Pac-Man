@@ -31,10 +31,10 @@ class Game(Activity):
         """Override of method from Activity class, updating the state of the
         activity."""
         self._pacman.update(dt, self._maze)
-        tile_was_emptied = self._maze.update_tile(self._pacman.position)
+        tile_emptied_idx = self._maze.update_tile(self._pacman.position)
 
-        if tile_was_emptied:
-            pass # For now do nothing. Need to call painter to change background.
+        if tile_emptied_idx is not None:
+            self._painter.set_empty_tile(tile_emptied_idx)
 
         if self._maze.completed():
             print('Level completed')

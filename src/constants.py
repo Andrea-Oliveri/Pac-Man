@@ -3,6 +3,9 @@
 from pyglet.window import Window
 from enum import IntEnum
 
+from .utils import Vector2
+
+
 # --------------------------------------------------------------------
 # Constants related to the pyglet window.
 # --------------------------------------------------------------------
@@ -19,8 +22,8 @@ WINDOW_INIT_KWARGS = {'width' : WINDOW_MINIMUM_SIZE[0],
                       'style': Window.WINDOW_STYLE_DEFAULT,
                       'vsync': True}
 
-# Approximate number of times to update game state per second.
-GAME_UPDATES_PER_SEC = 100
+# Interval between two game updates in seconds.
+GAME_UPDATES_INTERVAL = 1 / 100
 
 # Constant defining where the image are stored.
 WINDOW_ICON_PATH = "./assets/images/icon.ico"
@@ -35,9 +38,11 @@ WINDOW_ICON_PATH = "./assets/images/icon.ico"
 # Enum defining types of tiles.
 MazeTiles = IntEnum('MazeTiles', ['WALL', 'EMPTY', 'PELLET', 'POWER_PELLET'])
 
-# Location of image with maze starting configuration and coordinates (left, bottom pixel) of an empty tile in the initial maze.
+# Location of image with maze starting configuration.
 MAZE_START_IMAGE = "./assets/images/Maze Initial.png"
-MAZE_START_IMAGE_EMPTY_TILE_REGION_COORDS = (0, 120)
+
+# Coordinates (left pixel counting from left, bottom pixel counting from bottom) of an empty tile in the initial maze.
+MAZE_START_IMAGE_EMPTY_TILE_REGION_COORDS = (0, 128)
 
 # Size of maze tiles expressed in pixels.
 MAZE_TILE_PX_SIZE = 8
@@ -87,6 +92,7 @@ PACMAN_MOVE_SPEED_TILES = 11
 
 # Coordinates of tile where Pac-Man starts the game.
 PACMAN_START_TILE = (14, 23.5)
+
 
 # --------------------------------------------------------------------
 

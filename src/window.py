@@ -7,7 +7,7 @@ from src.activities.game import Game
 from src.painter import Painter
 from src.constants import (WINDOW_INIT_KWARGS,
                            WINDOW_MINIMUM_SIZE,
-                           GAME_UPDATES_PER_SEC,
+                           GAME_UPDATES_INTERVAL,
                            WINDOW_ICON_PATH)
 
 
@@ -26,7 +26,7 @@ class Window(pyglet.window.Window):
         
         # FPS locked to screen refresh rate (vsync enabled).
         # Number of updates per second can be freely chosen though.
-        pyglet.clock.schedule_interval(self.on_state_update, 1 / GAME_UPDATES_PER_SEC)
+        pyglet.clock.schedule_interval(self.on_state_update, GAME_UPDATES_INTERVAL)
 
         
     def on_resize(self, width, height):
@@ -70,13 +70,26 @@ class Window(pyglet.window.Window):
             print('    Max:', self.benchmark_dts[-1])
             self.benchmark_dts = []
         # ---------------------------------------
+        
+        # It is possible for the dt to be very large due to events which case a lag spike.
+        # An example is on_resize when going to fullscreen. 
+        # To avoid issues in the downstream logic, we cap the maximum dt and execute multiple updates if needed.
+        while dt > 0:
+            dt_step = min(dt, GAME_UPDATES_INTERVAL)
+            dt -= GAME_UPDATES_INTERVAL
+
+            self.on_state_update_step(dt_step)
+
+
+
+    def on_state_update_step(self, dt):
+        
 
         retval = self._current_activity.event_update_state(dt)
 
         if isinstance(self._current_activity, Menu) and retval:
             # retval is True if we need to change from Menu to Game.
             self._current_activity = Game(self.painter)
-        
 
         
     def on_draw(self):
