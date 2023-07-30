@@ -16,6 +16,10 @@ class Vector2:
     # y coordinate represent right-left direction, with positive values being towards the top.
     y: float
 
+    # Function returning a new Vector2 instance which has the x and y coordinates swapped.
+    def swap(self):
+        return Vector2(self.y, self.x)
+
     # Operator overloadings.
     def __add__(self, other):
         if not isinstance(other, Vector2):
@@ -30,6 +34,21 @@ class Vector2:
 
         self.x += other.x
         self.y += other.y
+        return self
+
+    def __sub__(self, other):
+        if not isinstance(other, Vector2):
+            self.raise_typerror('-', self, other)
+
+        return Vector2(x = self.x - other.x,
+                       y = self.y - other.y)
+
+    def __isub__(self, other):
+        if not isinstance(other, Vector2):
+            self.raise_typerror('-=', self, other)
+
+        self.x -= other.x
+        self.y -= other.y
         return self
 
     def __mul__(self, other):

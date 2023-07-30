@@ -19,13 +19,10 @@ class PacMan:
         self._direction = Vector2.LEFT
         self._state     = PacManStates.SPAWNING
 
-
-        # To be removed. For debugging.
-        self.collision_box_position = self._position + (self._direction * 0.5)
+        self._direction_input = None
 
 
-    def update_position(self, dt, maze):
-
+    def update(self, dt, maze):
         # -----------------------------------------
         # Placeholder to go from spawning to moving.
         # -----------------------------------------
@@ -34,47 +31,103 @@ class PacMan:
         if self._i > 100 and not self._deactivate:
             self._deactivate = True
             self._state = PacManStates.MOVING
+        # -----------------------------------------
+
+        # -----------------------------------------
+        # DEBUG: collision.
+        # -----------------------------------------
         if not self._i % 100:
-            print(self.position, self.collision_box_position)
+            try:
+                print(self.position, self.collision_point_1, self.collision_point_2)
+            except:
+                pass
         # -----------------------------------------
 
 
-        if self._state == PacManStates.SPAWNING or self._state == PacManStates.DEAD:
+
+
+        if self.state in (PacManStates.SPAWNING, PacManStates.DEAD):
+            # Ignore any request to change direction.
+            self._direction_input = None
+
+            # Do nothing.
             return
 
+        elif self.state in (PacManStates.MOVING, PacManStates.STUCK):
+            # Try to change direction.
+            self.update_direction(maze)
+
+            # Try to move.
+            is_stuck = self.update_position(dt, maze)
+
+            # Update state based on if Pac-Man stuck or not.
+            if is_stuck:
+                self.state = PacManStates.STUCK
+            else:
+                self.state = PacManStates.MOVING
+
+
+
+
+    def update_direction(self, maze):
+        # TODO: more complex logic to change direction.
+        if self._direction_input is None:
+            return
+
+        self._direction = self._direction_input
+        self._direction_input = None
+
+
+
+
+    def update_position(self, dt, maze):
 
         new_position = self.position + self._direction * (PACMAN_MOVE_SPEED_TILES * dt)
+        is_stuck = False
 
         # Check if movement will cause a collision. If so, clip instead of moving into wall.
-        # This collision detection does not account for very high speeds, which could allow Pac-Man to teleport through wall
+        # Only allow movement if both corners of Pac-Man's collision box are not into wall.
+        # This collision detection does not account for very high speeds, which could allow Pac-Man to pass through wall
         # (only final position is checked for a collision, not points in between).
-        collision_box_position = self._position + (self._direction * 0.5000001)
-        
-        self.collision_box_position = collision_box_position
-        if maze.tile_is_wall(collision_box_position):
+        point_forwards    = self._position + (self._direction        * 0.5000001)
+        collision_point_1 = point_forwards + (self._direction.swap() * 0.4999999)
+        collision_point_2 = point_forwards - (self._direction.swap() * 0.4999999)
+
+
+        # TODO: remove DEBUG
+        self.collision_point_1 = collision_point_1
+        self.collision_point_2 = collision_point_2
+
+
+        if maze.tile_is_wall(collision_point_1) or maze.tile_is_wall(collision_point_2):
             match self._direction:
-                case Vector2.LEFT, Vector2.RIGHT:
+                case Vector2.LEFT | Vector2.RIGHT:
                     new_position.x = int(new_position.x) + 0.5
-                case Vector2.UP  , Vector2.DOWN:
+                case Vector2.UP   | Vector2.DOWN:
                     new_position.y = int(new_position.y) + 0.5
 
-            self._state = PacManStates.STUCK
-        else:
-            self._state = PacManStates.MOVING
-
+            is_stuck = True
 
         self._position = new_position
-
+        return is_stuck
 
 
 
     # Defining properties for some private attributes.
     def _set_direction(self, direction):
         if direction not in (Vector2.LEFT, Vector2.RIGHT, Vector2.UP, Vector2.DOWN):
-            raise ValueError('Unvalid direction provided for Pac-Man to Pacman.set_direction')
+            raise ValueError('Invalid direction provided to Pacman._set_direction')
 
-        self._direction = direction
+        # Setting a temporary variable holding the requested direction.
+        # True direction will be set during next game tick only if appropriate.
+        self._direction_input = direction
+
+    def _set_state(self, state):
+        if state not in PacManStates:
+            raise ValueError('Invalid state provided to Pacman._set_state')
+
+        self._state = state
 
     position  = property(lambda self: self._position)
     direction = property(lambda self: self._direction, _set_direction)
-    state     = property(lambda self: self._state)
+    state     = property(lambda self: self._state    , _set_state)

@@ -37,13 +37,13 @@ class Maze:
         self._tiles[index] = val
 
     def _index_convert(self, index):
-        if isinstance(index, tuple) and len(index) == 2 and all(isinstance(elem, int) for elem in index):
-            # If a 2-elements tuple of integers, interpret it as (row, col).
-            row, col = index
-        elif isinstance(index, Vector2):
+        if isinstance(index, Vector2):
             # If a Vector2 instance, convert to tile coordinates by dividing tile size.
             row = int(index.y)
             col = int(index.x)
+        elif isinstance(index, tuple) and len(index) == 2 and all(isinstance(elem, int) for elem in index):
+            # If a 2-elements tuple of integers, interpret it as (row, col).
+            row, col = index
         else:
             raise IndexError(f"Unsupported indexing value for class Maze: {index}")
 
@@ -66,7 +66,7 @@ class Maze:
 
         if tile in (MazeTiles.PELLET, MazeTiles.POWER_PELLET):
             self[pacman_position] = MazeTiles.EMPTY
-            print(tile, 'eaten')
+            print(tile.name, 'eaten')
             return True
         
         return False
