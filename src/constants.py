@@ -85,13 +85,16 @@ PACMAN_SPAWNING_FRAME_IDX = 0
 # --------------------------------------------------------------------
 
 # Pac-Man states.
-PacManStates = IntEnum('PacManStates', ['SPAWNING', 'MOVING', 'STUCK', 'DEAD'])
+PacManStates = IntEnum('PacManStates', ['SPAWNING', 'MOVING', 'STUCK', 'TURNING', 'DEAD'])
 
 # Speed at which Pac-Man moves.
 PACMAN_MOVE_SPEED_TILES = 11
 
 # Coordinates of tile where Pac-Man starts the game.
 PACMAN_START_TILE = (14, 23.5)
+
+# One-frame penalty when eating pellet, 3 frames penalty when eating power pellet (in original game frame-rate: 60 fps).
+PACMAN_PELLET_PENALTIES = {MazeTiles.PELLET: 1 / 60, MazeTiles.POWER_PELLET: 3 / 60}
 
 
 # --------------------------------------------------------------------

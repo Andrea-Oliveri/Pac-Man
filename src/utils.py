@@ -36,21 +36,6 @@ class Vector2:
         self.y += other.y
         return self
 
-    def __sub__(self, other):
-        if not isinstance(other, Vector2):
-            self.raise_typerror('-', self, other)
-
-        return Vector2(x = self.x - other.x,
-                       y = self.y - other.y)
-
-    def __isub__(self, other):
-        if not isinstance(other, Vector2):
-            self.raise_typerror('-=', self, other)
-
-        self.x -= other.x
-        self.y -= other.y
-        return self
-
     def __mul__(self, other):
         if not isinstance(other, (int, float)):
             self.raise_typerror('*', self, other)

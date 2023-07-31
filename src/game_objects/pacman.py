@@ -6,7 +6,8 @@ from src.utils import Vector2
 
 from src.constants import (PACMAN_MOVE_SPEED_TILES,
                            PACMAN_START_TILE,
-                           PacManStates)
+                           PacManStates,
+                           PACMAN_PELLET_PENALTIES)
 
 
 
@@ -18,6 +19,7 @@ class PacMan:
         self._position  = Vector2(*PACMAN_START_TILE)
         self._direction = Vector2.LEFT
         self._state     = PacManStates.SPAWNING
+        self._penalty   = 0
 
         self._direction_input = None
 
@@ -44,10 +46,6 @@ class PacMan:
 
     def update(self, dt, maze):
 
-
-
-
-
         if self.state in (PacManStates.SPAWNING, PacManStates.DEAD):
             # Ignore any request to change direction.
             self._direction_input = None
@@ -55,70 +53,125 @@ class PacMan:
             # Do nothing.
             return
 
-        elif self.state in (PacManStates.MOVING, PacManStates.STUCK):
-            # Try to change direction.
-            self.update_direction(maze)
-
-            # Try to move.
-            is_stuck = self.update_position(dt, maze)
-
-            # Update state based on if Pac-Man stuck or not.
-            if is_stuck:
-                self.state = PacManStates.STUCK
+        elif self.state in (PacManStates.MOVING, PacManStates.STUCK, PacManStates.TURNING):
+            # Pac-Man is not allowed to change direction if he is already turning.
+            if self.state == PacManStates.TURNING:
+                self._direction_input = None
             else:
-                self.state = PacManStates.MOVING
+                # Try to change direction.
+                turning = self.update_direction(maze)
 
+                # Update state based on if Pac-Man turns or not.
+                if turning:
+                    self.state = PacManStates.TURNING
+            
+            # Try to move.
+            is_stuck, turning = self.update_position(dt, maze)
 
-
+            # Update state based on if Pac-Man stuck or not, only if not still turning.
+            if not turning:
+                if is_stuck:
+                    self.state = PacManStates.STUCK
+                else:
+                    self.state = PacManStates.MOVING
+            
 
     def update_direction(self, maze):
         # Note that reversing direction is allowed in Pac-Man.
 
-        new_direction = self._direction_input
-        self._direction_input = None
-        
-        if new_direction is None or new_direction == self._direction:
-            return
+        # If nothing to do, reset and return.
+        if self._direction_input is None or self._direction_input == self._direction:
+            self._direction_input = None
+            return False
 
-        # Check if turn allowed in that direction.
-        if maze.tile_is_wall(self._position + new_direction):
-            return
-        
-        self._direction = new_direction
+        # If turn allowed in that direction, do it.
+        if not maze.tile_is_wall(self._position + self._direction_input):
+            self._direction       = self._direction_input
+            self._direction_input = None
+            return True
 
+        # If turn will be allowed soon (one-cell forwards), allow anticipating it.
+        if maze.tile_is_wall(self._position + self._direction + self._direction_input):
+            self._direction_input = None
+
+        return False
+
+
+    def add_penalty(self, pellet_type):
+        self._penalty += PACMAN_PELLET_PENALTIES[pellet_type]
 
 
 
     def update_position(self, dt, maze):
 
-        new_position = self.position + self._direction * (PACMAN_MOVE_SPEED_TILES * dt)
-        is_stuck = False
+        
+        # Update penalty to movement speed.
+        if self._penalty >= dt:
+            self._penalty -= dt
+            return self._state == PacManStates.STUCK, self._state == PacManStates.TURNING # No change in state
+        
+        dt -= self._penalty
+        self._penalty = 0
 
-        # Check if movement will cause a collision. If so, clip instead of moving into wall.
-        # Only allow movement if both corners of Pac-Man's collision box are not into wall.
-        # This collision detection does not account for very high speeds, which could allow Pac-Man to pass through wall
-        # (only final position is checked for a collision, not points in between).
-        point_forwards    = self._position + (self._direction        * 0.5000001)
-        collision_point_1 = point_forwards + (self._direction.swap() * 0.4999999)
-        collision_point_2 = point_forwards - (self._direction.swap() * 0.4999999)
+        # Calculate how far Pac-Man has theoretically moved.
+        distance = PACMAN_MOVE_SPEED_TILES * dt
 
+        # When turning, specific movement logic needed to bring Pac-Man back to center of corridor.
+        # No collision detection because this was already checked by PacMan.update_direction method.
+        if self.state == PacManStates.TURNING:
+            self._position += self._direction * distance
 
-        # TODO: remove DEBUG
-        self.collision_point_1 = collision_point_1
-        self.collision_point_2 = collision_point_2
-
-
-        if maze.tile_is_wall(collision_point_1) or maze.tile_is_wall(collision_point_2):
             match self._direction:
                 case Vector2.LEFT | Vector2.RIGHT:
-                    new_position.x = int(new_position.x) + 0.5
+                    coord_to_move = 'y'
                 case Vector2.UP   | Vector2.DOWN:
-                    new_position.y = int(new_position.y) + 0.5
+                    coord_to_move = 'x'
 
+            desired_value_coord = int(getattr(self._position, coord_to_move)) + 0.5
+            offset = desired_value_coord - getattr(self._position, coord_to_move)
+
+            if abs(offset) <= distance:
+                setattr(self._position, coord_to_move, desired_value_coord)
+                return False, False # Not stuck, not turning anymore.
+
+            if offset >= 0:
+                new_value_coord = getattr(self._position, coord_to_move) + distance
+            else:
+                new_value_coord = getattr(self._position, coord_to_move) - distance
+
+
+            setattr(self._position, coord_to_move, new_value_coord)
+            return False, True # Not stuck, still turning.
+
+
+
+        
+
+        # Calculate new position and check if movement will cause a collision. If so, clip instead of moving into wall.
+        # Only allow movement if both corners of Pac-Man's collision box are not into wall.
+        # This collision detection does not account for high speeds or large dt, which could allow Pac-Man to pass through wall
+        # (only final position is checked for a collision, not points in between).
+        new_position = self.position + self._direction * distance
+        is_stuck = False
+
+        collision_point = self._position + (self._direction * 0.5000001)
+
+        # TODO: remove DEBUG
+        self.collision_point = collision_point
+
+
+        if maze.tile_is_wall(collision_point):
+            match self._direction:
+                case Vector2.LEFT | Vector2.RIGHT:
+                    coord_to_clip = 'x'
+                case Vector2.UP   | Vector2.DOWN:
+                    coord_to_clip = 'y'
+
+            setattr(new_position, coord_to_clip, int(getattr(new_position, coord_to_clip)) + 0.5)
             is_stuck = True
 
         self._position = new_position
-        return is_stuck
+        return is_stuck, False # If he wasn't turning, he is not turning due to this function.
 
 
 

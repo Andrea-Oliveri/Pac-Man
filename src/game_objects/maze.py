@@ -15,6 +15,7 @@ class Maze:
     def __init__(self):
         """Constructor for the class Maze."""
         self._tiles = list(MAZE_START_TILES)
+        self._n_pellets = sum(elem in (MazeTiles.PELLET, MazeTiles.POWER_PELLET) for elem in self._tiles)
 
         # Sanity check
         if len(self._tiles) != MAZE_TILES_ROWS * MAZE_TILES_COLS:
@@ -26,15 +27,6 @@ class Maze:
         index = self._index_convert(index)
 
         return self._tiles[index]
-
-    def __setitem__(self, index, val):
-        index = self._index_convert(index)
-
-        # Sanity check.
-        if val not in MazeTiles:
-            raise ValueError(f'Incorrect value tried to be set for a maze tile: {val}')
-
-        self._tiles[index] = val
 
     def _index_convert(self, index):
         if isinstance(index, Vector2):
@@ -67,11 +59,11 @@ class Maze:
 
         if tile in (MazeTiles.PELLET, MazeTiles.POWER_PELLET):
             self._tiles[index] = MazeTiles.EMPTY
-            print(tile.name, 'eaten')
-            return index
+            self._n_pellets -= 1
+            return index, tile
         
-        return None
+        return None, None
     
     def completed(self):
         """Function that returns True if all the pellets were eaten, False otherwise."""
-        return not any(elem in (MazeTiles.PELLET, MazeTiles.POWER_PELLET) for elem in self._tiles)
+        return self._n_pellets == 0

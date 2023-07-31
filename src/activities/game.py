@@ -31,10 +31,11 @@ class Game(Activity):
         """Override of method from Activity class, updating the state of the
         activity."""
         self._pacman.update(dt, self._maze)
-        tile_emptied_idx = self._maze.update_tile(self._pacman.position)
+        tile_emptied_idx, pellet_type = self._maze.update_tile(self._pacman.position)
 
         if tile_emptied_idx is not None:
             self._painter.set_empty_tile(tile_emptied_idx)
+            self._pacman.add_penalty(pellet_type)
 
         if self._maze.completed():
             print('Level completed')

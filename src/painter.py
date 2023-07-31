@@ -39,6 +39,9 @@ class Painter:
 
 
     def draw_game(self, pacman):
+
+        # TODO: make the Power Pellets (and other UI elements) flash. This can be achieved, for example, via an animated sprite which is drawn on top of maze before PacMan
+        # which is fully transparent a frame and fully opaque another frame. Or by using the maze empty tile and making it visible-unvisible
         self._maze_image.blit(0, 0)
 
         self._draw_pacman(pacman)
@@ -58,9 +61,7 @@ class Painter:
         pyglet.shapes.Circle(origin.x, origin.y, 2, color = (255, 0, 0)).draw()
 
         try:
-            coll_box_coords = self._calculate_coords_sprites(pacman.collision_point_1)
-            pyglet.shapes.Circle(coll_box_coords.x, coll_box_coords.y, 2, color = (0, 155, 155)).draw()
-            coll_box_coords = self._calculate_coords_sprites(pacman.collision_point_2)
+            coll_box_coords = self._calculate_coords_sprites(pacman.collision_point)
             pyglet.shapes.Circle(coll_box_coords.x, coll_box_coords.y, 2, color = (0, 155, 155)).draw()
         except:
             pass
@@ -103,7 +104,7 @@ class Painter:
                 self._pacman_move_sprite.update(x=pacman_coords.x, y=pacman_coords.y, rotation=rotation)
                 self._pacman_move_sprite.draw()
 
-            case PacManStates.MOVING:
+            case PacManStates.MOVING | PacManStates.TURNING:
                 # Unfreeze the animation (this is silently ignored if paused property was already false).
                 self._pacman_move_sprite.paused = False
 
