@@ -2,7 +2,7 @@
 
 from enum import IntEnum
 
-from src.utils import Vector2
+from src.directions import Vector2
 
 from src.constants import (PACMAN_SPEED,
                            PACMAN_START_TILE,
@@ -24,38 +24,31 @@ class PacMan:
         self._direction_input = None
 
         # -----------------------------------------
-        # Placeholder to go from spawning to moving.
+        # TODO: Remove placeholder to go from spawning to moving.
         # -----------------------------------------
         import pyglet
         def f(_):
             self._state = PacManStates.MOVING
         pyglet.clock.schedule_once(f, 1.5) 
+        def f2(_):
+            self._state = PacManStates.DEAD
+        pyglet.clock.schedule_once(f2, 4.5) 
         # -----------------------------------------
 
-        # -----------------------------------------
-        # DEBUG: collision.
-        # -----------------------------------------
-        def print_collision_debug(_):
-            try:
-                print(self.position, self.collision_point_1, self.collision_point_2)
-            except:
-                pass
-        pyglet.clock.schedule_interval(print_collision_debug, 1)
-        # -----------------------------------------
 
 
     def update(self, dt, level, fright, maze):
 
-        if self.state in (PacManStates.SPAWNING, PacManStates.DEAD):
+        if self._state in (PacManStates.SPAWNING, PacManStates.DEAD):
             # Ignore any request to change direction.
             self._direction_input = None
 
             # Do nothing.
             return
 
-        elif self.state in (PacManStates.MOVING, PacManStates.STUCK, PacManStates.TURNING):
+        elif self._state in (PacManStates.MOVING, PacManStates.STUCK, PacManStates.TURNING):
             # Pac-Man is not allowed to change direction if he is already turning.
-            if self.state == PacManStates.TURNING:
+            if self._state == PacManStates.TURNING:
                 self._direction_input = None
             else:
                 # Try to change direction.
@@ -63,7 +56,7 @@ class PacMan:
 
                 # Update state based on if Pac-Man turns or not.
                 if turning:
-                    self.state = PacManStates.TURNING
+                    self._state = PacManStates.TURNING
             
             # Try to move.
             is_stuck, turning = self.update_position(dt, level, fright, maze)
@@ -71,9 +64,9 @@ class PacMan:
             # Update state based on if Pac-Man stuck or not, only if not still turning.
             if not turning:
                 if is_stuck:
-                    self.state = PacManStates.STUCK
+                    self._state = PacManStates.STUCK
                 else:
-                    self.state = PacManStates.MOVING
+                    self._state = PacManStates.MOVING
             
 
     def update_direction(self, maze):
@@ -118,7 +111,7 @@ class PacMan:
 
         # When turning, specific movement logic needed to bring Pac-Man back to center of corridor.
         # No collision detection because this was already checked by PacMan.update_direction method.
-        if self.state == PacManStates.TURNING:
+        if self._state == PacManStates.TURNING:
             self._position += self._direction * distance
 
             match self._direction:
@@ -151,7 +144,7 @@ class PacMan:
         # Only allow movement if both corners of Pac-Man's collision box are not into wall.
         # This collision detection does not account for high speeds or large dt, which could allow Pac-Man to pass through wall
         # (only final position is checked for a collision, not points in between).
-        new_position = self.position + self._direction * distance
+        new_position = self._position + self._direction * distance
         is_stuck = False
 
         collision_point = self._position + (self._direction * 0.5000001)
@@ -184,12 +177,7 @@ class PacMan:
         # True direction will be set during next game tick only if appropriate.
         self._direction_input = direction
 
-    def _set_state(self, state):
-        if state not in PacManStates:
-            raise ValueError('Invalid state provided to Pacman._set_state')
-
-        self._state = state
 
     position  = property(lambda self: self._position)
     direction = property(lambda self: self._direction, _set_direction)
-    state     = property(lambda self: self._state    , _set_state)
+    state     = property(lambda self: self._state)

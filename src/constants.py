@@ -3,7 +3,7 @@
 from pyglet.window import Window
 from enum import IntEnum
 
-from .utils import Vector2
+from src.directions import Vector2
 
 
 # --------------------------------------------------------------------
@@ -66,7 +66,8 @@ PACMAN_MOVE_ANIMATION  = "./assets/images/Pac-Man Movement Animation Sequence.pn
 PACMAN_DEATH_ANIMATION = "./assets/images/Pac-Man Death Animation Sequence.png"
 
 # Duration of each frame in the animations, in seconds.
-ANIMATION_PERIOD_SECS = 2 / 60
+PACMAN_MOVE_ANIMATION_PERIOD_SECS  = 2 / 60
+PACMAN_DEATH_ANIMATION_PERIOD_SECS = 10 / 60
 
 # Size of Pac-Man and Ghost sprites expressed in pixels.
 PACMAN_GHOSTS_SPRITES_PX_SIZE = 16
@@ -78,6 +79,26 @@ PACMAN_STUCK_FRAME_IDX = 1
 PACMAN_SPAWNING_FRAME_IDX = 0
 
 # --------------------------------------------------------------------
+
+
+# --------------------------------------------------------------------
+# Constants related to the font.
+# --------------------------------------------------------------------
+
+# Path of image containing the font sheet.
+FONT_SHEET_PATH = "./assets/images/Font.png"
+
+# Size of font tiles expressed in pixels.
+FONT_TILE_PX_SIZE = 8
+
+# Colors present, ordered as in the font sheet (ordered from bottom to top due to how pyglet increases y-axis).
+FontColors = IntEnum('FontColors', ['WHITE', 'YELLOW', 'MELON', 'CASABLANCA', 'CYAN', 'MAUVE', 'RED', 'LAVANDER'], start = 0)
+
+# Characters present, ordered as in the font sheet (rows go from bottom to top due to how pyglet increases y-axis).
+FONT_SHEET_CHARACTERS = r'%%%%%%%         0123456789/-"   PQRSTUVWXYZ!cptsABCDEFGHIJKLMNO '
+
+# --------------------------------------------------------------------
+
 
 
 # --------------------------------------------------------------------
@@ -134,8 +155,26 @@ def GHOSTS_SPEED(level, fright, tunnel):
     return multiplier * REFERENCE_SPEED
 
 
-
-
 # --------------------------------------------------------------------
 
 
+# --------------------------------------------------------------------
+# Constants related to Game UI.
+# --------------------------------------------------------------------
+
+# Coordinates of 'HIGH SCORE' text.
+GAME_HIGH_SCORE_TEXT_COORDS   = (- 4.5 * MAZE_TILE_PX_SIZE, +18 * MAZE_TILE_PX_SIZE)
+
+# Coordinates of '1UP' text.
+GAME_1UP_TEXT_COORDS          = (-10.5 * MAZE_TILE_PX_SIZE, +18 * MAZE_TILE_PX_SIZE)
+
+# Coordinates of current score left-most digit.
+GAME_SCORE_NUMBER_COORDS      = (-13.5 * MAZE_TILE_PX_SIZE, +17 * MAZE_TILE_PX_SIZE)
+
+# Coordinates of high score left-most digit.
+GAME_HIGH_SCORE_NUMBER_COORDS = (- 3.5 * MAZE_TILE_PX_SIZE, +17 * MAZE_TILE_PX_SIZE)
+
+# Number of digits of the theoretical maximum score.
+MAX_SCORE_NUM_DIGITS = 7
+
+# --------------------------------------------------------------------

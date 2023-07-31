@@ -3,10 +3,11 @@
 from pyglet.window import key
 
 from src.activities.activity import Activity
-from src.utils import Vector2
+from src.directions import Vector2
 
 from src.game_objects.pacman import PacMan
 from src.game_objects.maze import Maze
+from src.game_objects.score import Score
 
 
 
@@ -20,6 +21,8 @@ class Game(Activity):
 
         self._maze = Maze()
         self._pacman = PacMan()
+        
+        self._score = Score()
 
         self._level = 1
         self._fright = False
@@ -28,7 +31,7 @@ class Game(Activity):
     def event_draw_screen(self):
         """Override of method from Activity class, drawing the controls menu
         on the screen."""
-        self._painter.draw_game(self._pacman)
+        self._painter.draw_game(self._pacman, self._score.score, self._score.high_score)
         
     def event_update_state(self, dt):
         """Override of method from Activity class, updating the state of the

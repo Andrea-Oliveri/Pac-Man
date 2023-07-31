@@ -4,7 +4,7 @@ import pyglet
 
 from src.activities.menu import Menu
 from src.activities.game import Game
-from src.painter import Painter
+from src.graphics.painter import Painter
 from src.constants import (WINDOW_INIT_KWARGS,
                            WINDOW_MINIMUM_SIZE,
                            GAME_UPDATES_INTERVAL,

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from src.utils import Vector2
+from src.directions import Vector2
 from src.constants import (MazeTiles,
                            MAZE_START_TILES,
                            MAZE_TILES_COLS,
