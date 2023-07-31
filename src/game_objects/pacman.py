@@ -4,7 +4,7 @@ from enum import IntEnum
 
 from src.utils import Vector2
 
-from src.constants import (PACMAN_MOVE_SPEED_TILES,
+from src.constants import (PACMAN_SPEED,
                            PACMAN_START_TILE,
                            PacManStates,
                            PACMAN_PELLET_PENALTIES)
@@ -44,7 +44,7 @@ class PacMan:
         # -----------------------------------------
 
 
-    def update(self, dt, maze):
+    def update(self, dt, level, fright, maze):
 
         if self.state in (PacManStates.SPAWNING, PacManStates.DEAD):
             # Ignore any request to change direction.
@@ -66,7 +66,7 @@ class PacMan:
                     self.state = PacManStates.TURNING
             
             # Try to move.
-            is_stuck, turning = self.update_position(dt, maze)
+            is_stuck, turning = self.update_position(dt, level, fright, maze)
 
             # Update state based on if Pac-Man stuck or not, only if not still turning.
             if not turning:
@@ -102,7 +102,7 @@ class PacMan:
 
 
 
-    def update_position(self, dt, maze):
+    def update_position(self, dt, level, fright, maze):
 
         
         # Update penalty to movement speed.
@@ -114,7 +114,7 @@ class PacMan:
         self._penalty = 0
 
         # Calculate how far Pac-Man has theoretically moved.
-        distance = PACMAN_MOVE_SPEED_TILES * dt
+        distance = PACMAN_SPEED(level, fright) * dt
 
         # When turning, specific movement logic needed to bring Pac-Man back to center of corridor.
         # No collision detection because this was already checked by PacMan.update_direction method.

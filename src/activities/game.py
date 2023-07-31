@@ -21,6 +21,9 @@ class Game(Activity):
         self._maze = Maze()
         self._pacman = PacMan()
 
+        self._level = 1
+        self._fright = False
+
 
     def event_draw_screen(self):
         """Override of method from Activity class, drawing the controls menu
@@ -30,7 +33,7 @@ class Game(Activity):
     def event_update_state(self, dt):
         """Override of method from Activity class, updating the state of the
         activity."""
-        self._pacman.update(dt, self._maze)
+        self._pacman.update(dt, self._level, self._fright, self._maze)
         tile_emptied_idx, pellet_type = self._maze.update_tile(self._pacman.position)
 
         if tile_emptied_idx is not None:

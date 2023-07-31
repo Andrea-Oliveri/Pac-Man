@@ -87,17 +87,55 @@ PACMAN_SPAWNING_FRAME_IDX = 0
 # Pac-Man states.
 PacManStates = IntEnum('PacManStates', ['SPAWNING', 'MOVING', 'STUCK', 'TURNING', 'DEAD'])
 
-# Speed at which Pac-Man moves.
-PACMAN_MOVE_SPEED_TILES = 11
-
 # Coordinates of tile where Pac-Man starts the game.
 PACMAN_START_TILE = (14, 23.5)
 
 # One-frame penalty when eating pellet, 3 frames penalty when eating power pellet (in original game frame-rate: 60 fps).
 PACMAN_PELLET_PENALTIES = {MazeTiles.PELLET: 1 / 60, MazeTiles.POWER_PELLET: 3 / 60}
 
-
 # --------------------------------------------------------------------
 
+
+# --------------------------------------------------------------------
+# Constants related to speed of Pac-Man and Ghosts.
+# --------------------------------------------------------------------
+
+# Maximum Pac-Man move speed.
+REFERENCE_SPEED = 75.75757625 / 8
+
+# Function returning the Pac-Man speed depending on the current level and if fright is on.
+def PACMAN_SPEED(level, fright):
+    multiplier = None
+
+    if level == 1:
+        multiplier = 0.90 if fright else 0.80
+    elif level <= 4:
+        multiplier = 0.95 if fright else 0.90
+    elif level <= 20:
+        multiplier = 1.00
+    else:
+        multiplier = 0.90
+
+    return multiplier * REFERENCE_SPEED
+
+# Function returning the Ghost speed depending on the current level, if fright is on and if ghost is in warp tunnel.
+def GHOSTS_SPEED(level, fright, tunnel):
+    multiplier = None
+
+    if level == 1:
+        multiplier = 0.40 if tunnel else 0.50 if fright else 0.75
+    elif level <= 4:
+        multiplier = 0.45 if tunnel else 0.55 if fright else 0.85
+    elif level <= 20:
+        multiplier = 0.50 if tunnel else 0.60 if fright else 0.95
+    else:
+        multiplier = 0.50 if tunnel else 0.95
+
+    return multiplier * REFERENCE_SPEED
+
+
+
+
+# --------------------------------------------------------------------
 
 
