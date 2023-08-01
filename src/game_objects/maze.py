@@ -4,7 +4,8 @@ from src.directions import Vector2
 from src.constants import (MazeTiles,
                            MAZE_START_TILES,
                            MAZE_TILES_COLS,
-                           MAZE_TILES_ROWS)
+                           MAZE_TILES_ROWS,
+                           WARP_TUNNEL_ROW)
 
 
 class Maze:
@@ -24,9 +25,16 @@ class Maze:
 
     def __getitem__(self, index):
         """Special function that allows to get items of attribute _tiles from the exterior."""
-        index = self._index_convert(index)
+        index, row, col = self._index_convert(index)
+
+        # If out of maze bounds, all tiles are walls except for warp tunnel.
+        if index is True:
+            return MazeTiles.EMPTY
+        elif index is False:
+            return MazeTiles.WALL
 
         return self._tiles[index]
+
 
     def _index_convert(self, index):
         if isinstance(index, Vector2):
@@ -39,11 +47,21 @@ class Maze:
         else:
             raise IndexError(f"Unsupported indexing value for class Maze: {index}")
 
-        # Check coordinates are within boundaries.
+        # If coordinates are outside boundaries, return True if we are in the warp tunnel (whole warp tunnel row), False otherwise.
         if row < 0 or row >= MAZE_TILES_ROWS or col < 0 or col >= MAZE_TILES_COLS:
-            raise IndexError(f"Index {(row, col)} is out of maze bounds")
+            index = row == WARP_TUNNEL_ROW
+        else:
+            index = row * MAZE_TILES_COLS + col
 
-        return row * MAZE_TILES_COLS + col
+        return index, row, col
+
+
+    def tile_is_warp_tunnel(self, index):
+        """Function that returns True if the tile at desired index is in the warp tunnel."""
+        index, _, _ = self._index_convert(index)
+
+        # If we are out of maze bounds but on the warp tunnel row, we are in the warp tunnel.
+        return index is True
 
 
     def tile_is_wall(self, index):
@@ -54,13 +72,13 @@ class Maze:
     def update_tile(self, pacman_position):
         """Updates maze if needed by replacing a pellet with an empty tile. Returns the index of
         the tile in the array if such a replacement was performed, None otherwise."""
-        index = self._index_convert(pacman_position)
-        tile = self._tiles[index]
+        index, row, col = self._index_convert(pacman_position)
+        tile = self[pacman_position]
 
         if tile in (MazeTiles.PELLET, MazeTiles.POWER_PELLET):
             self._tiles[index] = MazeTiles.EMPTY
             self._n_pellets -= 1
-            return index, tile
+            return (row, col), tile
         
         return None, None
     

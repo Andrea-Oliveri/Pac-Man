@@ -54,6 +54,10 @@ MAZE_START_TILES = (MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WA
 MAZE_TILES_COLS = 28
 MAZE_TILES_ROWS = 31
 
+# Warp tunnel tiles.
+WARP_TUNNEL_ROW = 14
+WARP_TUNNEL_TELEPORT_MARGIN = 2
+
 # --------------------------------------------------------------------
 
 
@@ -178,3 +182,5 @@ GAME_HIGH_SCORE_NUMBER_COORDS = (- 3.5 * MAZE_TILE_PX_SIZE, +17 * MAZE_TILE_PX_S
 MAX_SCORE_NUM_DIGITS = 7
 
 # --------------------------------------------------------------------
+
+

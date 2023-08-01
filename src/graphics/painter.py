@@ -4,7 +4,6 @@ import pyglet.gl
 
 from src.constants import (MAZE_START_IMAGE,
                            MAZE_TILE_PX_SIZE,
-                           MAZE_TILES_COLS,
                            MAZE_TILES_ROWS,
                            MAZE_START_IMAGE_EMPTY_TILE_REGION_COORDS,
                            PACMAN_MOVE_ANIMATION,
@@ -51,9 +50,7 @@ class Painter:
 
     def draw_game(self, pacman, score, high_score):
 
-        # TODO: make the Power Pellets (and other UI elements) flash. This can be achieved, for example, via an animated sprite which is drawn on top of maze before PacMan
-        # which is fully transparent a frame and fully opaque another frame. Or by using the maze empty tile and making it visible-unvisible
-        self._maze_image.blit(0, 0)
+        self._draw_maze()
 
         self._draw_gui(score, high_score)
 
@@ -80,6 +77,11 @@ class Painter:
             pass
       
         # ----------------------------------------
+
+
+    def _draw_maze(self):
+        self._maze_image.blit(0, 0)
+
 
 
 
@@ -150,8 +152,7 @@ class Painter:
 
 
     def set_empty_tile(self, idx):
-        maze_row = idx // MAZE_TILES_COLS
-        maze_col = idx % MAZE_TILES_COLS
+        maze_row, maze_col = idx
 
         destination_left_px   = maze_col * MAZE_TILE_PX_SIZE
         destination_bottom_px = (MAZE_TILES_ROWS - maze_row - 1) * MAZE_TILE_PX_SIZE

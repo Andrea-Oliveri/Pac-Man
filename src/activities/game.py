@@ -57,3 +57,15 @@ class Game(Activity):
             self._pacman.direction = Vector2.LEFT
         elif symbol == key.RIGHT:
             self._pacman.direction = Vector2.RIGHT
+
+        # ------------------------------
+        # DEBUG: slow down pacman
+        # ------------------------------
+        if symbol == key.SPACE:
+            import src.constants as const
+            if not hasattr(self, '_original_speed'):
+                self._original_speed = float(const.REFERENCE_SPEED)
+            const.REFERENCE_SPEED = self._original_speed if const.REFERENCE_SPEED < self._original_speed else 1
+
+
+        # ------------------------------

@@ -7,7 +7,9 @@ from src.directions import Vector2
 from src.constants import (PACMAN_SPEED,
                            PACMAN_START_TILE,
                            PacManStates,
-                           PACMAN_PELLET_PENALTIES)
+                           PACMAN_PELLET_PENALTIES,
+                           MAZE_TILES_COLS,
+                           WARP_TUNNEL_TELEPORT_MARGIN)
 
 
 
@@ -32,7 +34,7 @@ class PacMan:
         pyglet.clock.schedule_once(f, 1.5) 
         def f2(_):
             self._state = PacManStates.DEAD
-        pyglet.clock.schedule_once(f2, 4.5) 
+        #pyglet.clock.schedule_once(f2, 4.5) 
         # -----------------------------------------
 
 
@@ -94,7 +96,6 @@ class PacMan:
         self._penalty += PACMAN_PELLET_PENALTIES[pellet_type]
 
 
-
     def update_position(self, dt, level, fright, maze):
 
         
@@ -137,9 +138,6 @@ class PacMan:
             return False, True # Not stuck, still turning.
 
 
-
-        
-
         # Calculate new position and check if movement will cause a collision. If so, clip instead of moving into wall.
         # Only allow movement if both corners of Pac-Man's collision box are not into wall.
         # This collision detection does not account for high speeds or large dt, which could allow Pac-Man to pass through wall
@@ -162,6 +160,19 @@ class PacMan:
 
             setattr(new_position, coord_to_clip, int(getattr(new_position, coord_to_clip)) + 0.5)
             is_stuck = True
+
+        # Perform warping if needed.
+        if maze.tile_is_warp_tunnel(new_position):
+            right_warp_edge = MAZE_TILES_COLS + WARP_TUNNEL_TELEPORT_MARGIN
+            left_warp_edge  = -WARP_TUNNEL_TELEPORT_MARGIN
+
+            if new_position.x > right_warp_edge:
+                offset = new_position.x - right_warp_edge
+                new_position.x = left_warp_edge + offset
+            elif new_position.x < left_warp_edge:
+                offset = left_warp_edge - new_position.x
+                new_position.x = right_warp_edge - offset
+
 
         self._position = new_position
         return is_stuck, False # If he wasn't turning, he is not turning due to this function.
