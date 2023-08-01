@@ -2,6 +2,7 @@
 
 from pyglet.window import Window
 from enum import IntEnum
+import os
 
 from src.directions import Vector2
 
@@ -180,6 +181,42 @@ GAME_HIGH_SCORE_NUMBER_COORDS = (- 3.5 * MAZE_TILE_PX_SIZE, +17 * MAZE_TILE_PX_S
 
 # Number of digits of the theoretical maximum score.
 MAX_SCORE_NUM_DIGITS = 7
+
+# --------------------------------------------------------------------
+
+
+# --------------------------------------------------------------------
+# Constants related to Score.
+# --------------------------------------------------------------------
+
+# Possible actions causing increase in score.
+ScoreActions = IntEnum('ScoreActions', ['EAT_PELLET', 'EAT_POWER_PELLET', 'EAT_GHOST', 'EAT_FRUIT'])
+
+# Points given per action.
+SCORE_POINTS_EAT_PELLET = 10
+SCORE_POINTS_EAT_POWER_PELLET = 50
+SCORE_POINTS_EAT_GHOST_BASE = 200
+def SCORE_POINTS_EAT_FRUIT(level):
+    if level == 1:
+        return 100
+    elif level == 2:
+        return 300
+    elif level <= 4:
+        return 500
+    elif level <= 6:
+        return 700
+    elif level <= 8:
+        return 1000
+    elif level <= 10:
+        return 2000
+    elif level <= 12:
+        return 3000
+
+    return 5000
+
+# Path of file where to store high score.
+HIGH_SCORE_FILE = os.path.join(os.path.expanduser('~'), '.pacman_game')
+HIGH_SCORE_FILE_NUM_BYTES = 4
 
 # --------------------------------------------------------------------
 

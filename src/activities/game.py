@@ -9,6 +9,8 @@ from src.game_objects.pacman import PacMan
 from src.game_objects.maze import Maze
 from src.game_objects.score import Score
 
+from src.constants import (MazeTiles,
+                           ScoreActions)
 
 
 class Game(Activity):
@@ -25,6 +27,8 @@ class Game(Activity):
         self._score = Score()
 
         self._level = 1
+        self._score.notify_level_change(self._level)
+
         self._fright = False
 
 
@@ -42,6 +46,11 @@ class Game(Activity):
         if tile_emptied_idx is not None:
             self._painter.set_empty_tile(tile_emptied_idx)
             self._pacman.add_penalty(pellet_type)
+            self._score.add_to_score(ScoreActions.EAT_PELLET if pellet_type == MazeTiles.PELLET else ScoreActions.EAT_POWER_PELLET)
+
+            if pellet_type == MazeTiles.POWER_PELLET:
+                self._score.notify_fright_on()
+
 
         if self._maze.completed():
             print('Level completed')
