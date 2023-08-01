@@ -64,14 +64,15 @@ class Maze:
         return index is True
 
 
+
     def tile_is_wall(self, index):
         """Function that returns True if the tile at desired index is not walkable (is a wall)."""
         return self[index] == MazeTiles.WALL
     
 
-    def update_tile(self, pacman_position):
-        """Updates maze if needed by replacing a pellet with an empty tile. Returns the index of
-        the tile in the array if such a replacement was performed, None otherwise."""
+    def eat_check_pellet(self, pacman_position):
+        """Updates maze if needed by replacing a pellet with an empty tile. Returns the (row, col) coordinates of
+        the tile in the array if such a replacement was performed and the type, None otherwise."""
         index, row, col = self._index_convert(pacman_position)
         tile = self[pacman_position]
 

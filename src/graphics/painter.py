@@ -12,14 +12,22 @@ from src.constants import (MAZE_START_IMAGE,
                            PACMAN_MOVE_ANIMATION_PERIOD_SECS,
                            PACMAN_DEATH_ANIMATION_PERIOD_SECS,
                            PacManStates,
-                           PACMAN_STUCK_FRAME_IDX,
                            PACMAN_SPAWNING_FRAME_IDX,
                            FontColors,
                            GAME_HIGH_SCORE_TEXT_COORDS,
                            GAME_1UP_TEXT_COORDS,
                            GAME_SCORE_NUMBER_COORDS,
                            GAME_HIGH_SCORE_NUMBER_COORDS,
-                           MAX_SCORE_NUM_DIGITS)
+                           MAX_SCORE_NUM_DIGITS,
+                           GAME_DEFAULT_TEXT_COLOR,
+                           UI_TILES_SHEET_PATH,
+                           UI_TILES_PX_SIZE,
+                           Fruits,
+                           LIFE_ICON_UI,
+                           GAME_LEFT_LIVES_ICON_COORDS,
+                           GAME_RIGHT_FRUIT_ICON_COORDS,
+                           GAME_MAX_FRUIT_ICON_NUMBER,
+                           FRUIT_OF_LEVEL)
 from src.directions import Vector2
 from src.graphics import utils
 from src.graphics.font import Font
@@ -38,7 +46,10 @@ class Painter:
         self._pacman_move_sprite  = utils.load_animated_sprite(PACMAN_MOVE_ANIMATION , PACMAN_GHOSTS_SPRITES_PX_SIZE, PACMAN_MOVE_ANIMATION_PERIOD_SECS)
         self._pacman_death_sprite = utils.load_animated_sprite(PACMAN_DEATH_ANIMATION, PACMAN_GHOSTS_SPRITES_PX_SIZE, PACMAN_DEATH_ANIMATION_PERIOD_SECS)
 
+        # Load UI elements.
         self._font = Font()
+        self._ui_tiles = utils.load_image_grid(UI_TILES_SHEET_PATH, UI_TILES_PX_SIZE)
+
 
 
     def draw_menu(self):
@@ -48,11 +59,11 @@ class Painter:
         image.blit(0, 0)
 
 
-    def draw_game(self, pacman, score, high_score):
+    def draw_game(self, pacman, score, lives, level):
 
         self._draw_maze()
 
-        self._draw_gui(score, high_score)
+        self._draw_gui(score, lives, level)
 
         self._draw_pacman(pacman)
 
@@ -104,8 +115,9 @@ class Painter:
 
         match pacman.state:
             case PacManStates.STUCK:
-                # Freeze the animation on the correct frame.
-                utils.freeze_animated_sprite(self._pacman_move_sprite, PACMAN_STUCK_FRAME_IDX)
+                # Freeze the animation, as long as Pac-Man is not a full yellow circle.
+                if self._pacman_move_sprite.frame_index != PACMAN_SPAWNING_FRAME_IDX:
+                    self._pacman_move_sprite.paused = True
 
                 # Draw correct sprite.
                 self._pacman_move_sprite.update(x=pacman_coords.x, y=pacman_coords.y, rotation=rotation)
@@ -139,16 +151,35 @@ class Painter:
                 raise ValueError('Unvalid state provided for Pac-Man to Painter')
 
 
-    def _draw_gui(self, score, high_score):
+    def _draw_gui(self, score, lives, level):
+        # Print text on top of screen.
+        self._font.print(*GAME_HIGH_SCORE_TEXT_COORDS, GAME_DEFAULT_TEXT_COLOR, 'HIGH SCORE')
+        self._font.print(*GAME_1UP_TEXT_COORDS       , GAME_DEFAULT_TEXT_COLOR, '1UP')
         
-        self._font.print(*GAME_HIGH_SCORE_TEXT_COORDS, FontColors.WHITE, 'HIGH SCORE')
-        self._font.print(*GAME_1UP_TEXT_COORDS, FontColors.WHITE, '1UP')
-        
+        # Print score and high score numbers.
+        high_score = score.high_score
+        score      = score.score
+
+        high_score = (''   if high_score == 0 else str(high_score)).rjust(MAX_SCORE_NUM_DIGITS, ' ')
         score      = ('00' if score      == 0 else str(score))     .rjust(MAX_SCORE_NUM_DIGITS, ' ')
-        high_score = ('00' if high_score == 0 else str(high_score)).rjust(MAX_SCORE_NUM_DIGITS, ' ')
         
-        self._font.print(*GAME_SCORE_NUMBER_COORDS, FontColors.WHITE, score)
-        self._font.print(*GAME_HIGH_SCORE_NUMBER_COORDS, FontColors.WHITE, high_score)
+        self._font.print(*GAME_HIGH_SCORE_NUMBER_COORDS, GAME_DEFAULT_TEXT_COLOR, high_score)
+        self._font.print(*GAME_SCORE_NUMBER_COORDS     , GAME_DEFAULT_TEXT_COLOR, score)
+
+        # Draw the lives.
+        x, y = GAME_LEFT_LIVES_ICON_COORDS
+        for _ in range(lives):
+            self._ui_tiles[LIFE_ICON_UI].blit(x, y)
+            x += UI_TILES_PX_SIZE
+
+        # Draw the fruits.
+        fruits = [FRUIT_OF_LEVEL(i) for i in range(level-GAME_MAX_FRUIT_ICON_NUMBER+1, level+1) if i >= 1]
+        x, y = GAME_RIGHT_FRUIT_ICON_COORDS
+        for fruit in fruits:
+            self._ui_tiles[fruit].blit(x, y)
+            x -= UI_TILES_PX_SIZE
+            
+
 
 
     def set_empty_tile(self, idx):

@@ -19,7 +19,6 @@ class Score:
         self._high_score = self._load_or_write_high_score(load = True)
 
         self._ghost_eaten_same_fright = None
-        self._level = None
         
     
     # Defining properties for some private attributes.
@@ -48,7 +47,7 @@ class Score:
             file.write(self._high_score.to_bytes(length = HIGH_SCORE_FILE_NUM_BYTES, byteorder = 'big', signed = False))
 
     
-    def add_to_score(self, action): 
+    def add_to_score(self, action, fruit = None):
         """Adds points to the score based on the action type and data in parameters dictionary."""
         
         match action:
@@ -60,13 +59,10 @@ class Score:
                 self += SCORE_POINTS_EAT_GHOST_BASE * (2 ** self._ghost_eaten_same_fright)
                 self._ghost_eaten_same_fright += 1
             case ScoreActions.EAT_FRUIT:
-                self += SCORE_POINTS_EAT_FRUIT(self._level)
+                self += SCORE_POINTS_EAT_FRUIT[fruit]
             case _:
                 raise ValueError(f'Unvalid action provided for Score.add_to_score: {action}')
 
 
     def notify_fright_on(self):
         self._ghost_eaten_same_fright = 0
-
-    def notify_level_change(self, level):
-        self._level = level

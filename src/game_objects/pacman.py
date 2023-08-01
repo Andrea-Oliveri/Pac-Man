@@ -18,7 +18,8 @@ from src.constants import (PACMAN_SPEED,
 class PacMan:
 
     def __init__(self):
-        self._position  = Vector2(*PACMAN_START_TILE)
+        self._position     = Vector2(*PACMAN_START_TILE)
+        self._old_position = self._position
         self._direction = Vector2.LEFT
         self._state     = PacManStates.SPAWNING
         self._penalty   = 0
@@ -96,8 +97,9 @@ class PacMan:
         self._penalty += PACMAN_PELLET_PENALTIES[pellet_type]
 
 
-    def update_position(self, dt, level, fright, maze):
 
+    def update_position(self, dt, level, fright, maze):
+        self._old_position = self._position
         
         # Update penalty to movement speed.
         if self._penalty >= dt:
@@ -189,6 +191,7 @@ class PacMan:
         self._direction_input = direction
 
 
-    position  = property(lambda self: self._position)
-    direction = property(lambda self: self._direction, _set_direction)
-    state     = property(lambda self: self._state)
+    position      = property(lambda self: self._position)
+    old_position  = property(lambda self: self._old_position)
+    direction     = property(lambda self: self._direction, _set_direction)
+    state         = property(lambda self: self._state)

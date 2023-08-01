@@ -13,10 +13,10 @@ class Font:
 
     def __init__(self):
         # Load grid.
-        self.image_grid = utils.load_image_grid(FONT_SHEET_PATH, FONT_TILE_PX_SIZE)
+        image_grid = utils.load_image_grid(FONT_SHEET_PATH, FONT_TILE_PX_SIZE)
 
         # Split into regions for each character and group them in dictionaries for faster access.
-        iterator = iter(self.image_grid)
+        iterator = iter(image_grid)
         self._char_tiles = [{char: tile for char, tile in zip(FONT_SHEET_CHARACTERS, iterator)} for color in FontColors]
 
 

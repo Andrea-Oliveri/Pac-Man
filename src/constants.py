@@ -77,9 +77,6 @@ PACMAN_DEATH_ANIMATION_PERIOD_SECS = 10 / 60
 # Size of Pac-Man and Ghost sprites expressed in pixels.
 PACMAN_GHOSTS_SPRITES_PX_SIZE = 16
 
-# Index of frame in PACMAN_MOVE_ANIMATION to use when Pac-Man is stuck.
-PACMAN_STUCK_FRAME_IDX = 1
-
 # Index of frame in PACMAN_MOVE_ANIMATION to use when Pac-Man is spawning.
 PACMAN_SPAWNING_FRAME_IDX = 0
 
@@ -96,7 +93,7 @@ FONT_SHEET_PATH = "./assets/images/Font.png"
 # Size of font tiles expressed in pixels.
 FONT_TILE_PX_SIZE = 8
 
-# Colors present, ordered as in the font sheet (ordered from bottom to top due to how pyglet increases y-axis).
+# Colors present in font sheet, ordered as in the font sheet (ordered from bottom to top due to how pyglet increases y-axis).
 FontColors = IntEnum('FontColors', ['WHITE', 'YELLOW', 'MELON', 'CASABLANCA', 'CYAN', 'MAUVE', 'RED', 'LAVANDER'], start = 0)
 
 # Characters present, ordered as in the font sheet (rows go from bottom to top due to how pyglet increases y-axis).
@@ -182,6 +179,49 @@ GAME_HIGH_SCORE_NUMBER_COORDS = (- 3.5 * MAZE_TILE_PX_SIZE, +17 * MAZE_TILE_PX_S
 # Number of digits of the theoretical maximum score.
 MAX_SCORE_NUM_DIGITS = 7
 
+# In-Game UI colors.
+GAME_DEFAULT_TEXT_COLOR = FontColors.WHITE
+
+# Path of image containing the UI tiles (fruits and Pac-Man life).
+UI_TILES_SHEET_PATH = "./assets/images/UI.png"
+
+# Size of UI tiles expressed in pixels.
+UI_TILES_PX_SIZE = 16
+
+# Elements present in UI tiles sheet, ordered as in the sheet.
+Fruits = IntEnum('TileUI', ['CHERRY', 'STRAWBERRY', 'PEACH', 'APPLE', 'GRAPES', 'GALAXIAN', 'BELL', 'KEY'], start = 0)
+LIFE_ICON_UI = max(Fruits) + 1
+
+# Coordinates of left-most life icon.
+GAME_LEFT_LIVES_ICON_COORDS  = (-11 * MAZE_TILE_PX_SIZE, -16.5 * MAZE_TILE_PX_SIZE) 
+
+# Coordinates of right-most fruit icon.
+GAME_RIGHT_FRUIT_ICON_COORDS = (+11 * MAZE_TILE_PX_SIZE, -16.5 * MAZE_TILE_PX_SIZE) 
+
+# Max number of fruits to show on bottom right of screen.
+GAME_MAX_FRUIT_ICON_NUMBER = 7
+
+# Fruit associated to each level.
+def FRUIT_OF_LEVEL(level):
+    if level <= 0:
+        raise ValueError(f'invalid level value passed to constants.FRUIT_OF_LEVEL: {level}')
+    elif level == 1:
+        return Fruits.CHERRY
+    elif level == 2:
+        return Fruits.STRAWBERRY
+    elif level <= 4:
+        return Fruits.PEACH
+    elif level <= 6:
+        return Fruits.APPLE
+    elif level <= 8:
+        return Fruits.GRAPES
+    elif level <= 10:
+        return Fruits.GALAXIAN
+    elif level <= 12:
+        return Fruits.BELL
+
+    return Fruits.KEY
+
 # --------------------------------------------------------------------
 
 
@@ -196,23 +236,7 @@ ScoreActions = IntEnum('ScoreActions', ['EAT_PELLET', 'EAT_POWER_PELLET', 'EAT_G
 SCORE_POINTS_EAT_PELLET = 10
 SCORE_POINTS_EAT_POWER_PELLET = 50
 SCORE_POINTS_EAT_GHOST_BASE = 200
-def SCORE_POINTS_EAT_FRUIT(level):
-    if level == 1:
-        return 100
-    elif level == 2:
-        return 300
-    elif level <= 4:
-        return 500
-    elif level <= 6:
-        return 700
-    elif level <= 8:
-        return 1000
-    elif level <= 10:
-        return 2000
-    elif level <= 12:
-        return 3000
-
-    return 5000
+SCORE_POINTS_EAT_FRUIT = {Fruits.CHERRY: 100, Fruits.STRAWBERRY: 300, Fruits.PEACH: 500, Fruits.APPLE: 700, Fruits.GRAPES: 1000, Fruits.GALAXIAN: 2000, Fruits.BELL: 3000, Fruits.KEY: 5000}
 
 # Path of file where to store high score.
 HIGH_SCORE_FILE = os.path.join(os.path.expanduser('~'), '.pacman_game')
@@ -220,4 +244,22 @@ HIGH_SCORE_FILE_NUM_BYTES = 4
 
 # --------------------------------------------------------------------
 
+
+# --------------------------------------------------------------------
+# Constants related to the Game orchestrator.
+# --------------------------------------------------------------------
+
+# Number of lives at the beginning of the game.
+STARTING_LIVES_PACMAN = 3 # 1, 2, 3 or 5 are all valid for this setting
+
+# Score above which an extra life is awarded.
+EXTRA_LIFE_POINTS_REQUIREMENT = 10000 # 10000, 15000 and 20000 are all valid for this setting
+
+# Thresholds at which fruits appear: after eating 70 pellets and 170 pellets.
+FRUIT_SPAWN_THRESHOLDS = (70, 170)
+
+# Coordinates at which fruits appear.
+FRUIT_SPAWN_COORDINATES = Vector2(x = 14, y = 17.5)
+
+# --------------------------------------------------------------------
 

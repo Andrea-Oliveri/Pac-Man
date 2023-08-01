@@ -10,7 +10,10 @@ from src.game_objects.maze import Maze
 from src.game_objects.score import Score
 
 from src.constants import (MazeTiles,
-                           ScoreActions)
+                           ScoreActions,
+                           STARTING_LIVES_PACMAN,
+                           EXTRA_LIFE_POINTS_REQUIREMENT,
+                           FRUIT_SPAWN_COORDINATES)
 
 
 class Game(Activity):
@@ -27,34 +30,28 @@ class Game(Activity):
         self._score = Score()
 
         self._level = 1
-        self._score.notify_level_change(self._level)
 
         self._fright = False
+
+        self._lives = STARTING_LIVES_PACMAN
+        self._extra_life_awarded = False
+        
 
 
     def event_draw_screen(self):
         """Override of method from Activity class, drawing the controls menu
         on the screen."""
-        self._painter.draw_game(self._pacman, self._score.score, self._score.high_score)
+        self._painter.draw_game(self._pacman, self._score, self._lives, self._level)
         
+
     def event_update_state(self, dt):
         """Override of method from Activity class, updating the state of the
         activity."""
         self._pacman.update(dt, self._level, self._fright, self._maze)
-        tile_emptied_idx, pellet_type = self._maze.update_tile(self._pacman.position)
 
-        if tile_emptied_idx is not None:
-            self._painter.set_empty_tile(tile_emptied_idx)
-            self._pacman.add_penalty(pellet_type)
-            self._score.add_to_score(ScoreActions.EAT_PELLET if pellet_type == MazeTiles.PELLET else ScoreActions.EAT_POWER_PELLET)
+        self._calculate_new_game_state()
 
-            if pellet_type == MazeTiles.POWER_PELLET:
-                self._score.notify_fright_on()
-
-
-        if self._maze.completed():
-            print('Level completed')
-
+        
     def event_key_pressed(self, symbol, modifiers):
         """Override of method from Activity class, reacting to key presses.
         Returns True if the game should start and False otherwise."""
@@ -78,3 +75,51 @@ class Game(Activity):
 
 
         # ------------------------------
+
+
+    def _calculate_new_game_state(self):
+        # Check if passed on to fruit spawning point.
+        pacman_old_position = self._pacman.old_position
+        pacman_new_position = self._pacman.position
+
+        was_on_fruit = (pacman_old_position.y == pacman_new_position.y == FRUIT_SPAWN_COORDINATES.y) and \
+                       ((pacman_old_position.x <= FRUIT_SPAWN_COORDINATES.x <= pacman_new_position.x) or \
+                        (pacman_new_position.x <= FRUIT_SPAWN_COORDINATES.x <= pacman_old_position.x))
+
+        if was_on_fruit:
+            self._fruit_eaten()
+
+        # Check if eaten a pellet.
+        tile_coords, pellet_type = self._maze.eat_check_pellet(pacman_new_position)
+        if tile_coords is not None:
+            self._pellet_eaten(tile_coords, pellet_type)
+
+        # Check if collided with any ghosts.
+        pass
+
+
+        # Update lives if score high enough.
+        if not self._extra_life_awarded and self._score.score >= EXTRA_LIFE_POINTS_REQUIREMENT:
+            self._lives += 1
+
+        # End level if completed.
+        if self._maze.completed():
+            self._end_level()
+
+
+    def _fruit_eaten(self):
+        # TODO: Fill this function
+        print('Was on fruit')
+
+
+    def _pellet_eaten(self, tile_coords, pellet_type):
+        self._painter.set_empty_tile(tile_coords)
+        self._pacman.add_penalty(pellet_type)
+        self._score.add_to_score(ScoreActions.EAT_PELLET if pellet_type == MazeTiles.PELLET else ScoreActions.EAT_POWER_PELLET)
+
+        if pellet_type == MazeTiles.POWER_PELLET:
+            self._fright = True
+            self._score.notify_fright_on()
+
+    def _end_level():
+        print('Level completed')
