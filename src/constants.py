@@ -73,6 +73,7 @@ PACMAN_DEATH_ANIMATION = "./assets/images/Pac-Man Death Animation Sequence.png"
 # Duration of each frame in the animations, in seconds.
 PACMAN_MOVE_ANIMATION_PERIOD_SECS  = 2 / 60
 PACMAN_DEATH_ANIMATION_PERIOD_SECS = 10 / 60
+GHOSTS_MOVE_ANIMATION_PERIOD_SECS  = 8 / 60
 
 # Size of Pac-Man and Ghost sprites expressed in pixels.
 PACMAN_GHOSTS_SPRITES_PX_SIZE = 16
@@ -250,7 +251,7 @@ HIGH_SCORE_FILE_NUM_BYTES = 4
 # --------------------------------------------------------------------
 
 # Number of lives at the beginning of the game.
-STARTING_LIVES_PACMAN = 3 # 1, 2, 3 or 5 are all valid for this setting
+STARTING_LIVES_PACMAN = 5 # 1, 2, 3 or 5 are all valid for this setting
 
 # Score above which an extra life is awarded.
 EXTRA_LIFE_POINTS_REQUIREMENT = 10000 # 10000, 15000 and 20000 are all valid for this setting
@@ -260,6 +261,45 @@ FRUIT_SPAWN_THRESHOLDS = (70, 170)
 
 # Coordinates at which fruits appear.
 FRUIT_SPAWN_COORDINATES = Vector2(x = 14, y = 17.5)
+
+# Duration of fright time (in seconds) and number of flashes before fright mode ends.
+def FRIGHT_TIME_AND_FLASHES(level):
+    if level <= 0:
+        raise ValueError(f'invalid level value passed to constants.FRIGHT_TIME_SECS: {level}')
+    elif level >= 19:
+        return 0, 0
+    
+    time_and_flash = ((6, 5),
+                      (5, 5),
+                      (4, 5),
+                      (3, 5),
+                      (2, 5),
+                      (5, 5),
+                      (2, 5),
+                      (2, 5),
+                      (1, 3),
+                      (5, 5),
+                      (2, 5),
+                      (1, 3),
+                      (1, 3),
+                      (3, 5),
+                      (1, 3),
+                      (1, 3),
+                      (0, 0),
+                      (1, 3))
+    return time_and_flash[level - 1]
+
+
+
+
+
+
+
+
+# Duration of white flash when fright is close to finishing (in seconds).
+# The number of flashes vary, but the pattern goes: blue, white for this amount of time, blue for this amount of time, ...., white for this amount of time and then normal.
+WHITE_FLASH_ANIMATION_PERIOD_SECS = 7 / 60
+
 
 # --------------------------------------------------------------------
 

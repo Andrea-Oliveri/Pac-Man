@@ -13,7 +13,8 @@ from src.constants import (MazeTiles,
                            ScoreActions,
                            STARTING_LIVES_PACMAN,
                            EXTRA_LIFE_POINTS_REQUIREMENT,
-                           FRUIT_SPAWN_COORDINATES)
+                           FRUIT_SPAWN_COORDINATES,
+                           FRIGHT_TIME_AND_FLASHES)
 
 
 class Game(Activity):
@@ -31,7 +32,7 @@ class Game(Activity):
 
         self._level = 1
 
-        self._fright = False
+        self._fright_remaining_time = 0
 
         self._lives = STARTING_LIVES_PACMAN
         self._extra_life_awarded = False
@@ -47,7 +48,26 @@ class Game(Activity):
     def event_update_state(self, dt):
         """Override of method from Activity class, updating the state of the
         activity."""
-        self._pacman.update(dt, self._level, self._fright, self._maze)
+
+        # Update fright timer and tick game in a conservative way: if switching from fright to not, tick game at edge and then remaining dt.
+        if self._fright_remaining_time > 0:
+            if self._fright_remaining_time <= dt:
+                self._game_tick(self._fright_remaining_time)
+                dt -= self._fright_remaining_time
+                self._fright_remaining_time = 0
+            else:
+                self._fright_remaining_time -= dt
+        
+        self._game_tick(dt)
+
+
+
+
+
+    def _game_tick(self, dt):
+        fright = self._fright_remaining_time > 0
+
+        self._pacman.update(dt, self._level, fright, self._maze)
 
         self._calculate_new_game_state()
 
@@ -118,7 +138,7 @@ class Game(Activity):
         self._score.add_to_score(ScoreActions.EAT_PELLET if pellet_type == MazeTiles.PELLET else ScoreActions.EAT_POWER_PELLET)
 
         if pellet_type == MazeTiles.POWER_PELLET:
-            self._fright = True
+            self._fright_remaining_time, _ = FRIGHT_TIME_AND_FLASHES(self._level)
             self._score.notify_fright_on()
 
     def _end_level():
