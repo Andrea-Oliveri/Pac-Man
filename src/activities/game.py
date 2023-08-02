@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from pyglet.window import key
+import pyglet.clock
 
 from src.activities.activity import Activity
 from src.directions import Vector2
@@ -32,7 +33,8 @@ class Game(Activity):
 
         self._level = 1
 
-        self._fright_remaining_time = 0
+        self._fright = False
+        self._next_fright = False
 
         self._lives = STARTING_LIVES_PACMAN
         self._extra_life_awarded = False
@@ -48,28 +50,12 @@ class Game(Activity):
     def event_update_state(self, dt):
         """Override of method from Activity class, updating the state of the
         activity."""
-
-        # Update fright timer and tick game in a conservative way: if switching from fright to not, tick game at edge and then remaining dt.
-        if self._fright_remaining_time > 0:
-            if self._fright_remaining_time <= dt:
-                self._game_tick(self._fright_remaining_time)
-                dt -= self._fright_remaining_time
-                self._fright_remaining_time = 0
-            else:
-                self._fright_remaining_time -= dt
-        
-        self._game_tick(dt)
-
-
-
-
-
-    def _game_tick(self, dt):
-        fright = self._fright_remaining_time > 0
-
-        self._pacman.update(dt, self._level, fright, self._maze)
+        self._pacman.update(dt, self._level, self._fright, self._maze)
 
         self._calculate_new_game_state()
+
+        # To avoid threading-related inconsistencies, only update fright at the end of the update step.
+        self._fright = self._next_fright
 
         
     def event_key_pressed(self, symbol, modifiers):
@@ -138,8 +124,15 @@ class Game(Activity):
         self._score.add_to_score(ScoreActions.EAT_PELLET if pellet_type == MazeTiles.PELLET else ScoreActions.EAT_POWER_PELLET)
 
         if pellet_type == MazeTiles.POWER_PELLET:
-            self._fright_remaining_time, _ = FRIGHT_TIME_AND_FLASHES(self._level)
-            self._score.notify_fright_on()
+            fright_duration, _ = FRIGHT_TIME_AND_FLASHES(self._level)
+            if fright_duration > 0:
+                self._fright = self._next_fright = True
+                pyglet.clock.schedule_once(self._turn_fright_off, fright_duration)
+                self._score.notify_fright_on()
 
     def _end_level():
         print('Level completed')
+
+    def _turn_fright_off(self, dt):
+        self._next_fright = False
+        print('Fright off')
