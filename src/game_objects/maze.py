@@ -5,7 +5,9 @@ from src.constants import (MazeTiles,
                            MAZE_START_TILES,
                            MAZE_TILES_COLS,
                            MAZE_TILES_ROWS,
-                           WARP_TUNNEL_ROW)
+                           WARP_TUNNEL_ROW,
+                           GHOST_HOUSE_ROWS_RANGE,
+                           GHOST_HOUSE_COLS_RANGE)
 
 
 class Maze:
@@ -64,11 +66,17 @@ class Maze:
         return index is True
 
 
-
     def tile_is_wall(self, index):
         """Function that returns True if the tile at desired index is not walkable (is a wall)."""
         return self[index] == MazeTiles.WALL
     
+
+    def tile_is_ghost_house(self, index):
+        _, row, col = self._index_convert(index)
+
+        return (GHOST_HOUSE_ROWS_RANGE[0] <= row <= GHOST_HOUSE_ROWS_RANGE[1]) and \
+               (GHOST_HOUSE_COLS_RANGE[0] <= col <= GHOST_HOUSE_COLS_RANGE[1])
+
 
     def eat_check_pellet(self, pacman_position):
         """Updates maze if needed by replacing a pellet with an empty tile. Returns the (row, col) coordinates of

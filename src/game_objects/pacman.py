@@ -3,24 +3,24 @@
 from enum import IntEnum
 
 from src.directions import Vector2
+from src.game_objects.character import Character
 
 from src.constants import (PACMAN_SPEED,
-                           PACMAN_START_TILE,
+                           PACMAN_START_POSITION,
                            PacManStates,
-                           PACMAN_PELLET_PENALTIES,
-                           MAZE_TILES_COLS,
-                           WARP_TUNNEL_TELEPORT_MARGIN)
+                           PACMAN_PELLET_PENALTIES)
 
 
 
 
 
-class PacMan:
+class PacMan(Character):
 
     def __init__(self):
-        self._position     = Vector2(*PACMAN_START_TILE)
+        super().__init__(position  = PACMAN_START_POSITION,
+                         direction = Vector2.LEFT)
+
         self._old_position = self._position
-        self._direction = Vector2.LEFT
         self._state     = PacManStates.SPAWNING
         self._penalty   = 0
 
@@ -51,18 +51,16 @@ class PacMan:
 
         elif self._state in (PacManStates.MOVING, PacManStates.STUCK, PacManStates.TURNING):
             # Pac-Man is not allowed to change direction if he is already turning.
-            if self._state == PacManStates.TURNING:
-                self._direction_input = None
-            else:
+            if self._state != PacManStates.TURNING:
                 # Try to change direction.
-                turning = self.update_direction(maze)
+                turning = self._update_direction(maze)
 
                 # Update state based on if Pac-Man turns or not.
                 if turning:
                     self._state = PacManStates.TURNING
             
             # Try to move.
-            is_stuck, turning = self.update_position(dt, level, fright, maze)
+            is_stuck, turning = self._update_position(dt, level, fright, maze)
 
             # Update state based on if Pac-Man stuck or not, only if not still turning.
             if not turning:
@@ -72,7 +70,7 @@ class PacMan:
                     self._state = PacManStates.MOVING
             
 
-    def update_direction(self, maze):
+    def _update_direction(self, maze):
         # Note that reversing direction is allowed in Pac-Man.
 
         # If nothing to do, reset and return.
@@ -98,7 +96,7 @@ class PacMan:
 
 
 
-    def update_position(self, dt, level, fright, maze):
+    def _update_position(self, dt, level, fright, maze):
         self._old_position = self._position
         
         # Update penalty to movement speed.
@@ -113,7 +111,7 @@ class PacMan:
         distance = PACMAN_SPEED(level, fright) * dt
 
         # When turning, specific movement logic needed to bring Pac-Man back to center of corridor.
-        # No collision detection because this was already checked by PacMan.update_direction method.
+        # No collision detection because this was already checked by PacMan._update_direction method.
         if self._state == PacManStates.TURNING:
             self._position += self._direction * distance
 
@@ -140,43 +138,7 @@ class PacMan:
             return False, True # Not stuck, still turning.
 
 
-        # Calculate new position and check if movement will cause a collision. If so, clip instead of moving into wall.
-        # Only allow movement if both corners of Pac-Man's collision box are not into wall.
-        # This collision detection does not account for high speeds or large dt, which could allow Pac-Man to pass through wall
-        # (only final position is checked for a collision, not points in between).
-        new_position = self._position + self._direction * distance
-        is_stuck = False
-
-        collision_point = self._position + (self._direction * 0.5000001)
-
-        # TODO: remove DEBUG
-        self.collision_point = collision_point
-
-
-        if maze.tile_is_wall(collision_point):
-            match self._direction:
-                case Vector2.LEFT | Vector2.RIGHT:
-                    coord_to_clip = 'x'
-                case Vector2.UP   | Vector2.DOWN:
-                    coord_to_clip = 'y'
-
-            setattr(new_position, coord_to_clip, int(getattr(new_position, coord_to_clip)) + 0.5)
-            is_stuck = True
-
-        # Perform warping if needed.
-        if maze.tile_is_warp_tunnel(new_position):
-            right_warp_edge = MAZE_TILES_COLS + WARP_TUNNEL_TELEPORT_MARGIN
-            left_warp_edge  = -WARP_TUNNEL_TELEPORT_MARGIN
-
-            if new_position.x > right_warp_edge:
-                offset = new_position.x - right_warp_edge
-                new_position.x = left_warp_edge + offset
-            elif new_position.x < left_warp_edge:
-                offset = left_warp_edge - new_position.x
-                new_position.x = right_warp_edge - offset
-
-
-        self._position = new_position
+        is_stuck = super()._update_position(distance, maze)
         return is_stuck, False # If he wasn't turning, he is not turning due to this function.
 
 

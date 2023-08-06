@@ -23,7 +23,3 @@ class Activity(ABC):
     def event_key_pressed(self, symbol, modifiers):
         """Reacts to key being pressed."""
         return
-
-    def event_key_released(self, symbol, modifiers):
-        """Reacts to key being released."""
-        return

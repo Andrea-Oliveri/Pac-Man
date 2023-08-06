@@ -14,7 +14,7 @@ from src.constants import (MazeTiles,
                            ScoreActions,
                            STARTING_LIVES_PACMAN,
                            EXTRA_LIFE_POINTS_REQUIREMENT,
-                           FRUIT_SPAWN_COORDINATES,
+                           FRUIT_SPAWN_POSITION,
                            FRIGHT_TIME_AND_FLASHES)
 
 
@@ -96,7 +96,7 @@ class Game(Activity):
             import src.constants as const
             if not hasattr(self, '_original_speed'):
                 self._original_speed = float(const.REFERENCE_SPEED)
-            const.REFERENCE_SPEED = self._original_speed if const.REFERENCE_SPEED < self._original_speed else 1
+            const.REFERENCE_SPEED = self._original_speed if const.REFERENCE_SPEED < self._original_speed else self._original_speed * 0.1
 
 
         # ------------------------------
@@ -107,9 +107,9 @@ class Game(Activity):
         pacman_old_position = self._pacman.old_position
         pacman_new_position = self._pacman.position
 
-        was_on_fruit = (pacman_old_position.y == pacman_new_position.y == FRUIT_SPAWN_COORDINATES.y) and \
-                       ((pacman_old_position.x <= FRUIT_SPAWN_COORDINATES.x <= pacman_new_position.x) or \
-                        (pacman_new_position.x <= FRUIT_SPAWN_COORDINATES.x <= pacman_old_position.x))
+        was_on_fruit = (pacman_old_position.y == pacman_new_position.y == FRUIT_SPAWN_POSITION.y) and \
+                       ((pacman_old_position.x <= FRUIT_SPAWN_POSITION.x <= pacman_new_position.x) or \
+                        (pacman_new_position.x <= FRUIT_SPAWN_POSITION.x <= pacman_old_position.x))
 
         if was_on_fruit:
             self._fruit_eaten()
@@ -119,7 +119,7 @@ class Game(Activity):
         if tile_coords is not None:
             self._pellet_eaten(tile_coords, pellet_type)
 
-        # Check if collided with any ghosts.
+        # TODO: Check if collided with any ghosts.
         pass
 
 

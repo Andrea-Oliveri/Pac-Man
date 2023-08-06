@@ -95,7 +95,6 @@ class Painter:
 
 
 
-
     def _draw_pacman(self, pacman):
         # Convert in-game coordinates to render space coordinates.
         pacman_coords = utils.calculate_coords_sprites(pacman.position)

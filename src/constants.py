@@ -24,6 +24,7 @@ WINDOW_INIT_KWARGS = {'width' : WINDOW_MINIMUM_SIZE[0],
                       'vsync': True}
 
 # Interval between two game updates in seconds.
+GAME_ORIGINAL_FPS = 60
 GAME_UPDATES_INTERVAL = 1 / 100
 
 # Constant defining where the image are stored.
@@ -58,6 +59,10 @@ MAZE_TILES_ROWS = 31
 # Warp tunnel tiles.
 WARP_TUNNEL_ROW = 14
 WARP_TUNNEL_TELEPORT_MARGIN = 2
+
+# Ghost house tiles coords.
+GHOST_HOUSE_ROWS_RANGE = (13, 15)
+GHOST_HOUSE_COLS_RANGE = (11, 16)
 
 # --------------------------------------------------------------------
 
@@ -112,7 +117,7 @@ FONT_SHEET_CHARACTERS = r'%%%%%%%         0123456789/-"   PQRSTUVWXYZ!cptsABCDEF
 PacManStates = IntEnum('PacManStates', ['SPAWNING', 'MOVING', 'STUCK', 'TURNING', 'DEAD'])
 
 # Coordinates of tile where Pac-Man starts the game.
-PACMAN_START_TILE = (14, 23.5)
+PACMAN_START_POSITION = Vector2(14, 23.5)
 
 # One-frame penalty when eating pellet, 3 frames penalty when eating power pellet (in original game frame-rate: 60 fps).
 PACMAN_PELLET_PENALTIES = {MazeTiles.PELLET: 1 / 60, MazeTiles.POWER_PELLET: 3 / 60}
@@ -143,17 +148,17 @@ def PACMAN_SPEED(level, fright):
     return multiplier * REFERENCE_SPEED
 
 # Function returning the Ghost speed depending on the current level, if fright is on and if ghost is in warp tunnel.
-def GHOSTS_SPEED(level, fright, tunnel):
+def GHOSTS_SPEED(level, fright, in_warp_tunnel):
     multiplier = None
 
     if level == 1:
-        multiplier = 0.40 if tunnel else 0.50 if fright else 0.75
+        multiplier = 0.40 if in_warp_tunnel else 0.50 if fright else 0.75
     elif level <= 4:
-        multiplier = 0.45 if tunnel else 0.55 if fright else 0.85
+        multiplier = 0.45 if in_warp_tunnel else 0.55 if fright else 0.85
     elif level <= 20:
-        multiplier = 0.50 if tunnel else 0.60 if fright else 0.95
+        multiplier = 0.50 if in_warp_tunnel else 0.60 if fright else 0.95
     else:
-        multiplier = 0.50 if tunnel else 0.95
+        multiplier = 0.50 if in_warp_tunnel else 0.95
 
     return multiplier * REFERENCE_SPEED
 
@@ -260,7 +265,7 @@ EXTRA_LIFE_POINTS_REQUIREMENT = 10000 # 10000, 15000 and 20000 are all valid for
 FRUIT_SPAWN_THRESHOLDS = (70, 170)
 
 # Coordinates at which fruits appear.
-FRUIT_SPAWN_COORDINATES = Vector2(x = 14, y = 17.5)
+FRUIT_SPAWN_POSITION = Vector2(x = 14, y = 17.5)
 
 # Duration of fright time (in seconds) and number of flashes before fright mode ends.
 def FRIGHT_TIME_AND_FLASHES(level):
@@ -303,3 +308,26 @@ WHITE_FLASH_ANIMATION_PERIOD_SECS = 7 / 60
 
 # --------------------------------------------------------------------
 
+
+# --------------------------------------------------------------------
+# Constants related to the Ghosts.
+# --------------------------------------------------------------------
+
+# Enum defining names of ghost.
+Ghost = IntEnum('Ghost', ['BLINKY', 'PINKY', 'INKY', 'CLYDE'], start = 0)
+
+# Starting positions and directions of ghosts.
+GHOSTS_START_POSITIONS = {Ghost.BLINKY: Vector2(x = 14, y = 11.5),
+                          Ghost.PINKY : Vector2(x = 14, y = 13.5),
+                          Ghost.INKY  : Vector2(x = 12, y = 13.5),
+                          Ghost.CLYDE : Vector2(x = 16, y = 13.5)}
+
+GHOSTS_START_DIRECTIONS = {Ghost.BLINKY: Vector2.LEFT,
+                           Ghost.PINKY : Vector2.UP,
+                           Ghost.INKY  : Vector2.DOWN,
+                           Ghost.CLYDE : Vector2.DOWN}
+
+# Enum defining modes of ghost behaviour.
+GhostBehaviour = IntEnum('GhostBehaviour', ['CHASE', 'SCATTER', 'FRIGHTENED'], start = 0)
+
+# --------------------------------------------------------------------

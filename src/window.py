@@ -8,7 +8,8 @@ from src.graphics.painter import Painter
 from src.constants import (WINDOW_INIT_KWARGS,
                            WINDOW_MINIMUM_SIZE,
                            GAME_UPDATES_INTERVAL,
-                           WINDOW_ICON_PATH)
+                           WINDOW_ICON_PATH,
+                           GAME_ORIGINAL_FPS)
 
 
 class Window(pyglet.window.Window):
@@ -52,11 +53,21 @@ class Window(pyglet.window.Window):
     def on_key_press(self, symbol, modifiers):
         self._current_activity.event_key_pressed(symbol, modifiers)
 
-    def on_key_release(self, symbol, modifiers):
-        self._current_activity.event_key_released(symbol, modifiers)
+        from pyglet.window import key
+
+        if symbol == key.P:
+            self.paused = True if not hasattr(self, 'paused') else not self.paused
+            self.frame_steps = 0
+        if symbol == key.O:
+            self.frame_steps += 1
+
 
     def on_state_update(self, dt):
-        
+        if hasattr(self, 'paused') and self.paused:
+            if self.frame_steps == 0:
+                return 
+            self.frame_steps -= 1
+
         # -------- TEMP BENCHMARK CODE ----------
         self.benchmark_dts = self.benchmark_dts if hasattr(self, 'benchmark_dts') else []
         self.benchmark_dts.append(dt)
@@ -75,8 +86,8 @@ class Window(pyglet.window.Window):
         # An example is on_resize when going to fullscreen. 
         # To avoid issues in the downstream logic, we cap the maximum dt and execute multiple updates if needed.
         while dt > 0:
-            dt_step = min(dt, GAME_UPDATES_INTERVAL)
-            dt -= GAME_UPDATES_INTERVAL
+            dt_step = min(dt, GAME_ORIGINAL_FPS)
+            dt -= dt_step
 
             self.on_state_update_step(dt_step)
 
