@@ -23,8 +23,9 @@ WINDOW_INIT_KWARGS = {'width' : WINDOW_MINIMUM_SIZE[0],
                       'style': Window.WINDOW_STYLE_DEFAULT,
                       'vsync': True}
 
-# Interval between two game updates in seconds.
-GAME_UPDATES_INTERVAL = 1 / 100
+# Interval between two game updates in seconds. Original game relied on constant 60 Hz frame rate for game updates.
+GAME_ORIGINAL_FPS = 60
+GAME_UPDATES_INTERVAL = 1 / GAME_ORIGINAL_FPS
 
 # Constant defining where the image are stored.
 WINDOW_ICON_PATH = "./assets/images/icon.ico"
@@ -71,9 +72,9 @@ PACMAN_MOVE_ANIMATION  = "./assets/images/Pac-Man Movement Animation Sequence.pn
 PACMAN_DEATH_ANIMATION = "./assets/images/Pac-Man Death Animation Sequence.png"
 
 # Duration of each frame in the animations, in seconds.
-PACMAN_MOVE_ANIMATION_PERIOD_SECS  = 2 / 60
-PACMAN_DEATH_ANIMATION_PERIOD_SECS = 10 / 60
-GHOSTS_MOVE_ANIMATION_PERIOD_SECS  = 8 / 60
+PACMAN_MOVE_ANIMATION_PERIOD_SECS  = 2 / GAME_ORIGINAL_FPS
+PACMAN_DEATH_ANIMATION_PERIOD_SECS = 10 / GAME_ORIGINAL_FPS
+GHOSTS_MOVE_ANIMATION_PERIOD_SECS  = 8 / GAME_ORIGINAL_FPS
 
 # Size of Pac-Man and Ghost sprites expressed in pixels.
 PACMAN_GHOSTS_SPRITES_PX_SIZE = 16
@@ -111,11 +112,12 @@ FONT_SHEET_CHARACTERS = r'%%%%%%%         0123456789/-"   PQRSTUVWXYZ!cptsABCDEF
 # Pac-Man states.
 PacManStates = IntEnum('PacManStates', ['SPAWNING', 'MOVING', 'STUCK', 'TURNING', 'DEAD'])
 
-# Coordinates of tile where Pac-Man starts the game.
-PACMAN_START_TILE = (14, 23.5)
+# Starting position and direction of Pac-Man.
+PACMAN_START_POSITION = Vector2(x = 14, y = 23.5)
+PACMAN_START_DIRECTION = Vector2.LEFT
 
-# One-frame penalty when eating pellet, 3 frames penalty when eating power pellet (in original game frame-rate: 60 fps).
-PACMAN_PELLET_PENALTIES = {MazeTiles.PELLET: 1 / 60, MazeTiles.POWER_PELLET: 3 / 60}
+# One-frame penalty when eating pellet, 3 frames penalty when eating power pellet.
+PACMAN_PELLET_PENALTIES = {MazeTiles.PELLET: 1, MazeTiles.POWER_PELLET: 3}
 
 # --------------------------------------------------------------------
 
@@ -124,8 +126,8 @@ PACMAN_PELLET_PENALTIES = {MazeTiles.PELLET: 1 / 60, MazeTiles.POWER_PELLET: 3 /
 # Constants related to speed of Pac-Man and Ghosts.
 # --------------------------------------------------------------------
 
-# Maximum Pac-Man move speed.
-REFERENCE_SPEED = 75.75757625 / 8
+# Maximum Pac-Man move speed in tiles per frame.
+REFERENCE_SPEED = (75.75757625 / MAZE_TILE_PX_SIZE) / GAME_ORIGINAL_FPS
 
 # Function returning the Pac-Man speed depending on the current level and if fright is on.
 def PACMAN_SPEED(level, fright):
@@ -263,43 +265,44 @@ FRUIT_SPAWN_THRESHOLDS = (70, 170)
 FRUIT_SPAWN_COORDINATES = Vector2(x = 14, y = 17.5)
 
 # Duration of fright time (in seconds) and number of flashes before fright mode ends.
-def FRIGHT_TIME_AND_FLASHES(level):
+def FRIGHT_FRAMES_AND_FLASHES(level):
     if level <= 0:
         raise ValueError(f'invalid level value passed to constants.FRIGHT_TIME_SECS: {level}')
     elif level >= 19:
         return 0, 0
     
-    time_and_flash = ((6, 5),
-                      (5, 5),
-                      (4, 5),
-                      (3, 5),
-                      (2, 5),
-                      (5, 5),
-                      (2, 5),
-                      (2, 5),
-                      (1, 3),
-                      (5, 5),
-                      (2, 5),
-                      (1, 3),
-                      (1, 3),
-                      (3, 5),
-                      (1, 3),
-                      (1, 3),
-                      (0, 0),
-                      (1, 3))
-    return time_and_flash[level - 1]
+    time_secs = [6, 5, 4, 3, 2, 5, 2, 2, 1, 5, 2, 1, 1, 3, 1, 1, 0, 1]
+    flash_num = [5, 5, 5, 5, 5, 5, 5, 5, 3, 5, 5, 3, 3, 5, 3, 3, 0, 3]
 
+    fright_frames  = time_secs[level - 1] * GAME_ORIGINAL_FPS
+    fright_flashes = flash_num[level - 1]
 
+    return fright_frames, fright_flashes
 
-
-
-
-
-
-# Duration of white flash when fright is close to finishing (in seconds).
+# Duration of white flash when fright is close to finishing (in frames).
 # The number of flashes vary, but the pattern goes: blue, white for this amount of time, blue for this amount of time, ...., white for this amount of time and then normal.
-WHITE_FLASH_ANIMATION_PERIOD_SECS = 7 / 60
+WHITE_FLASH_ANIMATION_PERIOD_FRAMES = 7
 
 
 # --------------------------------------------------------------------
 
+
+# --------------------------------------------------------------------
+# Constants related to the Ghosts.
+# --------------------------------------------------------------------
+
+# Enum defining types of ghost.
+Ghost = IntEnum('Ghost', ['BLINKY', 'PINKY', 'INKY', 'CLYDE'], start = 0)
+
+# Starting positions and directions of ghosts.
+GHOSTS_START_POSITIONS = {Ghost.BLINKY: Vector2(x = 14, y = 11.5),
+                          Ghost.PINKY : Vector2(x = 14, y = 13.5),
+                          Ghost.INKY  : Vector2(x = 12, y = 13.5),
+                          Ghost.CLYDE : Vector2(x = 16, y = 13.5)}
+GHOSTS_START_DIRECTIONS = {Ghost.BLINKY: Vector2.LEFT,
+                           Ghost.PINKY : Vector2.UP,
+                           Ghost.INKY  : Vector2.DOWN,
+                           Ghost.CLYDE : Vector2.DOWN}
+
+
+# --------------------------------------------------------------------

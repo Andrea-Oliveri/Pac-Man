@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from enum import IntEnum
-
 from src.directions import Vector2
 
 from src.constants import (PACMAN_SPEED,
-                           PACMAN_START_TILE,
+                           PACMAN_START_POSITION,
+                           PACMAN_START_DIRECTION,
                            PacManStates,
                            PACMAN_PELLET_PENALTIES,
                            MAZE_TILES_COLS,
@@ -18,11 +17,12 @@ from src.constants import (PACMAN_SPEED,
 class PacMan:
 
     def __init__(self):
-        self._position     = Vector2(*PACMAN_START_TILE)
+        self._position     = PACMAN_START_POSITION
         self._old_position = self._position
-        self._direction = Vector2.LEFT
-        self._state     = PacManStates.SPAWNING
-        self._penalty   = 0
+        self._direction    = PACMAN_START_DIRECTION
+
+        self._state   = PacManStates.SPAWNING
+        self._penalty = 0
 
         self._direction_input = None
 
@@ -40,7 +40,7 @@ class PacMan:
 
 
 
-    def update(self, dt, level, fright, maze):
+    def update(self, level, fright, maze):
 
         if self._state in (PacManStates.SPAWNING, PacManStates.DEAD):
             # Ignore any request to change direction.
@@ -62,7 +62,7 @@ class PacMan:
                     self._state = PacManStates.TURNING
             
             # Try to move.
-            is_stuck, turning = self.update_position(dt, level, fright, maze)
+            is_stuck, turning = self.update_position(level, fright, maze)
 
             # Update state based on if Pac-Man stuck or not, only if not still turning.
             if not turning:
@@ -73,7 +73,7 @@ class PacMan:
             
 
     def update_direction(self, maze):
-        # Note that reversing direction is allowed in Pac-Man.
+        # Note that reversing direction is allowed for Pac-Man.
 
         # If nothing to do, reset and return.
         if self._direction_input is None or self._direction_input == self._direction:
@@ -98,19 +98,16 @@ class PacMan:
 
 
 
-    def update_position(self, dt, level, fright, maze):
+    def update_position(self, level, fright, maze):
         self._old_position = self._position
         
         # Update penalty to movement speed.
-        if self._penalty >= dt:
-            self._penalty -= dt
+        if self._penalty > 0:
+            self._penalty -= 1
             return self._state == PacManStates.STUCK, self._state == PacManStates.TURNING # No change in state
         
-        dt -= self._penalty
-        self._penalty = 0
-
         # Calculate how far Pac-Man has theoretically moved.
-        distance = PACMAN_SPEED(level, fright) * dt
+        distance = PACMAN_SPEED(level, fright)
 
         # When turning, specific movement logic needed to bring Pac-Man back to center of corridor.
         # No collision detection because this was already checked by PacMan.update_direction method.
