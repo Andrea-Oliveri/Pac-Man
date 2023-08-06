@@ -3,9 +3,9 @@ from pyglet.window import key
 from src.activities.activity import Activity
 
 
-class AttractMode(Activity):
-    """Class AttractMode. Implements screen update and reaction to key presses
-    when the program is showing the main menu (attract mode)."""
+class Menu(Activity):
+    """Class Menu. Implements screen update and reaction to key presses
+    when the program is showing the main menu."""
     
 
     def __init__(self, *args, **kwargs):
@@ -17,7 +17,7 @@ class AttractMode(Activity):
         on the screen."""
         self._painter.draw_menu()
         
-    def event_update_state(self):
+    def event_update_state(self, dt):
         """Override of method from Activity class, updating the state of the
         activity."""
         return self.must_switch_to_game

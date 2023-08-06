@@ -15,8 +15,8 @@ class Activity(ABC):
         return
 
     @abstractmethod
-    def event_update_state(self):
-        """Updates the state of the activity by a fixed amount of time."""
+    def event_update_state(self, dt):
+        """Updates the state of the activity."""
         return
     
     @abstractmethod
