@@ -37,8 +37,8 @@ class Maze:
 
         return self._tiles[index]
 
-
-    def _index_convert(self, index):
+    @staticmethod
+    def _index_convert(index):
         if isinstance(index, Vector2):
             # If a Vector2 instance, convert to tile coordinates by dividing tile size.
             row = int(index.y)
@@ -49,7 +49,7 @@ class Maze:
         else:
             raise IndexError(f"Unsupported indexing value for class Maze: {index}")
 
-        # If coordinates are outside boundaries, return True if we are in the warp tunnel (whole warp tunnel row), False otherwise.
+        # If coordinates are outside boundaries, return True if we are in the warp tunnel row, False otherwise.
         if row < 0 or row >= MAZE_TILES_ROWS or col < 0 or col >= MAZE_TILES_COLS:
             index = row == WARP_TUNNEL_ROW
         else:
@@ -77,6 +77,10 @@ class Maze:
         return (GHOST_HOUSE_ROWS_RANGE[0] <= row <= GHOST_HOUSE_ROWS_RANGE[1]) and \
                (GHOST_HOUSE_COLS_RANGE[0] <= col <= GHOST_HOUSE_COLS_RANGE[1])
 
+    @staticmethod
+    def get_tile_center(index):
+        _, row, col = self._index_convert(index)
+        return row + 0.5, col + 0.5
 
     def eat_check_pellet(self, pacman_position):
         """Updates maze if needed by replacing a pellet with an empty tile. Returns the (row, col) coordinates of

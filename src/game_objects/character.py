@@ -1,20 +1,40 @@
 # -*- coding: utf-8 -*-
 
-from src.directions import Vector2
+from abc import ABC
+from math import floor
 
+from src.directions import Vector2
 from src.constants import (MAZE_TILES_COLS,
                            WARP_TUNNEL_TELEPORT_MARGIN)
 
 
-class Character:
+class Character(ABC):
 
     def __init__(self, position, direction):
         self._position  = position
         self._direction = direction
 
 
-    def _update_position(self, distance, maze):
+    def _update_position_within_tile(self, distance, maze):
         
+        # Find coordinate along which we are travelling.
+        match self._direction:
+            case Vector2.LEFT | Vector2.RIGHT:
+                coord_changing = 'x'
+            case Vector2.UP   | Vector2.DOWN:
+                coord_changing = 'y'
+
+        # Clip distance so that it won't leave half-tile.
+        coord_val = getattr(self._position, coord_changing)
+        match self._direction:
+            case Vector2.LEFT  | Vector2.UP:
+                max_distance = coord_val - (floor(coord_val * 2) / 2) + 0.0000001
+            case Vector2.RIGHT | Vector2.DOWN:
+                max_distance = (floor(coord_val * 2) / 2) - coord_val + 0.5000001
+        new_distance = min(max_distance, distance)
+        residual_distance = distance - new_distance
+        distance = new_distance
+
         # Calculate new position and check if movement will cause a collision. If so, clip instead of moving into wall.
         new_position = self._position + self._direction * distance
         is_stuck = False
@@ -26,13 +46,7 @@ class Character:
 
 
         if maze.tile_is_wall(collision_point):
-            match self._direction:
-                case Vector2.LEFT | Vector2.RIGHT:
-                    coord_to_clip = 'x'
-                case Vector2.UP   | Vector2.DOWN:
-                    coord_to_clip = 'y'
-
-            setattr(new_position, coord_to_clip, int(getattr(new_position, coord_to_clip)) + 0.5)
+            setattr(new_position, coord_changing, floor(getattr(new_position, coord_changing)) + 0.5)
             is_stuck = True
 
         # Perform warping if needed.
@@ -49,5 +63,8 @@ class Character:
 
 
         self._position = new_position
-        return is_stuck
-
+        offset_in_tile = getattr(new_position, coord_changing) % 1
+        is_at_tile_center = abs(offset_in_tile - 0.5) <= 0.0000001
+        is_at_tile_edge   = abs(offset_in_tile)       <= 0.0000001
+        
+        return residual_distance, is_stuck, is_at_tile_center, is_at_tile_edge

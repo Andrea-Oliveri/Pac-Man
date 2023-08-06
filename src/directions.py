@@ -17,8 +17,8 @@ class Vector2:
     y: float
 
     # Function returning a new Vector2 instance which has the x and y coordinates swapped.
-    def swap(self):
-        return Vector2(self.y, self.x)
+    #def swap(self):
+    #    return Vector2(self.y, self.x)
 
     # Operator overloadings.
     def __add__(self, other):
@@ -50,6 +50,14 @@ class Vector2:
         self.x *= other
         self.y *= other
         return self
+
+    @staticmethod
+    def distance_squared(left_obj, right_obj):
+        if not isinstance(left_obj, Vector2) or not isinstance(right_obj, Vector2):
+            Vector2.raise_typerror('distance_squared', left_obj, right_obj)
+
+        return (left_obj.x - right_obj.x) ** 2 + (left_obj.y - right_obj.y) ** 2
+
 
     @staticmethod
     def raise_typerror(operator, left_obj, right_obj):

@@ -133,12 +133,14 @@ class PacMan(Character):
             else:
                 new_value_coord = getattr(self._position, coord_to_move) - distance
 
-
             setattr(self._position, coord_to_move, new_value_coord)
             return False, True # Not stuck, still turning.
 
+        residual_distance = distance
+        is_stuck = False
+        while residual_distance > 0 and not is_stuck:
+            residual_distance, is_stuck, _, _ = super()._update_position_within_tile(residual_distance, maze)
 
-        is_stuck = super()._update_position(distance, maze)
         return is_stuck, False # If he wasn't turning, he is not turning due to this function.
 
 
