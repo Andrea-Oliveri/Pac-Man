@@ -59,13 +59,15 @@ class Painter:
         image.blit(0, 0)
 
 
-    def draw_game(self, pacman, score, lives, level):
+    def draw_game(self, pacman, ghosts, score, lives, level):
 
         self._draw_maze()
 
         self._draw_gui(score, lives, level)
 
         self._draw_pacman(pacman)
+
+        self._draw_ghosts(ghosts)
 
 
         # ----------------------------------------
@@ -178,6 +180,14 @@ class Painter:
             self._ui_tiles[fruit].blit(x, y)
             x -= UI_TILES_PX_SIZE
             
+
+    def _draw_ghosts(self, ghosts):
+        for name, ghost in ghosts:
+
+            from src.constants import Ghost
+            colors = {Ghost.BLINKY: (255, 0, 0), Ghost.PINKY: (255, 183, 255), Ghost.INKY: (0, 255, 255), Ghost.CLYDE: (255, 183, 81)}
+            ghost_center = utils.calculate_coords_sprites(ghost.position)
+            pyglet.shapes.Circle(ghost_center.x, ghost_center.y, 5, color = colors[name]).draw()
 
 
 

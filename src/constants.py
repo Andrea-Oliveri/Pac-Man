@@ -318,9 +318,9 @@ Ghost = IntEnum('Ghost', ['BLINKY', 'PINKY', 'INKY', 'CLYDE'], start = 0)
 
 # Starting positions and directions of ghosts.
 GHOSTS_START_POSITIONS = {Ghost.BLINKY: Vector2(x = 14, y = 11.5),
-                          Ghost.PINKY : Vector2(x = 14, y = 13.5),
-                          Ghost.INKY  : Vector2(x = 12, y = 13.5),
-                          Ghost.CLYDE : Vector2(x = 16, y = 13.5)}
+                          Ghost.PINKY : Vector2(x = 14, y = 14.5),
+                          Ghost.INKY  : Vector2(x = 12, y = 14.5),
+                          Ghost.CLYDE : Vector2(x = 16, y = 14.5)}
 
 GHOSTS_START_DIRECTIONS = {Ghost.BLINKY: Vector2.LEFT,
                            Ghost.PINKY : Vector2.UP,

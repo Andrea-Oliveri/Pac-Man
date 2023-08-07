@@ -79,8 +79,8 @@ class Maze:
 
     @staticmethod
     def get_tile_center(index):
-        _, row, col = self._index_convert(index)
-        return row + 0.5, col + 0.5
+        _, row, col = Maze._index_convert(index)
+        return Vector2(x = col + 0.5, y = row + 0.5)
 
     def eat_check_pellet(self, pacman_position):
         """Updates maze if needed by replacing a pellet with an empty tile. Returns the (row, col) coordinates of

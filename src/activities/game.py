@@ -7,6 +7,7 @@ from src.activities.activity import Activity
 from src.directions import Vector2
 
 from src.game_objects.pacman import PacMan
+from src.game_objects.ghosts import GhostsCoordinator
 from src.game_objects.maze import Maze
 from src.game_objects.score import Score
 
@@ -28,6 +29,7 @@ class Game(Activity):
 
         self._maze = Maze()
         self._pacman = PacMan()
+        self._ghosts = GhostsCoordinator()
         
         self._score = Score()
 
@@ -43,14 +45,14 @@ class Game(Activity):
     def event_draw_screen(self):
         """Override of method from Activity class, drawing the controls menu
         on the screen."""
-        self._painter.draw_game(self._pacman, self._score, self._lives, self._level)
+        self._painter.draw_game(self._pacman, self._ghosts, self._score, self._lives, self._level)
         
 
     def event_update_state(self, dt):
         """Override of method from Activity class, updating the state of the
         activity."""
 
-        # Update fright timer and tick game in a conservative way: if switching from fright to not, tick game at edge and then remaining dt.
+        # Update fright timer and tick game in a conservative way: if switching from fright to not, tick game at edge and then tick for remaining dt.
         # Can't rely on dt exclusively because start time would depend on how long game update has taken. 
         if self._fright_off_time is not None:
             time_now = time.time()
@@ -67,12 +69,11 @@ class Game(Activity):
 
 
 
-
-
     def _game_tick(self, dt):
         fright = self._fright_off_time is not None
 
         self._pacman.update(dt, self._level, fright, self._maze)
+        self._ghosts.update(dt, self._level, fright, self._maze, self._pacman)
 
         self._calculate_new_game_state()
 
@@ -98,7 +99,6 @@ class Game(Activity):
                 self._original_speed = float(const.REFERENCE_SPEED)
             const.REFERENCE_SPEED = self._original_speed if const.REFERENCE_SPEED < self._original_speed else self._original_speed * 0.1
 
-
         # ------------------------------
 
 
@@ -119,9 +119,9 @@ class Game(Activity):
         if tile_coords is not None:
             self._pellet_eaten(tile_coords, pellet_type)
 
-        # TODO: Check if collided with any ghosts.
-        pass
-
+        # Check if collided with any ghosts.
+        if self._ghosts.check_collision(self._maze, self._pacman.position):
+            self._ghost_collision()
 
         # Update lives if score high enough.
         if not self._extra_life_awarded and self._score.score >= EXTRA_LIFE_POINTS_REQUIREMENT:
@@ -148,6 +148,10 @@ class Game(Activity):
             if fright_duration > 0:
                 self._fright_off_time = time.time() + fright_duration
                 self._score.notify_fright_on()
+
+
+    def _ghost_collision(self):
+        print('Ghost collision')
 
 
     def _end_level():

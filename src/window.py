@@ -53,6 +53,10 @@ class Window(pyglet.window.Window):
     def on_key_press(self, symbol, modifiers):
         self._current_activity.event_key_pressed(symbol, modifiers)
 
+        # --------------------------------------
+        # DEBUG: single-tick game update
+        # --------------------------------------
+
         from pyglet.window import key
 
         if symbol == key.P:
@@ -60,6 +64,7 @@ class Window(pyglet.window.Window):
             self.frame_steps = 0
         if symbol == key.O:
             self.frame_steps += 1
+        # --------------------------------------
 
 
     def on_state_update(self, dt):
