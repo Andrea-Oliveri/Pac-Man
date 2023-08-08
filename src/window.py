@@ -73,19 +73,17 @@ class Window(pyglet.window.Window):
                 return 
             self.frame_steps -= 1
 
-        # -------- TEMP BENCHMARK CODE ----------
+        # -------- DEBUG: TEMP BENCHMARK CODE ----------
         self.benchmark_dts = self.benchmark_dts if hasattr(self, 'benchmark_dts') else []
         self.benchmark_dts.append(dt)
-        if len(self.benchmark_dts) == 400:
-            self.benchmark_dts.sort()
-            print('State updates dt summary:')
-            print('    Min:', self.benchmark_dts[0])
-            print('    25%:', self.benchmark_dts[100])
-            print('    50%:', self.benchmark_dts[200])
-            print('    75%:', self.benchmark_dts[300])
-            print('    Max:', self.benchmark_dts[-1])
-            self.benchmark_dts = []
+
+        import time
+        self.time_to_update = self.time_to_update if hasattr(self, 'time_to_update') else []
+        self.time_to_update.append(time.time())
         # ---------------------------------------
+
+
+
         
         # It is possible for the dt to be very large due to events which case a lag spike.
         # An example is on_resize when going to fullscreen. 
@@ -95,6 +93,33 @@ class Window(pyglet.window.Window):
             dt -= dt_step
 
             self.on_state_update_step(dt_step)
+
+
+        # -------- DEBUG: TEMP BENCHMARK CODE ----------
+        self.time_to_update[-1] = time.time() - self.time_to_update[-1]
+
+
+        if len(self.benchmark_dts) == 400:
+            self.benchmark_dts .sort()
+            self.time_to_update.sort()
+
+            print('State updates dt summary:')
+            print('    Min:', self.benchmark_dts[0])
+            print('    25%:', self.benchmark_dts[100])
+            print('    50%:', self.benchmark_dts[200])
+            print('    75%:', self.benchmark_dts[300])
+            print('    Max:', self.benchmark_dts[-1])
+
+            print('Time to run update summary:')
+            print('    Min:', self.time_to_update[0])
+            print('    25%:', self.time_to_update[100])
+            print('    50%:', self.time_to_update[200])
+            print('    75%:', self.time_to_update[300])
+            print('    Max:', self.time_to_update[-1])
+
+            self.benchmark_dts = []
+            self.time_to_update = []
+        # ---------------------------------------
 
 
 

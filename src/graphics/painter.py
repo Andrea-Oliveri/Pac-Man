@@ -54,7 +54,7 @@ class Painter:
 
     def draw_menu(self):
         # TODO: better menu
-        image = utils.load_image(r"C:\Users\andre\Desktop\Python Pac-Man\assets\images\TMP-Menu.png")
+        image = utils.load_image(r".\assets\images\TMP-Menu.png")
 
         image.blit(0, 0)
 
