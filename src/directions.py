@@ -43,6 +43,9 @@ class Vector2:
         return Vector2(x = self.x * other,
                        y = self.y * other)
 
+    def __rmul__(self, other):
+        return self * other
+
     def __imul__(self, other):
         if not isinstance(other, (int, float)):
             self.raise_typerror('*=', self, other)
@@ -70,7 +73,7 @@ class Vector2:
 # Static variables for ease of use.
 Vector2.LEFT  = Vector2(-1, 0)
 Vector2.RIGHT = Vector2(+1, 0)
-Vector2.UP    = Vector2(0, +1)
-Vector2.DOWN  = Vector2(0, -1)
+Vector2.UP    = Vector2(0, -1)
+Vector2.DOWN  = Vector2(0, +1)
 
 # --------------------------------------------------------------------

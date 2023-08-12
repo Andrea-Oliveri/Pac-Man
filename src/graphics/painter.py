@@ -106,9 +106,9 @@ class Painter:
             case Vector2.LEFT:
                 rotation = 180
             case Vector2.UP:
-                rotation = 90
-            case Vector2.DOWN:
                 rotation = -90
+            case Vector2.DOWN:
+                rotation = 90
             case Vector2.RIGHT:
                 rotation = 0
             case _:

@@ -27,11 +27,10 @@ class Character(ABC):
         # Clip distance so that it won't leave half-tile.
         # Using (floor + 1) and (ceil - 1) instead of ceil and floor respectively allows to deal with integers correctly.
         coord_val = getattr(self._position, coord_changing)
-        match self._direction:
-            case Vector2.LEFT  | Vector2.UP:
-                max_distance = coord_val - ((ceil(coord_val * 2) - 1) / 2)
-            case Vector2.RIGHT | Vector2.DOWN:
-                max_distance = ((floor(coord_val * 2) + 1) / 2) - coord_val
+        if getattr(self._direction, coord_changing) < 0:
+            max_distance = coord_val - ((ceil(coord_val * 2) - 1) / 2)
+        else:
+            max_distance = ((floor(coord_val * 2) + 1) / 2) - coord_val
         new_distance = min(max_distance, distance)
         residual_distance = distance - new_distance
         distance = new_distance
@@ -40,7 +39,7 @@ class Character(ABC):
         new_position = self._position + self._direction * distance
         is_stuck = True
 
-        collision_point = new_position + (self._direction * 0.5000001)
+        collision_point = new_position + (self._direction * 0.500000000001)
         
         if maze.tile_is_wall(new_position):
             new_position += self._direction * (-0.5)
@@ -61,12 +60,17 @@ class Character(ABC):
                 offset = left_warp_edge - new_position.x
                 new_position.x = right_warp_edge - offset
 
-        # Set new position.
-        self._position = new_position
-
         # Calculate if at new position we are at a tile center or edge.
         offset_in_tile = getattr(new_position, coord_changing) % 1
         is_at_tile_center = offset_in_tile == 0.5
         is_at_tile_edge   = offset_in_tile == 0.0
         
+        # If at tile edge, slightly push in correct direction to clearly be in one tile for subsequent calculations.
+        if is_at_tile_edge:
+            new_position      += 0.000000000001 * self._direction
+            residual_distance -= 0.000000000001
+
+        # Set new position.
+        self._position = new_position
+
         return residual_distance, is_stuck, is_at_tile_center, is_at_tile_edge

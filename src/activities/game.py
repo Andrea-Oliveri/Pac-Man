@@ -82,9 +82,9 @@ class Game(Activity):
         """Override of method from Activity class, reacting to key presses.
         Returns True if the game should start and False otherwise."""
         if symbol == key.UP:
-            self._pacman.direction = Vector2.DOWN
-        elif symbol == key.DOWN:
             self._pacman.direction = Vector2.UP
+        elif symbol == key.DOWN:
+            self._pacman.direction = Vector2.DOWN
         elif symbol == key.LEFT:
             self._pacman.direction = Vector2.LEFT
         elif symbol == key.RIGHT:

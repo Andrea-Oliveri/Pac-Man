@@ -132,6 +132,9 @@ class Window(pyglet.window.Window):
             # retval is True if we need to change from Menu to Game.
             self._current_activity = Game(self.painter)
 
+            from pyglet.window import key
+            self.on_key_press(key.P, None)
+
         
     def on_draw(self):
         self.clear()
