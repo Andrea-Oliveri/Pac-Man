@@ -6,6 +6,8 @@ from src.constants import (MazeTiles,
                            MAZE_TILES_COLS,
                            MAZE_TILES_ROWS,
                            WARP_TUNNEL_ROW,
+                           WARP_TUNNEL_COL_LEFT,
+                           WARP_TUNNEL_COL_RIGHT,
                            GHOST_HOUSE_ROWS_RANGE,
                            GHOST_HOUSE_COLS_RANGE)
 
@@ -30,10 +32,8 @@ class Maze:
         index, row, col = self._index_convert(index)
 
         # If out of maze bounds, all tiles are walls except for warp tunnel.
-        if index is True:
-            return MazeTiles.EMPTY
-        elif index is False:
-            return MazeTiles.WALL
+        if index is None:
+            return MazeTiles.EMPTY if row == WARP_TUNNEL_ROW else MazeTiles.WALL
 
         return self._tiles[index]
 
@@ -49,9 +49,9 @@ class Maze:
         else:
             raise IndexError(f"Unsupported indexing value for class Maze: {index}")
 
-        # If coordinates are outside boundaries, return True if we are in the warp tunnel row, False otherwise.
+        # If coordinates are outside boundaries, return None.
         if row < 0 or row >= MAZE_TILES_ROWS or col < 0 or col >= MAZE_TILES_COLS:
-            index = row == WARP_TUNNEL_ROW
+            index = None
         else:
             index = row * MAZE_TILES_COLS + col
 
@@ -60,10 +60,9 @@ class Maze:
 
     def tile_is_warp_tunnel(self, index):
         """Function that returns True if the tile at desired index is in the warp tunnel."""
-        index, _, _ = self._index_convert(index)
+        _, row, col = self._index_convert(index)
 
-        # If we are out of maze bounds but on the warp tunnel row, we are in the warp tunnel.
-        return index is True
+        return (row == WARP_TUNNEL_ROW) and (col <= WARP_TUNNEL_COL_LEFT or col >= WARP_TUNNEL_COL_RIGHT)
 
 
     def tile_is_wall(self, index):

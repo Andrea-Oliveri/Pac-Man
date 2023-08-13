@@ -189,6 +189,19 @@ class Painter:
             ghost_center = utils.calculate_coords_sprites(ghost.position)
             pyglet.shapes.Circle(ghost_center.x, ghost_center.y, 5, color = colors[name]).draw()
 
+        # --------------
+        # Debug
+        # --------------
+        from src.constants import GHOSTS_SCATTER_MODE_TARGET_TILES, GHOSTS_EATEN_TARGET_TILE
+        for name, tile_position in GHOSTS_SCATTER_MODE_TARGET_TILES.items():
+            tile_position = utils.calculate_coords_sprites(tile_position)
+            pyglet.shapes.Star(tile_position.x, tile_position.y, 5, 2, 4, color = colors[name]).draw()
+        tile_position = utils.calculate_coords_sprites(GHOSTS_EATEN_TARGET_TILE)
+        pyglet.shapes.Star(tile_position.x, tile_position.y, 5, 2, 4, color = (0, 255, 0)).draw()
+
+
+        # --------------
+
 
 
     def set_empty_tile(self, idx):

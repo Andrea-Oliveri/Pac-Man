@@ -2,7 +2,6 @@
 
 
 from abc import ABC, abstractmethod
-from typing import Self
 
 from src.game_objects.character import Character
 
@@ -11,7 +10,10 @@ from src.constants import (Ghost,
                            GHOSTS_START_POSITIONS,
                            GHOSTS_START_DIRECTIONS,
                            GhostBehaviour,
-                           GHOSTS_SPEED)
+                           GHOSTS_SPEED,
+                           GHOSTS_FORBIDDEN_TURNING_UP_TILES,
+                           GHOSTS_SCATTER_MODE_TARGET_TILES,
+                           GHOSTS_EATEN_TARGET_TILE)
 
 
 class GhostsCoordinator:
@@ -61,7 +63,7 @@ class GhostClass(Character, ABC):
         self.is_at_tile_center = self.is_at_tile_center if hasattr(self, 'is_at_tile_center') else None
         self.is_at_tile_edge   = self.is_at_tile_edge   if hasattr(self, 'is_at_tile_edge') else None
 
-        print(self._position, self._direction, self._direction_next, self._direction_next_next, self.is_at_tile_center, self.is_at_tile_edge)
+        #print(self._position, self._direction, self._direction_next, self._direction_next_next, self.is_at_tile_center, self.is_at_tile_edge)
 
 
     def _just_exited_pen(self):
@@ -120,6 +122,10 @@ class GhostClass(Character, ABC):
             if direction == self._direction_next * (-1):
                 continue
 
+            # Ghosts are not allowed to turn upwards on certain tiles when in chase or frightened mode.
+            if next_tile in GHOSTS_FORBIDDEN_TURNING_UP_TILES and direction == Vector2.UP:
+                continue
+
             next_next_tile = next_tile + direction
 
             # Ghosts can't go in a wall.
@@ -137,7 +143,7 @@ class GhostClass(Character, ABC):
 
     @abstractmethod
     def _calculate_target_tile(self, pacman, maze):
-        return
+        raise NotImplementedError
 
 
     def _update_position(self, dt, level, fright, maze, pacman):
