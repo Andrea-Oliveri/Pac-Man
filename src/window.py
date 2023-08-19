@@ -32,21 +32,21 @@ class Window(pyglet.window.Window):
         
     def on_resize(self, width, height):
         desired_width, desired_height = WINDOW_MINIMUM_SIZE
-        desired_aspect_ratio = desired_width / desired_height
 
-        # Draw on the whole window.
-        self.viewport = (0, 0, width, height)
+        scale = min(width // desired_width, height // desired_height)
+        viewport_width  = desired_width * scale
+        viewport_height = desired_height * scale
 
-        # Scale and translate the render space.
-        if self.aspect_ratio > desired_aspect_ratio:
-            y_max = desired_height / 2
-            x_max = y_max * self.aspect_ratio
-        else:
-            x_max = desired_width / 2
-            y_max = x_max / self.aspect_ratio
+        pad_x = (width  - viewport_width ) / 2
+        pad_y = (height - viewport_height) / 2
 
-        self.projection = pyglet.math.Mat4.orthogonal_projection(-x_max, +x_max, -y_max, y_max, -255, 255)
+        self.viewport = (pad_x, pad_y, viewport_width, viewport_height)
 
+        x_max = desired_width  / 2
+        y_max = desired_height / 2
+
+        self.projection = pyglet.math.Mat4.orthogonal_projection(-x_max, +x_max, -y_max, +y_max, -255, 255)
+        
         return pyglet.event.EVENT_HANDLED   # Don't call the default handler
 
 
