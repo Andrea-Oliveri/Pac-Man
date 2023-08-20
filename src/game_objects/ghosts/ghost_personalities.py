@@ -23,7 +23,6 @@ class Pinky(GhostAbstract):
 
     def __init__(self):
         super().__init__(Ghost.PINKY)
-
         
     def update(*args, **kwargs):
         return

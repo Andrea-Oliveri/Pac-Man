@@ -319,7 +319,10 @@ WHITE_FLASH_ANIMATION_PERIOD_SECS = 7 / GAME_ORIGINAL_FPS
 # Enum defining names of ghost.
 Ghost = IntEnum('Ghost', ['BLINKY', 'PINKY', 'INKY', 'CLYDE'], start = 0)
 
-# Starting positions and directions of ghosts.
+# Enum defining modes of ghost behaviour.
+GhostBehaviour = IntEnum('GhostBehaviour', ['CHASE', 'SCATTER', 'FRIGHTENED', 'IN_HOUSE', 'EXITING_HOUSE', 'GOING_TO_HOUSE'], start = 0)
+
+# Starting positions, directions and behaviour of ghosts.
 GHOSTS_START_POSITIONS = {Ghost.BLINKY: Vector2(x = 14, y = 11.5),
                           Ghost.PINKY : Vector2(x = 14, y = 14.5),
                           Ghost.INKY  : Vector2(x = 12, y = 14.5),
@@ -330,8 +333,10 @@ GHOSTS_START_DIRECTIONS = {Ghost.BLINKY: Vector2.LEFT,
                            Ghost.INKY  : Vector2.DOWN,
                            Ghost.CLYDE : Vector2.DOWN}
 
-# Enum defining modes of ghost behaviour.
-GhostBehaviour = IntEnum('GhostBehaviour', ['CHASE', 'SCATTER', 'FRIGHTENED'], start = 0)
+GHOSTS_START_BEHAVIOUR  = {Ghost.BLINKY: GhostBehaviour.SCATTER,
+                           Ghost.PINKY : GhostBehaviour.IN_HOUSE,
+                           Ghost.INKY  : GhostBehaviour.IN_HOUSE,
+                           Ghost.CLYDE : GhostBehaviour.IN_HOUSE}
 
 # Tiles where the ghosts are not allowed to turn up.
 GHOSTS_FORBIDDEN_TURNING_UP_TILES = (Vector2(15.5, 23.5), Vector2(12.5, 23.5), Vector2(15.5, 11.5), Vector2(12.5, 11.5))

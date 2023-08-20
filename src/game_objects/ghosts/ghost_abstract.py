@@ -9,6 +9,7 @@ from src.directions import Vector2
 from src.constants import (GAME_ORIGINAL_UPDATES_INTERVAL,
                            GHOSTS_START_POSITIONS,
                            GHOSTS_START_DIRECTIONS,
+                           GHOSTS_START_BEHAVIOUR,
                            GhostBehaviour,
                            GHOSTS_SPEED,
                            GHOSTS_FORBIDDEN_TURNING_UP_TILES,
@@ -28,7 +29,7 @@ class GhostAbstract(Character, ABC):
         self._direction_next      = None
         self._direction_next_next = None
 
-        self._behaviour = None
+        self._behaviour = GHOSTS_START_BEHAVIOUR[name]
 
         self._reverse_direction_signal = False
 
@@ -54,23 +55,23 @@ class GhostAbstract(Character, ABC):
                 self._direction *= -1
 
                 # We need to invalidate and recalculate the direction of the next tile.
-                self._direction_next = self._calculate_direction_at_next_tile_center(maze, pacman)
+                self._direction_next = self._calculate_direction_at_tile_center(maze, pacman, self._direction)
 
                 # This will be recalculated once we step back in the previous tile (next iteration).
                 self._direction_next_next = None
             else:
                 # When entering new tile, ghost must decide what it will do in next tile along this direction.
-                self._direction_next_next = self._calculate_direction_at_next_tile_center(maze, pacman)
+                self._direction_next_next = self._calculate_direction_at_tile_center(maze, pacman, self._direction_next)
 
     
     
-    def _calculate_direction_at_next_tile_center(self, maze, pacman):
+    def _calculate_direction_at_tile_center(self, maze, pacman, direction_from_current_tile):
         target_tile = self._calculate_target_tile(pacman, maze)
         
         # Ghost has just entered a new tile. Hence it did not switch yet his current direction of travel with the
         # one calculated for this tile (switch will only happen once he reaches the center of the current tile). 
         current_tile = maze.get_tile_center(self._position)
-        next_tile = current_tile + self._direction_next
+        next_tile = current_tile + direction_from_current_tile
 
         # Direction is chosen so that euclidean distance between next next tile and target tile is minimized.
         # In case of equivalency, preference is in this order (from most preferred to least): up, left, down, right.
@@ -78,7 +79,7 @@ class GhostAbstract(Character, ABC):
         best_direction = None
         for direction in (Vector2.UP, Vector2.LEFT, Vector2.DOWN, Vector2.RIGHT):
             # Ghosts are not allowed to willingly flip direction.
-            if direction == self._direction_next * (-1):
+            if direction == direction_from_current_tile * (-1):
                 continue
 
             # Ghosts are not allowed to turn upwards on certain tiles when in chase or frightened mode.

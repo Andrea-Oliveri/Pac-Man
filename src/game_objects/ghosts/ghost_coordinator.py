@@ -40,10 +40,6 @@ class GhostsCoordinator:
         raise RuntimeError('Reached end of GhostCoordinator._update_mode without finding a behaviour for current timer')
 
     def _set_behaviour(self, behaviour):
-        print(behaviour.name)
-        print(self._ghosts[Ghost.BLINKY].behaviour)
-        print(self._ghosts[Ghost.BLINKY]._reverse_direction_signal)
-
         for ghost in self._ghosts.values():
             ghost.behaviour = behaviour
 
