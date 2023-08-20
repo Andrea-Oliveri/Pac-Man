@@ -7,9 +7,9 @@ from src.activities.activity import Activity
 from src.directions import Vector2
 
 from src.game_objects.pacman import PacMan
-from src.game_objects.ghosts import GhostsCoordinator
 from src.game_objects.maze import Maze
 from src.game_objects.score import Score
+from src.game_objects.ghosts.ghost_coordinator import GhostsCoordinator
 
 from src.constants import (MazeTiles,
                            ScoreActions,

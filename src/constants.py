@@ -24,7 +24,7 @@ WINDOW_INIT_KWARGS = {'width' : WINDOW_MINIMUM_SIZE[0],
                       'vsync': True}
 
 # Interval between two game updates in seconds.
-GAME_ORIGINAL_FPS = 60
+GAME_ORIGINAL_UPDATES_INTERVAL = 1 / 60
 GAME_UPDATES_INTERVAL = 1 / 100
 
 # Constant defining where the image are stored.
@@ -343,6 +343,44 @@ GHOSTS_SCATTER_MODE_TARGET_TILES = {Ghost.BLINKY: Vector2(25.5, -3.5),
 
 # Target tile to reach when ghost is eaten.
 GHOSTS_EATEN_TARGET_TILE = Vector2(x = 13.5, y = 11.5)
+
+# Duration of scatter and chase mode alternations.
+def SCATTER_CHASE_ALTERNATIONS(level):
+    if level <= 0:
+        raise ValueError(f'invalid level value passed to constants.SCATTER_CHASE_ALTERNATIONS: {level}')
+    
+    elif level == 1:
+        mode_durations = ((GhostBehaviour.SCATTER, 7),
+                          (GhostBehaviour.CHASE  , 20),
+                          (GhostBehaviour.SCATTER, 7),
+                          (GhostBehaviour.CHASE  , 20),
+                          (GhostBehaviour.SCATTER, 5),
+                          (GhostBehaviour.CHASE  , 20),
+                          (GhostBehaviour.SCATTER, 5),
+                          (GhostBehaviour.CHASE  , float('inf')))
+    elif level <= 4:
+        mode_durations = ((GhostBehaviour.SCATTER, 7),
+                          (GhostBehaviour.CHASE  , 20),
+                          (GhostBehaviour.SCATTER, 7),
+                          (GhostBehaviour.CHASE  , 20),
+                          (GhostBehaviour.SCATTER, 5),
+                          (GhostBehaviour.CHASE  , 1033),
+                          (GhostBehaviour.SCATTER, 1 / 60),
+                          (GhostBehaviour.CHASE  , float('inf')))
+    else:
+        mode_durations = ((GhostBehaviour.SCATTER, 5),
+                          (GhostBehaviour.CHASE  , 20),
+                          (GhostBehaviour.SCATTER, 5),
+                          (GhostBehaviour.CHASE  , 20),
+                          (GhostBehaviour.SCATTER, 5),
+                          (GhostBehaviour.CHASE  , 1037),
+                          (GhostBehaviour.SCATTER, 1 / 60),
+                          (GhostBehaviour.CHASE  , float('inf')))
+    
+    return mode_durations
+
+
+
 
 # --------------------------------------------------------------------
 

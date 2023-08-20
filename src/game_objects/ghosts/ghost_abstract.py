@@ -6,8 +6,7 @@ from abc import ABC, abstractmethod
 from src.game_objects.character import Character
 
 from src.directions import Vector2
-from src.constants import (Ghost,
-                           GHOSTS_START_POSITIONS,
+from src.constants import (GHOSTS_START_POSITIONS,
                            GHOSTS_START_DIRECTIONS,
                            GhostBehaviour,
                            GHOSTS_SPEED,
@@ -16,34 +15,10 @@ from src.constants import (Ghost,
                            GHOSTS_EATEN_TARGET_TILE)
 
 
-class GhostsCoordinator:
-
-    def __init__(self):
-        self._ghosts = {Ghost.BLINKY: Blinky(), Ghost.PINKY: Pinky(), Ghost.INKY: Inky(), Ghost.CLYDE: Clyde()}
-
-
-    def update(self, dt, level, fright, maze, pacman):
-        for ghost in self._ghosts.values():
-            ghost.update(dt, level, fright, maze, pacman)
-
-    def check_collision(self, maze, pacman_position):
-        pacman_tile = maze.get_tile_center(pacman_position)
-
-        for ghost in self._ghosts.values():
-            ghost_tile = maze.get_tile_center(ghost.position)
-            if pacman_tile == ghost_tile:
-                return True
-
-        return False
-
-    def __iter__(self):
-        return iter(self._ghosts.items())
- 
 
 
 
-
-class GhostClass(Character, ABC):
+class GhostAbstract(Character, ABC):
     def __init__(self, name):
         super().__init__(position  = GHOSTS_START_POSITIONS [name],
                          direction = GHOSTS_START_DIRECTIONS[name])
@@ -52,19 +27,13 @@ class GhostClass(Character, ABC):
         self._direction_next      = None
         self._direction_next_next = None
 
-        self._behaviour = GhostBehaviour.CHASE
+        self._behaviour = None
 
         self._reverse_direction_signal = False
 
 
     def update(self, dt, level, fright, maze, pacman):
         self._update_position(dt, level, fright, maze, pacman)
-
-        self.is_at_tile_center = self.is_at_tile_center if hasattr(self, 'is_at_tile_center') else None
-        self.is_at_tile_edge   = self.is_at_tile_edge   if hasattr(self, 'is_at_tile_edge') else None
-
-        #print(self._position, self._direction, self._direction_next, self._direction_next_next, self.is_at_tile_center, self.is_at_tile_edge)
-
 
     def _just_exited_pen(self):
         self._direction           = Vector2.LEFT
@@ -101,17 +70,6 @@ class GhostClass(Character, ABC):
         # one calculated for this tile (switch will only happen once he reaches the center of the current tile). 
         current_tile = maze.get_tile_center(self._position)
         next_tile = current_tile + self._direction_next
-
-
-        # ---------------
-        # DEBUG
-        # ---------------
-        if maze.get_tile_center(self._position + self._direction_next) != next_tile:
-            print('PROBLEM:')
-            print(maze.get_tile_center(self._position + self._direction_next), next_tile)
-        # ---------------
-
-
 
         # Direction is chosen so that euclidean distance between next next tile and target tile is minimized.
         # In case of equivalency, preference is in this order (from most preferred to least): up, left, down, right.
@@ -177,54 +135,6 @@ class GhostClass(Character, ABC):
 
         self._behaviour = behaviour
 
-    position = property(lambda self: self._position)
+    position  = property(lambda self: self._position)
+    behaviour = property(lambda self: self._behaviour, _set_behaviour)
     
-
-
-class Blinky(GhostClass):
-
-    def __init__(self):
-        super().__init__(Ghost.BLINKY)
-        self._just_exited_pen()
-
-    def _calculate_target_tile(self, pacman, maze):
-        # Blinky always targets the tile Pac-Man is on.
-        pacman_tile = maze.get_tile_center(pacman.position)
-        return pacman_tile
-
-
-class Pinky(GhostClass):
-
-    def __init__(self):
-        super().__init__(Ghost.PINKY)
-
-        
-    def update(*args, **kwargs):
-        return
-
-    def _calculate_target_tile(self, pacman, maze):
-        pass
-
-
-class Inky(GhostClass):
-
-    def __init__(self):
-        super().__init__(Ghost.INKY)
-
-    def update(*args, **kwargs):
-        return
-
-    def _calculate_target_tile(self, pacman, maze):
-        pass
-
-
-class Clyde(GhostClass):
-
-    def __init__(self):
-        super().__init__(Ghost.CLYDE)
-
-    def update(*args, **kwargs):
-        return
-
-    def _calculate_target_tile(self, pacman, maze):
-        pass
