@@ -24,7 +24,8 @@ WINDOW_INIT_KWARGS = {'width' : WINDOW_MINIMUM_SIZE[0],
                       'vsync': True}
 
 # Interval between two game updates in seconds.
-GAME_ORIGINAL_UPDATES_INTERVAL = 1 / 60
+GAME_ORIGINAL_FPS = 60 
+GAME_ORIGINAL_UPDATES_INTERVAL = 1 / GAME_ORIGINAL_FPS
 GAME_UPDATES_INTERVAL = 1 / 100
 
 # Constant defining where the image are stored.
@@ -78,9 +79,9 @@ PACMAN_MOVE_ANIMATION  = "./assets/images/Pac-Man Movement Animation Sequence.pn
 PACMAN_DEATH_ANIMATION = "./assets/images/Pac-Man Death Animation Sequence.png"
 
 # Duration of each frame in the animations, in seconds.
-PACMAN_MOVE_ANIMATION_PERIOD_SECS  = 2 / 60
-PACMAN_DEATH_ANIMATION_PERIOD_SECS = 10 / 60
-GHOSTS_MOVE_ANIMATION_PERIOD_SECS  = 8 / 60
+PACMAN_MOVE_ANIMATION_PERIOD_SECS  = 2 / GAME_ORIGINAL_FPS
+PACMAN_DEATH_ANIMATION_PERIOD_SECS = 10 / GAME_ORIGINAL_FPS
+GHOSTS_MOVE_ANIMATION_PERIOD_SECS  = 8 / GAME_ORIGINAL_FPS
 
 # Size of Pac-Man and Ghost sprites expressed in pixels.
 PACMAN_GHOSTS_SPRITES_PX_SIZE = 16
@@ -122,7 +123,7 @@ PacManStates = IntEnum('PacManStates', ['SPAWNING', 'MOVING', 'STUCK', 'TURNING'
 PACMAN_START_POSITION = Vector2(14, 23.5)
 
 # One-frame penalty when eating pellet, 3 frames penalty when eating power pellet (in original game frame-rate: 60 fps).
-PACMAN_PELLET_PENALTIES = {MazeTiles.PELLET: 1 / 60, MazeTiles.POWER_PELLET: 3 / 60}
+PACMAN_PELLET_PENALTIES = {MazeTiles.PELLET: 1, MazeTiles.POWER_PELLET: 3}
 
 # --------------------------------------------------------------------
 
@@ -305,7 +306,7 @@ def FRIGHT_TIME_AND_FLASHES(level):
 
 # Duration of white flash when fright is close to finishing (in seconds).
 # The number of flashes vary, but the pattern goes: blue, white for this amount of time, blue for this amount of time, ...., white for this amount of time and then normal.
-WHITE_FLASH_ANIMATION_PERIOD_SECS = 7 / 60
+WHITE_FLASH_ANIMATION_PERIOD_SECS = 7 / GAME_ORIGINAL_FPS
 
 
 # --------------------------------------------------------------------
@@ -344,37 +345,37 @@ GHOSTS_SCATTER_MODE_TARGET_TILES = {Ghost.BLINKY: Vector2(25.5, -3.5),
 # Target tile to reach when ghost is eaten.
 GHOSTS_EATEN_TARGET_TILE = Vector2(x = 13.5, y = 11.5)
 
-# Duration of scatter and chase mode alternations.
+# Duration of scatter and chase mode alternations in original game frames.
 def SCATTER_CHASE_ALTERNATIONS(level):
     if level <= 0:
         raise ValueError(f'invalid level value passed to constants.SCATTER_CHASE_ALTERNATIONS: {level}')
     
     elif level == 1:
-        mode_durations = ((GhostBehaviour.SCATTER, 7),
-                          (GhostBehaviour.CHASE  , 20),
-                          (GhostBehaviour.SCATTER, 7),
-                          (GhostBehaviour.CHASE  , 20),
-                          (GhostBehaviour.SCATTER, 5),
-                          (GhostBehaviour.CHASE  , 20),
-                          (GhostBehaviour.SCATTER, 5),
+        mode_durations = ((GhostBehaviour.SCATTER, 7    * GAME_ORIGINAL_FPS),
+                          (GhostBehaviour.CHASE  , 20   * GAME_ORIGINAL_FPS),
+                          (GhostBehaviour.SCATTER, 7    * GAME_ORIGINAL_FPS),
+                          (GhostBehaviour.CHASE  , 20   * GAME_ORIGINAL_FPS),
+                          (GhostBehaviour.SCATTER, 5    * GAME_ORIGINAL_FPS),
+                          (GhostBehaviour.CHASE  , 20   * GAME_ORIGINAL_FPS),
+                          (GhostBehaviour.SCATTER, 5    * GAME_ORIGINAL_FPS),
                           (GhostBehaviour.CHASE  , float('inf')))
     elif level <= 4:
-        mode_durations = ((GhostBehaviour.SCATTER, 7),
-                          (GhostBehaviour.CHASE  , 20),
-                          (GhostBehaviour.SCATTER, 7),
-                          (GhostBehaviour.CHASE  , 20),
-                          (GhostBehaviour.SCATTER, 5),
-                          (GhostBehaviour.CHASE  , 1033),
-                          (GhostBehaviour.SCATTER, 1 / 60),
+        mode_durations = ((GhostBehaviour.SCATTER, 7    * GAME_ORIGINAL_FPS),
+                          (GhostBehaviour.CHASE  , 20   * GAME_ORIGINAL_FPS),
+                          (GhostBehaviour.SCATTER, 7    * GAME_ORIGINAL_FPS),
+                          (GhostBehaviour.CHASE  , 20   * GAME_ORIGINAL_FPS),
+                          (GhostBehaviour.SCATTER, 5    * GAME_ORIGINAL_FPS),
+                          (GhostBehaviour.CHASE  , 1033 * GAME_ORIGINAL_FPS),
+                          (GhostBehaviour.SCATTER, 1),
                           (GhostBehaviour.CHASE  , float('inf')))
     else:
-        mode_durations = ((GhostBehaviour.SCATTER, 5),
-                          (GhostBehaviour.CHASE  , 20),
-                          (GhostBehaviour.SCATTER, 5),
-                          (GhostBehaviour.CHASE  , 20),
-                          (GhostBehaviour.SCATTER, 5),
-                          (GhostBehaviour.CHASE  , 1037),
-                          (GhostBehaviour.SCATTER, 1 / 60),
+        mode_durations = ((GhostBehaviour.SCATTER, 5    * GAME_ORIGINAL_FPS),
+                          (GhostBehaviour.CHASE  , 20   * GAME_ORIGINAL_FPS),
+                          (GhostBehaviour.SCATTER, 5    * GAME_ORIGINAL_FPS),
+                          (GhostBehaviour.CHASE  , 20   * GAME_ORIGINAL_FPS),
+                          (GhostBehaviour.SCATTER, 5    * GAME_ORIGINAL_FPS),
+                          (GhostBehaviour.CHASE  , 1037 * GAME_ORIGINAL_FPS),
+                          (GhostBehaviour.SCATTER, 1),
                           (GhostBehaviour.CHASE  , float('inf')))
     
     return mode_durations

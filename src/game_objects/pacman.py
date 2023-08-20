@@ -5,7 +5,8 @@ from enum import IntEnum
 from src.directions import Vector2
 from src.game_objects.character import Character
 
-from src.constants import (PACMAN_SPEED,
+from src.constants import (GAME_ORIGINAL_UPDATES_INTERVAL,
+                           PACMAN_SPEED,
                            PACMAN_START_POSITION,
                            PacManStates,
                            PACMAN_PELLET_PENALTIES)
@@ -26,21 +27,18 @@ class PacMan(Character):
 
         self._direction_input = None
 
-        # -----------------------------------------
-        # TODO: Remove placeholder to go from spawning to moving.
-        # -----------------------------------------
-        import pyglet
-        def f(_):
-            self._state = PacManStates.MOVING
-        pyglet.clock.schedule_once(f, 1.5) 
-        def f2(_):
-            self._state = PacManStates.DEAD
-        #pyglet.clock.schedule_once(f2, 4.5) 
-        # -----------------------------------------
+
+
+        # --------------------------------
+        # TODO: implement proper swicthing
+        # --------------------------------
+        self._state = PacManStates.MOVING
+        # --------------------------------
+        
 
 
 
-    def update(self, dt, level, fright, maze):
+    def update(self, level, fright, maze):
 
         if self._state in (PacManStates.SPAWNING, PacManStates.DEAD):
             # Ignore any request to change direction.
@@ -60,7 +58,7 @@ class PacMan(Character):
                     self._state = PacManStates.TURNING
             
             # Try to move.
-            is_stuck, turning = self._update_position(dt, level, fright, maze)
+            is_stuck, turning = self._update_position(level, fright, maze)
 
             # Update state based on if Pac-Man stuck or not, only if not still turning.
             if not turning:
@@ -96,19 +94,16 @@ class PacMan(Character):
 
 
 
-    def _update_position(self, dt, level, fright, maze):
+    def _update_position(self, level, fright, maze):
         self._old_position = self._position
         
         # Update penalty to movement speed.
-        if self._penalty >= dt:
-            self._penalty -= dt
+        if self._penalty > 0:
+            self._penalty -= 1
             return self._state == PacManStates.STUCK, self._state == PacManStates.TURNING # No change in state
         
-        dt -= self._penalty
-        self._penalty = 0
-
         # Calculate how far Pac-Man has theoretically moved.
-        distance = PACMAN_SPEED(level, fright) * dt
+        distance = PACMAN_SPEED(level, fright) * GAME_ORIGINAL_UPDATES_INTERVAL
 
         # When turning, specific movement logic needed to bring Pac-Man back to center of corridor.
         # No collision detection because this was already checked by PacMan._update_direction method.

@@ -9,7 +9,7 @@ from src.constants import (WINDOW_INIT_KWARGS,
                            WINDOW_MINIMUM_SIZE,
                            GAME_UPDATES_INTERVAL,
                            WINDOW_ICON_PATH,
-                           GAME_ORIGINAL_FPS)
+                           GAME_ORIGINAL_UPDATES_INTERVAL)
 
 
 class Window(pyglet.window.Window):
@@ -28,6 +28,7 @@ class Window(pyglet.window.Window):
         # FPS locked to screen refresh rate (vsync enabled).
         # Number of updates per second can be freely chosen though.
         pyglet.clock.schedule_interval(self.on_state_update, GAME_UPDATES_INTERVAL)
+        self._residual_update_interval = 0
 
         
     def on_resize(self, width, height):
@@ -61,17 +62,14 @@ class Window(pyglet.window.Window):
 
         if symbol == key.P:
             self.paused = True if not hasattr(self, 'paused') else not self.paused
-            self.frame_steps = 0
         if symbol == key.O:
-            self.frame_steps += 1
+            self.on_state_update_step()
         # --------------------------------------
 
 
     def on_state_update(self, dt):
         if hasattr(self, 'paused') and self.paused:
-            if self.frame_steps == 0:
-                return 
-            self.frame_steps -= 1
+            return
 
         # -------- DEBUG: TEMP BENCHMARK CODE ----------
         self.benchmark_dts = self.benchmark_dts if hasattr(self, 'benchmark_dts') else []
@@ -85,14 +83,13 @@ class Window(pyglet.window.Window):
 
 
         
-        # It is possible for the dt to be very large due to events which case a lag spike.
-        # An example is on_resize when going to fullscreen. 
-        # To avoid issues in the downstream logic, we cap the maximum dt and execute multiple updates if needed.
-        while dt > 0:
-            dt_step = min(dt, GAME_ORIGINAL_FPS)
-            dt -= dt_step
+        # Force updates to happen with the same frame-rate as in the original game.
+        self._residual_update_interval += dt
 
-            self.on_state_update_step(dt_step)
+        while self._residual_update_interval >= GAME_ORIGINAL_UPDATES_INTERVAL:
+            self._residual_update_interval -= GAME_ORIGINAL_UPDATES_INTERVAL
+
+            self.on_state_update_step()
 
 
         # -------- DEBUG: TEMP BENCHMARK CODE ----------
@@ -123,10 +120,9 @@ class Window(pyglet.window.Window):
 
 
 
-    def on_state_update_step(self, dt):
+    def on_state_update_step(self):
         
-
-        retval = self._current_activity.event_update_state(dt)
+        retval = self._current_activity.event_update_state()
 
         if isinstance(self._current_activity, Menu) and retval:
             # retval is True if we need to change from Menu to Game.
@@ -139,96 +135,3 @@ class Window(pyglet.window.Window):
     def on_draw(self):
         self.clear()
         self._current_activity.event_draw_screen()
-        
-        #self.painter.draw()
-
-
-
-
-#class Gui():
-#    """Class Gui. Implements the pygame event loop and delegates handling events to
-#    current activities. Also deals with changing the current activity and interfaces
-#    the sound engine for the background music."""
-    
-#    def __init__(self):
-#        """Constructor for the class Gui."""
-#        # First initialize sound engine, such that constructor sets desired
-#        # values for the pygame.mixer.init function.
-#        self._sound = SoundEngine()
-        
-#        # Initialize all pygame modules. pygame.mixer will not be re-initialized
-#        # and hence the desired values for pygame.mixer.init will be kept.
-#        pygame.init()
-        
-#        # Open a pygame window.
-#        self._window = Window()
-
-#        # Store current activity.
-#        self._current_activity = Menu(self._window, self._sound)
-        
-        
-#    def __del__(self):
-#        """Destructor for the class Gui."""
-#        del self._current_activity
-#        del self._sound
-#        del self._window
-#        pygame.quit()
-        
-    
-#    def run(self):
-#        """Method implementing the pygame event loop, dealing with changing the
-#        current activity, delegating events to current activity, exiting program
-#        if the window was closed and interfacing sound engine for the background
-#        music."""
-#        pygame.event.set_allowed([QUIT, KEYDOWN, KEYUP])
-        
-#        # Variable used to limit the fps at which screen is being updated.
-#        fps_clock = pygame.time.Clock()
-        
-#        while not self._window.closed:
-#            fps_clock.tick(REFRESH_RATE)
-#            self._current_activity.event_update_screen(fps_clock.get_fps())            
-            
-#            for event in pygame.event.get():    
-#                if event.type == QUIT:
-#                    self._window.close()
-                
-#                if event.type == KEYDOWN:
-#                    if event.key == K_r:
-#                        self._sound.change_track()
-                        
-#                    elif event.key == K_m:
-#                        self._sound.toggle_mute()
-                        
-#                    else:
-                    
-#                        output = self._current_activity.event_key_pressed(event.key)
-                        
-#                        if isinstance(self._current_activity, Menu):
-#                            change_activity, text_pressed = output
-                            
-#                            if change_activity:
-#                                if text_pressed == 'Play':
-#                                    # Enable Delayed Auto Shift.
-#                                    pygame.key.set_repeat(DAS_DELAY, DAS_RATE)
-                                    
-#                                    self._current_activity = Game(self._window, self._sound)
-#                                elif text_pressed == 'Controls':
-#                                    self._current_activity = MenuControls(self._window, self._sound)
-#                                elif text_pressed == 'Exit':
-#                                    self._window.close()
-#                                else:
-#                                    raise RuntimeError("Unknown selected menu option")
-                                    
-#                        elif isinstance(self._current_activity, MenuControls) or isinstance(self._current_activity, Game):
-#                            change_activity = output
-                            
-#                            if change_activity:
-#                                self._current_activity = Menu(self._window, self._sound)
-                                
-#                                # Disable Delayed Auto Shift.
-#                                pygame.key.set_repeat()
-
-                
-#                elif event.type == KEYUP:
-#                    self._current_activity.event_key_released(event.key)

@@ -20,21 +20,14 @@ class Vector2:
     #def swap(self):
     #    return Vector2(self.y, self.x)
 
-    # Operator overloadings.
+    # Operator overloadings. Inplace operations should not modify the instance herself to
+    # avoid accidentally changing the LEFT, RIGHT, UP, DOWN contants. 
     def __add__(self, other):
         if not isinstance(other, Vector2):
             self.raise_typerror('+', self, other)
 
         return Vector2(x = self.x + other.x,
                        y = self.y + other.y)
-
-    def __iadd__(self, other):
-        if not isinstance(other, Vector2):
-            self.raise_typerror('+=', self, other)
-
-        self.x += other.x
-        self.y += other.y
-        return self
 
     def __mul__(self, other):
         if not isinstance(other, (int, float)):
@@ -45,14 +38,6 @@ class Vector2:
 
     def __rmul__(self, other):
         return self * other
-
-    def __imul__(self, other):
-        if not isinstance(other, (int, float)):
-            self.raise_typerror('*=', self, other)
-
-        self.x *= other
-        self.y *= other
-        return self
 
     @staticmethod
     def distance_squared(left_obj, right_obj):

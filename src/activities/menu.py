@@ -17,7 +17,7 @@ class Menu(Activity):
         on the screen."""
         self._painter.draw_menu()
         
-    def event_update_state(self, dt):
+    def event_update_state(self):
         """Override of method from Activity class, updating the state of the
         activity."""
         return self.must_switch_to_game

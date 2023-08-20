@@ -6,7 +6,8 @@ from abc import ABC, abstractmethod
 from src.game_objects.character import Character
 
 from src.directions import Vector2
-from src.constants import (GHOSTS_START_POSITIONS,
+from src.constants import (GAME_ORIGINAL_UPDATES_INTERVAL,
+                           GHOSTS_START_POSITIONS,
                            GHOSTS_START_DIRECTIONS,
                            GhostBehaviour,
                            GHOSTS_SPEED,
@@ -32,8 +33,8 @@ class GhostAbstract(Character, ABC):
         self._reverse_direction_signal = False
 
 
-    def update(self, dt, level, fright, maze, pacman):
-        self._update_position(dt, level, fright, maze, pacman)
+    def update(self, level, fright, maze, pacman):
+        self._update_position(level, fright, maze, pacman)
 
     def _just_exited_pen(self):
         self._direction           = Vector2.LEFT
@@ -104,8 +105,10 @@ class GhostAbstract(Character, ABC):
         raise NotImplementedError
 
 
-    def _update_position(self, dt, level, fright, maze, pacman):
+    def _update_position(self, level, fright, maze, pacman):
         
+        dt = GAME_ORIGINAL_UPDATES_INTERVAL
+
         while True:
             # Distance that can still be travelled depends on the tile (whether in warp tunnel or not).
             in_warp_tunnel = maze.tile_is_warp_tunnel(self._position)
@@ -129,6 +132,9 @@ class GhostAbstract(Character, ABC):
     def _set_behaviour(self, behaviour):
         if behaviour not in GhostBehaviour:
             raise ValueError('Invalid behaviour provided to Ghost._set_behaviour')
+
+        if behaviour == self._behaviour:
+            return
 
         if self._behaviour != GhostBehaviour.FRIGHTENED:
             self._reverse_direction_signal = True

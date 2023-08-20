@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import time
 from pyglet.window import key
 
 from src.activities.activity import Activity
@@ -35,7 +34,7 @@ class Game(Activity):
 
         self._level = 1
 
-        self._fright_off_time = None
+        self._fright_counter = 0
 
         self._lives = STARTING_LIVES_PACMAN
         self._extra_life_awarded = False
@@ -48,32 +47,16 @@ class Game(Activity):
         self._painter.draw_game(self._pacman, self._ghosts, self._score, self._lives, self._level)
         
 
-    def event_update_state(self, dt):
-        """Override of method from Activity class, updating the state of the
-        activity."""
+    def event_update_state(self):
+        """Override of method from Activity class, updating the state of the activity."""
 
-        # Update fright timer and tick game in a conservative way: if switching from fright to not, tick game at edge and then tick for remaining dt.
-        # Can't rely on dt exclusively because start time would depend on how long game update has taken. 
-        if self._fright_off_time is not None:
-            time_now = time.time()
+        fright = False
+        if self._fright_counter > 0:
+            self._fright_counter -= 1
+            fright = True
 
-            if time_now > self._fright_off_time:
-                remaining_fright_time = time_now - self._fright_off_time
-
-                self._game_tick(remaining_fright_time)
-                dt -= remaining_fright_time
-                self._fright_off_time = None
-                print('Fright off')
-            
-        self._game_tick(dt)
-
-
-
-    def _game_tick(self, dt):
-        fright = self._fright_off_time is not None
-
-        self._pacman.update(dt, self._level, fright, self._maze)
-        self._ghosts.update(dt, self._level, fright, self._maze, self._pacman)
+        self._pacman.update(self._level, fright, self._maze)
+        self._ghosts.update(self._level, fright, self._maze, self._pacman)
 
         self._calculate_new_game_state()
 
@@ -145,9 +128,9 @@ class Game(Activity):
         if pellet_type == MazeTiles.POWER_PELLET:
             fright_duration, _ = FRIGHT_TIME_AND_FLASHES(self._level)
 
-            if fright_duration > 0:
-                self._fright_off_time = time.time() + fright_duration
-                self._score.notify_fright_on()
+            self._fright_counter = fright_duration
+            self._score.notify_fright_on()
+            self._ghosts.notify_fright_on()
 
 
     def _ghost_collision(self):
