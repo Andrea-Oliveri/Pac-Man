@@ -13,7 +13,7 @@ class Blinky(GhostAbstract):
         super().__init__(Ghost.BLINKY)
         self._just_exited_pen()
 
-    def _calculate_target_tile(self, pacman, maze):
+    def _calculate_personal_target_tile(self, pacman, maze):
         # Blinky always targets the tile Pac-Man is on.
         pacman_tile = maze.get_tile_center(pacman.position)
         return pacman_tile
@@ -27,7 +27,7 @@ class Pinky(GhostAbstract):
     def update(*args, **kwargs):
         return
 
-    def _calculate_target_tile(self, pacman, maze):
+    def _calculate_personal_target_tile(self, pacman, maze):
         pass
 
 
@@ -39,7 +39,7 @@ class Inky(GhostAbstract):
     def update(*args, **kwargs):
         return
 
-    def _calculate_target_tile(self, pacman, maze):
+    def _calculate_personal_target_tile(self, pacman, maze):
         pass
 
 
@@ -51,5 +51,5 @@ class Clyde(GhostAbstract):
     def update(*args, **kwargs):
         return
 
-    def _calculate_target_tile(self, pacman, maze):
+    def _calculate_personal_target_tile(self, pacman, maze):
         pass

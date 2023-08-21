@@ -270,32 +270,17 @@ FRUIT_SPAWN_THRESHOLDS = (70, 170)
 # Coordinates at which fruits appear.
 FRUIT_SPAWN_POSITION = Vector2(x = 14, y = 17.5)
 
-# Duration of fright time (in seconds) and number of flashes before fright mode ends.
+# Duration of fright time (in original game frames) and number of flashes before fright mode ends.
 def FRIGHT_TIME_AND_FLASHES(level):
     if level <= 0:
         raise ValueError(f'invalid level value passed to constants.FRIGHT_TIME_SECS: {level}')
     elif level >= 19:
         return 0, 0
     
-    time_and_flash = ((6, 5),
-                      (5, 5),
-                      (4, 5),
-                      (3, 5),
-                      (2, 5),
-                      (5, 5),
-                      (2, 5),
-                      (2, 5),
-                      (1, 3),
-                      (5, 5),
-                      (2, 5),
-                      (1, 3),
-                      (1, 3),
-                      (3, 5),
-                      (1, 3),
-                      (1, 3),
-                      (0, 0),
-                      (1, 3))
-    return time_and_flash[level - 1]
+    times_secs  = (6, 5, 4, 3, 2, 5, 2, 2, 1, 5, 2, 1, 1, 3, 1, 1, 0, 1)
+    flashes_num = (5, 5, 5, 5, 5, 5, 5, 5, 3, 5, 5, 3, 3, 5, 3, 3, 0, 3)
+    
+    return times_secs[level - 1] * GAME_ORIGINAL_FPS, flashes_num[level - 1]
 
 
 
@@ -320,7 +305,7 @@ WHITE_FLASH_ANIMATION_PERIOD_SECS = 7 / GAME_ORIGINAL_FPS
 Ghost = IntEnum('Ghost', ['BLINKY', 'PINKY', 'INKY', 'CLYDE'], start = 0)
 
 # Enum defining modes of ghost behaviour.
-GhostBehaviour = IntEnum('GhostBehaviour', ['CHASE', 'SCATTER', 'FRIGHTENED', 'IN_HOUSE', 'EXITING_HOUSE', 'GOING_TO_HOUSE'], start = 0)
+GhostBehaviour = IntEnum('GhostBehaviour', ['CHASE', 'SCATTER', 'FRIGHTENED', 'IN_HOUSE', 'EXITING_HOUSE', 'GOING_TO_HOUSE'])
 
 # Starting positions, directions and behaviour of ghosts.
 GHOSTS_START_POSITIONS = {Ghost.BLINKY: Vector2(x = 14, y = 11.5),

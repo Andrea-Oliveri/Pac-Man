@@ -41,28 +41,6 @@ class GhostAbstract(Character, ABC):
         self._direction           = Vector2.LEFT
         self._direction_next      = Vector2.LEFT
         self._direction_next_next = Vector2.LEFT
-
-
-    def _update_direction(self, maze, pacman, is_at_tile_center, is_at_tile_edge):
-        
-        if is_at_tile_center:
-            self._direction           = self._direction_next
-            self._direction_next      = self._direction_next_next
-            self._direction_next_next = None
-        elif is_at_tile_edge:
-            if self._reverse_direction_signal:
-                self._reverse_direction_signal = False
-                self._direction *= -1
-
-                # We need to invalidate and recalculate the direction of the next tile.
-                self._direction_next = self._calculate_direction_at_tile_center(maze, pacman, self._direction)
-
-                # This will be recalculated once we step back in the previous tile (next iteration).
-                self._direction_next_next = None
-            else:
-                # When entering new tile, ghost must decide what it will do in next tile along this direction.
-                self._direction_next_next = self._calculate_direction_at_tile_center(maze, pacman, self._direction_next)
-
     
     
     def _calculate_direction_at_tile_center(self, maze, pacman, direction_from_current_tile):
@@ -101,14 +79,20 @@ class GhostAbstract(Character, ABC):
         return best_direction
 
 
-    @abstractmethod
     def _calculate_target_tile(self, pacman, maze):
-        raise NotImplementedError
+        match self._behaviour:
+            case GhostBehaviour.CHASE:
+                return self._calculate_personal_target_tile(pacman, maze)
+
+            case GhostBehaviour.SCATTER:
+                return GHOSTS_SCATTER_MODE_TARGET_TILES[self._name]
+
+        raise RuntimeError("GhostAbtract._calculate_target_tile was called with invalid behaviour: {self._behaviour.name}")
 
 
     def _update_position(self, level, fright, maze, pacman):
         
-        dt = GAME_ORIGINAL_UPDATES_INTERVAL
+        dt = GAME_ORIGINAL_UPDATES_INTERVAL            
 
         while True:
             # Distance that can still be travelled depends on the tile (whether in warp tunnel or not).
@@ -119,14 +103,54 @@ class GhostAbstract(Character, ABC):
             # Update position clipping to closest half-tile.
             residual_distance, _, is_at_tile_center, is_at_tile_edge = super()._update_position_within_tile(residual_distance, maze)
 
-            # Update direction attributes.
-            self._update_direction(maze, pacman, is_at_tile_center, is_at_tile_edge)
+            # Update direction attributes based on behaviours.
+            if is_at_tile_center:
+                self._callback_is_at_tile_center()
+            elif is_at_tile_edge:
+                self._callback_is_at_tile_edge(maze, pacman)
 
             # Calculate residual dt not used by movement at this speed, if any.
             if residual_distance <= 0:
                 break
 
             dt = residual_distance / speed
+
+
+    def _callback_is_at_tile_edge(self, maze, pacman):
+        if self._behaviour in (GhostBehaviour.CHASE, GhostBehaviour.SCATTER):
+
+            if self._reverse_direction_signal:
+                self._reverse_direction_signal = False
+                self._direction *= -1
+
+                # We need to invalidate and recalculate the direction of the next tile.
+                self._direction_next = self._calculate_direction_at_tile_center(maze, pacman, self._direction)
+
+                # This will be recalculated once we step back in the previous tile (next iteration).
+                self._direction_next_next = None
+            else:
+                # When entering new tile, ghost must decide what it will do in next tile along this direction.
+                self._direction_next_next = self._calculate_direction_at_tile_center(maze, pacman, self._direction_next)
+            
+        
+
+            
+            
+            
+            
+            
+            
+            #'FRIGHTENED', 'IN_HOUSE', 'EXITING_HOUSE', 'GOING_TO_HOUSE'
+
+
+    def _callback_is_at_tile_center(self):
+        if self._behaviour in (GhostBehaviour.CHASE, GhostBehaviour.SCATTER):
+            self._direction           = self._direction_next
+            self._direction_next      = self._direction_next_next
+            self._direction_next_next = None
+
+
+
 
 
     # Defining properties for some private attributes.
