@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from pyglet.window import Window
-from enum import IntEnum
+from enum import IntEnum, IntFlag
 import os
 
 from src.directions import Vector2
@@ -259,7 +259,7 @@ HIGH_SCORE_FILE_NUM_BYTES = 4
 # --------------------------------------------------------------------
 
 # Number of lives at the beginning of the game.
-STARTING_LIVES_PACMAN = 5 # 1, 2, 3 or 5 are all valid for this setting
+STARTING_LIVES_PACMAN = 3 # 1, 2, 3 or 5 are all valid for this setting
 
 # Score above which an extra life is awarded.
 EXTRA_LIFE_POINTS_REQUIREMENT = 10000 # 10000, 15000 and 20000 are all valid for this setting
@@ -305,7 +305,7 @@ WHITE_FLASH_ANIMATION_PERIOD_SECS = 7 / GAME_ORIGINAL_FPS
 Ghost = IntEnum('Ghost', ['BLINKY', 'PINKY', 'INKY', 'CLYDE'], start = 0)
 
 # Enum defining modes of ghost behaviour.
-GhostBehaviour = IntEnum('GhostBehaviour', ['CHASE', 'SCATTER', 'FRIGHTENED', 'IN_HOUSE', 'EXITING_HOUSE', 'GOING_TO_HOUSE'])
+GhostBehaviour = IntFlag('GhostBehaviour', ['CHASE', 'SCATTER', 'FRIGHTENED', 'IN_HOUSE', 'EXITING_HOUSE', 'GOING_TO_HOUSE'])
 
 # Starting positions, directions and behaviour of ghosts.
 GHOSTS_START_POSITIONS = {Ghost.BLINKY: Vector2(x = 14, y = 11.5),
@@ -319,9 +319,9 @@ GHOSTS_START_DIRECTIONS = {Ghost.BLINKY: Vector2.LEFT,
                            Ghost.CLYDE : Vector2.DOWN}
 
 GHOSTS_START_BEHAVIOUR  = {Ghost.BLINKY: GhostBehaviour.SCATTER,
-                           Ghost.PINKY : GhostBehaviour.IN_HOUSE,
-                           Ghost.INKY  : GhostBehaviour.IN_HOUSE,
-                           Ghost.CLYDE : GhostBehaviour.IN_HOUSE}
+                           Ghost.PINKY : GhostBehaviour.SCATTER | GhostBehaviour.IN_HOUSE,
+                           Ghost.INKY  : GhostBehaviour.SCATTER | GhostBehaviour.IN_HOUSE,
+                           Ghost.CLYDE : GhostBehaviour.SCATTER | GhostBehaviour.IN_HOUSE}
 
 # Tiles where the ghosts are not allowed to turn up.
 GHOSTS_FORBIDDEN_TURNING_UP_TILES = (Vector2(15.5, 23.5), Vector2(12.5, 23.5), Vector2(15.5, 11.5), Vector2(12.5, 11.5))

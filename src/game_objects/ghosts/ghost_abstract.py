@@ -21,11 +21,12 @@ from src.constants import (GAME_ORIGINAL_UPDATES_INTERVAL,
 
 
 class GhostAbstract(Character, ABC):
-    def __init__(self, name):
+    def __init__(self, name, prng):
         super().__init__(position  = GHOSTS_START_POSITIONS [name],
                          direction = GHOSTS_START_DIRECTIONS[name])
 
         self._name = name
+        self._prng = prng
         self._direction_next      = None
         self._direction_next_next = None
 
@@ -35,6 +36,7 @@ class GhostAbstract(Character, ABC):
 
 
     def update(self, level, fright, maze, pacman):
+        # Update position and directions.
         self._update_position(level, fright, maze, pacman)
 
     def _just_exited_pen(self):
@@ -80,12 +82,12 @@ class GhostAbstract(Character, ABC):
 
 
     def _calculate_target_tile(self, pacman, maze):
-        match self._behaviour:
-            case GhostBehaviour.CHASE:
-                return self._calculate_personal_target_tile(pacman, maze)
+        
+        if GhostBehaviour.CHASE in self._behaviour:
+            return self._calculate_personal_target_tile(pacman, maze)
 
-            case GhostBehaviour.SCATTER:
-                return GHOSTS_SCATTER_MODE_TARGET_TILES[self._name]
+        elif GhostBehaviour.SCATTER in self._behaviour:
+            return GHOSTS_SCATTER_MODE_TARGET_TILES[self._name]
 
         raise RuntimeError("GhostAbtract._calculate_target_tile was called with invalid behaviour: {self._behaviour.name}")
 
@@ -117,7 +119,21 @@ class GhostAbstract(Character, ABC):
 
 
     def _callback_is_at_tile_edge(self, maze, pacman):
-        if self._behaviour in (GhostBehaviour.CHASE, GhostBehaviour.SCATTER):
+        
+        if GhostBehaviour.FRIGHTENED in self._behaviour:
+            if self._reverse_direction_signal:
+                self._reverse_direction_signal = False
+                self._direction *= -1
+
+                # We need to invalidate and future directions. Will be recalculated once we step back in the previous tile (next iteration).
+                self._direction_next = None
+                self._direction_next_next = None 
+                
+            else:
+                self._direction_next = self._frightened_ghost_random_direction(maze)
+                self._direction_next_next = self._calculate_direction_at_tile_center(maze, pacman, self._direction_next)
+        
+        elif any(behaviour in self._behaviour for behaviour in (GhostBehaviour.CHASE, GhostBehaviour.SCATTER)):
 
             if self._reverse_direction_signal:
                 self._reverse_direction_signal = False
@@ -132,40 +148,61 @@ class GhostAbstract(Character, ABC):
                 # When entering new tile, ghost must decide what it will do in next tile along this direction.
                 self._direction_next_next = self._calculate_direction_at_tile_center(maze, pacman, self._direction_next)
             
-        
+                      
+            #'IN_HOUSE', 'EXITING_HOUSE', 'GOING_TO_HOUSE'
 
-            
-            
-            
-            
-            
-            
-            #'FRIGHTENED', 'IN_HOUSE', 'EXITING_HOUSE', 'GOING_TO_HOUSE'
+
+    def _frightened_ghost_random_direction(self, maze):
+        current_tile = maze.get_tile_center(self._position)
+        directions_clockwise = [Vector2.UP, Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT]
+
+        direction = self._prng.get_random_direction()
+        starting_idx = directions_clockwise.index(direction)
+
+        for offset in range(0, len(directions_clockwise)):
+            direction =  directions_clockwise[(starting_idx + offset) % len(directions_clockwise)]
+            next_tile = current_tile + direction
+
+            if not maze.tile_is_wall(next_tile) and direction != self._direction * (-1):
+                return direction
+
+        raise RuntimeError("No valid direction found in GhostAbstract._frightened_ghost_random_direction")
+
 
 
     def _callback_is_at_tile_center(self):
-        if self._behaviour in (GhostBehaviour.CHASE, GhostBehaviour.SCATTER):
+        if any(behaviour in self._behaviour for behaviour in (GhostBehaviour.CHASE, GhostBehaviour.SCATTER, GhostBehaviour.FRIGHTENED)):
             self._direction           = self._direction_next
             self._direction_next      = self._direction_next_next
             self._direction_next_next = None
 
 
+    def add_behaviour(self, behaviour):
+        if behaviour not in GhostBehaviour:
+            raise ValueError('Invalid behaviour provided to Ghost.add_behaviour')
 
+        # Ignore calls in excess, but still force direction if frightened and already frightened.
+        if behaviour in self._behaviour and behaviour != GhostBehaviour.FRIGHTENED:
+            return
+
+        match behaviour:
+            case GhostBehaviour.CHASE | GhostBehaviour.SCATTER:
+                self._behaviour = self._behaviour & (~GhostBehaviour.CHASE) & (~GhostBehaviour.SCATTER) | behaviour
+                self._reverse_direction_signal = True
+
+            case GhostBehaviour.FRIGHTENED:
+                self._behaviour = self._behaviour | GhostBehaviour.FRIGHTENED
+                self._reverse_direction_signal = True
+
+            case GhostBehaviour.IN_HOUSE | GhostBehaviour.EXITING_HOUSE | GhostBehaviour.GOING_TO_HOUSE:
+                self._behaviour = self._behaviour & (~GhostBehaviour.IN_HOUSE) & (~GhostBehaviour.EXITING_HOUSE) & (~GhostBehaviour.GOING_TO_HOUSE) | behaviour
+
+
+    def clear_fright(self):
+        self._behaviour &= (~GhostBehaviour.FRIGHTENED)
 
 
     # Defining properties for some private attributes.
-    def _set_behaviour(self, behaviour):
-        if behaviour not in GhostBehaviour:
-            raise ValueError('Invalid behaviour provided to Ghost._set_behaviour')
-
-        if behaviour == self._behaviour:
-            return
-
-        if self._behaviour != GhostBehaviour.FRIGHTENED:
-            self._reverse_direction_signal = True
-
-        self._behaviour = behaviour
-
-    position  = property(lambda self: self._position)
-    behaviour = property(lambda self: self._behaviour, _set_behaviour)
+    position   = property(lambda self: self._position)
+    frightened = property(lambda self: GhostBehaviour.FRIGHTENED in self._behaviour)
     

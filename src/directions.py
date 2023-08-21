@@ -16,10 +16,6 @@ class Vector2:
     # y coordinate represent right-left direction, with positive values being towards the top.
     y: float
 
-    # Function returning a new Vector2 instance which has the x and y coordinates swapped.
-    #def swap(self):
-    #    return Vector2(self.y, self.x)
-
     # Operator overloadings. Inplace operations should not modify the instance herself to
     # avoid accidentally changing the LEFT, RIGHT, UP, DOWN contants. 
     def __add__(self, other):
