@@ -24,7 +24,7 @@ WINDOW_INIT_KWARGS = {'width' : WINDOW_MINIMUM_SIZE[0],
                       'vsync': True}
 
 # Interval between two game updates in seconds.
-GAME_ORIGINAL_FPS = 60 
+GAME_ORIGINAL_FPS = 60.606061
 GAME_ORIGINAL_UPDATES_INTERVAL = 1 / GAME_ORIGINAL_FPS
 GAME_UPDATES_INTERVAL = 1 / 100
 
@@ -122,7 +122,7 @@ PacManStates = IntEnum('PacManStates', ['SPAWNING', 'MOVING', 'STUCK', 'TURNING'
 # Coordinates of tile where Pac-Man starts the game.
 PACMAN_START_POSITION = Vector2(14, 23.5)
 
-# One-frame penalty when eating pellet, 3 frames penalty when eating power pellet (in original game frame-rate: 60 fps).
+# One-frame penalty when eating pellet, 3 frames penalty when eating power pellet (in original game frame-rate).
 PACMAN_PELLET_PENALTIES = {MazeTiles.PELLET: 1, MazeTiles.POWER_PELLET: 3}
 
 # --------------------------------------------------------------------
