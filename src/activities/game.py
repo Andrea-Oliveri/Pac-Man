@@ -55,8 +55,9 @@ class Game(Activity):
             self._fright_counter -= 1
             fright = True
 
-        self._pacman.update(self._level, fright, self._maze)
-        self._ghosts.update(self._level, fright, self._maze, self._pacman)
+        self._pacman .update(self._level, fright, self._maze)
+        self._ghosts .update(self._level, fright, self._maze, self._pacman)
+        self._painter.update()
 
         self._calculate_new_game_state()
 
@@ -126,11 +127,12 @@ class Game(Activity):
         self._score.add_to_score(ScoreActions.EAT_PELLET if pellet_type == MazeTiles.PELLET else ScoreActions.EAT_POWER_PELLET)
 
         if pellet_type == MazeTiles.POWER_PELLET:
-            fright_duration, _ = FRIGHT_TIME_AND_FLASHES(self._level)
+            fright_duration, fright_flashes = FRIGHT_TIME_AND_FLASHES(self._level)
 
             self._fright_counter = fright_duration
             self._score.notify_fright_on()
             self._ghosts.notify_fright_on()
+            self._painter.notify_fright_on(fright_duration, fright_flashes)
 
 
     def _ghost_collision(self):

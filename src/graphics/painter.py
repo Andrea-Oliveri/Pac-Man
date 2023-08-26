@@ -31,6 +31,7 @@ from src.constants import (MAZE_START_IMAGE,
 from src.directions import Vector2
 from src.graphics import utils
 from src.graphics.font import Font
+from src.graphics.ghost_sprites import GhostSprite
 
 
 
@@ -45,18 +46,23 @@ class Painter:
         # Load animated sprites.
         self._pacman_move_sprite  = utils.load_animated_sprite(PACMAN_MOVE_ANIMATION , PACMAN_GHOSTS_SPRITES_PX_SIZE, PACMAN_MOVE_ANIMATION_PERIOD_SECS)
         self._pacman_death_sprite = utils.load_animated_sprite(PACMAN_DEATH_ANIMATION, PACMAN_GHOSTS_SPRITES_PX_SIZE, PACMAN_DEATH_ANIMATION_PERIOD_SECS)
+        self._ghost_sprites       = GhostSprite()
 
         # Load UI elements.
         self._font = Font()
         self._ui_tiles = utils.load_image_grid(UI_TILES_SHEET_PATH, UI_TILES_PX_SIZE)
 
-
+    
 
     def draw_menu(self):
         # TODO: better menu
         image = utils.load_image(r".\assets\images\TMP-Menu.png")
 
         image.blit(0, 0)
+
+
+    def update(self):
+        self._ghost_sprites.update()
 
 
     def draw_game(self, pacman, ghosts, score, lives, level):
@@ -67,8 +73,7 @@ class Painter:
 
         self._draw_pacman(pacman)
 
-        self._draw_ghosts(ghosts)
-
+        self._ghost_sprites.draw(ghosts)
 
         # ----------------------------------------
         # DEBUG
@@ -90,6 +95,10 @@ class Painter:
             pass
       
         # ----------------------------------------
+
+
+    def notify_fright_on(self, fright_duration, fright_flashes):
+        self._ghost_sprites.notify_fright_on(fright_duration, fright_flashes)
 
 
     def _draw_maze(self):
@@ -179,29 +188,6 @@ class Painter:
         for fruit in fruits:
             self._ui_tiles[fruit].blit(x, y)
             x -= UI_TILES_PX_SIZE
-            
-
-    def _draw_ghosts(self, ghosts):
-        for name, ghost in ghosts:
-
-            from src.constants import Ghost
-            colors = {Ghost.BLINKY: (255, 0, 0), Ghost.PINKY: (255, 183, 255), Ghost.INKY: (0, 255, 255), Ghost.CLYDE: (255, 183, 81)}
-            ghost_center = utils.calculate_coords_sprites(ghost.position)
-            pyglet.shapes.Circle(ghost_center.x, ghost_center.y, 5, color = colors[name]).draw()
-
-        # --------------
-        # Debug
-        # --------------
-        from src.constants import GHOSTS_SCATTER_MODE_TARGET_TILES, GHOSTS_EATEN_TARGET_TILE
-        for name, tile_position in GHOSTS_SCATTER_MODE_TARGET_TILES.items():
-            tile_position = utils.calculate_coords_sprites(tile_position)
-            pyglet.shapes.Star(tile_position.x, tile_position.y, 5, 2, 4, color = colors[name]).draw()
-        tile_position = utils.calculate_coords_sprites(GHOSTS_EATEN_TARGET_TILE)
-        pyglet.shapes.Star(tile_position.x, tile_position.y, 5, 2, 4, color = (0, 255, 0)).draw()
-
-
-        # --------------
-
 
 
     def set_empty_tile(self, idx):

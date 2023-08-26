@@ -14,7 +14,6 @@ class Blinky(GhostAbstract):
         self._just_exited_pen()
 
     def _calculate_personal_target_tile(self, pacman, maze):
-        # Blinky targets the tile Pac-Man is on.
         target_tile = maze.get_tile_center(pacman.position)
         return target_tile
 
@@ -33,8 +32,6 @@ class Pinky(GhostAbstract):
         # ----------------------
 
     def _calculate_personal_target_tile(self, pacman, maze):
-        # Pinky targets 4 tiles in front of Pac-Man. Due to an error, if Pac-Man direction is upwards, 
-        # targets 4 tiles up and 4 tiles left.
         target_tile = maze.get_tile_center(pacman.position)
         target_tile += pacman.direction * 4
 

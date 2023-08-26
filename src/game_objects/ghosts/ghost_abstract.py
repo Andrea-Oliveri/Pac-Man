@@ -34,6 +34,11 @@ class GhostAbstract(Character, ABC):
 
         self._reverse_direction_signal = False
 
+        # Needed to ensure consistency with original game: ghost eyes change as soon as
+        # they enter a new tile, even if they have not made the turn yet.
+        self._eyes_direction_next = False
+
+
 
     def update(self, level, fright, maze, pacman):
         # Update position and directions.
@@ -119,6 +124,7 @@ class GhostAbstract(Character, ABC):
 
 
     def _callback_is_at_tile_edge(self, maze, pacman):
+        self._eyes_direction_next = True
         
         if GhostBehaviour.FRIGHTENED in self._behaviour:
             if self._reverse_direction_signal:
@@ -171,6 +177,8 @@ class GhostAbstract(Character, ABC):
 
 
     def _callback_is_at_tile_center(self):
+        self._eyes_direction_next = False
+
         if any(behaviour in self._behaviour for behaviour in (GhostBehaviour.CHASE, GhostBehaviour.SCATTER, GhostBehaviour.FRIGHTENED)):
             self._direction           = self._direction_next
             self._direction_next      = self._direction_next_next
@@ -203,6 +211,7 @@ class GhostAbstract(Character, ABC):
 
 
     # Defining properties for some private attributes.
-    position   = property(lambda self: self._position)
-    frightened = property(lambda self: GhostBehaviour.FRIGHTENED in self._behaviour)
-    
+    position    = property(lambda self: self._position)
+    frightened  = property(lambda self: GhostBehaviour.FRIGHTENED in self._behaviour)
+    transparent = property(lambda self: GhostBehaviour.GOING_TO_HOUSE in self._behaviour)
+    eyes_direction = property(lambda self: self._direction_next if self._eyes_direction_next else self._direction)
