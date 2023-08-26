@@ -26,19 +26,29 @@ class Game(Activity):
         """Override of method from Activity class, instancing all game objects."""
         super().__init__(painter)
 
+        self._level = 0
+        self._score = Score()
+        
+        self._lives = STARTING_LIVES_PACMAN
+        self._extra_life_awarded = False
+
+        self._new_level()
+
+        
+
+        
+
+
+    def _new_level(self):
+        self._level += 1
+
         self._maze = Maze()
         self._pacman = PacMan()
         self._ghosts = GhostsCoordinator()
         
-        self._score = Score()
-
-        self._level = 19
-
         self._fright_counter = 0
 
-        self._lives = STARTING_LIVES_PACMAN
-        self._extra_life_awarded = False
-        
+        self._painter.new_level()
 
 
     def event_draw_screen(self):
@@ -139,5 +149,5 @@ class Game(Activity):
         print('Ghost collision')
 
 
-    def _end_level():
-        print('Level completed')
+    def _end_level(self):
+        self._new_level()

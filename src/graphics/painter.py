@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from copy import deepcopy
 import pyglet.gl
 
 from src.constants import (MAZE_START_IMAGE,
@@ -39,10 +40,8 @@ class Painter:
     
     def __init__(self):
         
-        # Load initial maze image.
-        self._maze_image = utils.load_image(MAZE_START_IMAGE)
-        self._maze_empty_tile = self._maze_image.get_region(*MAZE_START_IMAGE_EMPTY_TILE_REGION_COORDS, MAZE_TILE_PX_SIZE, MAZE_TILE_PX_SIZE)
-        
+        self.new_level()
+
         # Load animated sprites.
         self._pacman_move_sprite  = utils.load_animated_sprite(PACMAN_MOVE_ANIMATION , PACMAN_GHOSTS_SPRITES_PX_SIZE, PACMAN_MOVE_ANIMATION_PERIOD_SECS)
         self._pacman_death_sprite = utils.load_animated_sprite(PACMAN_DEATH_ANIMATION, PACMAN_GHOSTS_SPRITES_PX_SIZE, PACMAN_DEATH_ANIMATION_PERIOD_SECS)
@@ -64,10 +63,15 @@ class Painter:
     def update(self):
         self._ghost_sprites.update()
 
+    def new_level(self):
+        # Load initial maze image.
+        self._maze_image = utils.load_image(MAZE_START_IMAGE)
+        self._maze_empty_tile = self._maze_image.get_region(*MAZE_START_IMAGE_EMPTY_TILE_REGION_COORDS, MAZE_TILE_PX_SIZE, MAZE_TILE_PX_SIZE)
+        
 
     def draw_game(self, pacman, ghosts, score, lives, level):
 
-        self._draw_maze()
+        self._maze_image.blit(0, 0)
 
         self._draw_gui(score, lives, level)
 
@@ -87,23 +91,12 @@ class Painter:
         
         origin = utils.calculate_coords_sprites(Vector2(0, 0))
         pyglet.shapes.Circle(origin.x, origin.y, 2, color = (255, 0, 0)).draw()
-
-        try:
-            coll_box_coords = utils.calculate_coords_sprites(pacman.collision_point)
-            pyglet.shapes.Circle(coll_box_coords.x, coll_box_coords.y, 2, color = (0, 155, 155)).draw()
-        except:
-            pass
       
         # ----------------------------------------
 
 
     def notify_fright_on(self, fright_duration, fright_flashes):
         self._ghost_sprites.notify_fright_on(fright_duration, fright_flashes)
-
-
-    def _draw_maze(self):
-        self._maze_image.blit(0, 0)
-
 
 
     def _draw_pacman(self, pacman):
