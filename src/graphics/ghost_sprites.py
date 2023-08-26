@@ -22,18 +22,21 @@ class GhostSprite:
     def notify_fright_on(self, fright_duration, fright_flashes):
         # The number of flashes vary, but the pattern goes: blue, white for this amount of time, blue for this amount of time, ...., white for this amount of time and then normal.
 
-        self._fright_flash_counter = 2 * fright_flashes * GHOSTS_FRIGHT_FLASH_ANIMATION_PERIOD_FRAMES - fright_duration - 1
+        flashing_time = (2 * fright_flashes - 1) * GHOSTS_FRIGHT_FLASH_ANIMATION_PERIOD_FRAMES
+
+        if fright_duration > flashing_time:
+            self._fright_flash_counter = flashing_time - fright_duration - 1
+            return
+        
+        self._fright_flash_counter = 0
 
 
     def draw(self, ghosts):
         utils.enable_transparency_blit()
 
         for name, ghost in ghosts:
-            
             sprite_idx = self._get_sprite_idx(name, ghost.frightened, ghost.transparent, ghost.eyes_direction)
-
             ghost_coords = utils.calculate_coords_sprites(ghost.position)
-
             self._sprites[sprite_idx].blit(x=ghost_coords.x, y=ghost_coords.y)
 
 
@@ -49,7 +52,7 @@ class GhostSprite:
 
         if frightened:
             frightened_blue = self._fright_flash_counter < 0 or \
-                              (self._fright_flash_counter // GHOSTS_FRIGHT_FLASH_ANIMATION_PERIOD_FRAMES) % 2 == 0
+                              (self._fright_flash_counter // GHOSTS_FRIGHT_FLASH_ANIMATION_PERIOD_FRAMES) % 2 == 1
             frightened_white = not frightened_blue
         else:
             frightened_blue = frightened_white = False

@@ -70,8 +70,12 @@ class GhostsCoordinator:
 
         return False
 
-    def notify_fright_on(self):
+    def notify_fright_on(self, fright_duration):
         self._add_behaviour_to_all(GhostBehaviour.FRIGHTENED)
+
+        if fright_duration <= 0:
+            for ghost in self._ghosts.values():
+                ghost.clear_fright()
 
     def __iter__(self):
         return iter(self._ghosts.items())

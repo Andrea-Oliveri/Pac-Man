@@ -32,7 +32,7 @@ class Game(Activity):
         
         self._score = Score()
 
-        self._level = 1
+        self._level = 19
 
         self._fright_counter = 0
 
@@ -131,7 +131,7 @@ class Game(Activity):
 
             self._fright_counter = fright_duration
             self._score.notify_fright_on()
-            self._ghosts.notify_fright_on()
+            self._ghosts.notify_fright_on(fright_duration)
             self._painter.notify_fright_on(fright_duration, fright_flashes)
 
 
