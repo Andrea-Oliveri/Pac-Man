@@ -21,6 +21,7 @@ class Font:
 
 
     def print(self, x, y, color, text):
+        utils.enable_transparency_blit()
         
         if color not in FontColors:
             raise ValueError(f'Invalid color provided to Font.print: {color}')

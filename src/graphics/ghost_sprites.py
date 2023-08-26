@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
-from src.constants import (Ghost,
-                           GHOSTS_ALL_SPRITES,
+from src.constants import (GHOSTS_ALL_SPRITES,
                            GHOSTS_MOVE_ANIMATION_PERIOD_FRAMES,
                            GHOSTS_FRIGHT_FLASH_ANIMATION_PERIOD_FRAMES,
                            PACMAN_GHOSTS_SPRITES_PX_SIZE,
@@ -15,7 +14,7 @@ from src.graphics import utils
 class GhostSprite:
 
     def __init__(self):
-        self._sprites = utils.load_animated_sprite(GHOSTS_ALL_SPRITES, PACMAN_GHOSTS_SPRITES_PX_SIZE, duration=None, copies = len(Ghost))
+        self._sprites = utils.load_image_grid(GHOSTS_ALL_SPRITES, PACMAN_GHOSTS_SPRITES_PX_SIZE)
 
         self._movement_counter     = 0
         self._fright_flash_counter = 0
@@ -27,10 +26,15 @@ class GhostSprite:
 
 
     def draw(self, ghosts):
+        utils.enable_transparency_blit()
+
         for name, ghost in ghosts:
             
-            self._update_sprite(name, ghost.frightened, ghost.transparent, ghost.eyes_direction, ghost.position)
-            self._sprites[name].draw()
+            sprite_idx = self._get_sprite_idx(name, ghost.frightened, ghost.transparent, ghost.eyes_direction)
+
+            ghost_coords = utils.calculate_coords_sprites(ghost.position)
+
+            self._sprites[sprite_idx].blit(x=ghost_coords.x, y=ghost_coords.y)
 
 
     def update(self):
@@ -38,7 +42,7 @@ class GhostSprite:
         self._fright_flash_counter += 1
 
 
-    def _update_sprite(self, name, frightened, transparent, direction, position):
+    def _get_sprite_idx(self, name, frightened, transparent, direction):
 
         # Calculate index of frame animation for sprite.
         frame_idx = (self._movement_counter // GHOSTS_MOVE_ANIMATION_PERIOD_FRAMES) % 2
@@ -51,10 +55,4 @@ class GhostSprite:
             frightened_blue = frightened_white = False
 
         sprite_idx = GHOST_SPRITE_IDX(name, frightened_blue, frightened_white, transparent, direction, frame_idx)
-
-        # Update sprite frame index.
-        utils.freeze_animated_sprite(self._sprites[name], sprite_idx)
-
-        # Update sprite position.
-        ghost_coords = utils.calculate_coords_sprites(position)
-        self._sprites[name].update(x=ghost_coords.x, y=ghost_coords.y)
+        return sprite_idx

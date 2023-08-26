@@ -36,17 +36,13 @@ def load_image_grid(path, tile_size_px):
     return image_grid
 
 
-def load_animated_sprite(path, tile_size_px, duration, copies = 1):
+def load_animated_sprite(path, tile_size_px, duration):
     image_grid = load_image_grid(path, tile_size_px)
 
     animation = pyglet.image.Animation.from_image_sequence(image_grid, duration=duration)
+    sprite = pyglet.sprite.Sprite(img=animation)
 
-    if copies == 1:
-        return pyglet.sprite.Sprite(img=animation)
-    elif not isinstance(copies, int) or copies <= 0:
-        raise ValueError(f"Incorrect value provided to graphics.utils.load_animated_sprite for copies parameter: {copies}")
-
-    return tuple(pyglet.sprite.Sprite(img=animation) for _ in range(copies))
+    return sprite
 
 
 def load_image(path):
@@ -75,3 +71,7 @@ def freeze_animated_sprite(sprite, frame_index):
 
     if frame.duration is not None:
         sprite._next_dt = frame.duration
+
+
+def enable_transparency_blit():
+    pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
