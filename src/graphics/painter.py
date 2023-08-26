@@ -1,19 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from copy import deepcopy
 import pyglet.gl
 
 from src.constants import (MAZE_START_IMAGE,
                            MAZE_TILE_PX_SIZE,
                            MAZE_TILES_ROWS,
                            MAZE_START_IMAGE_EMPTY_TILE_REGION_COORDS,
-                           PACMAN_MOVE_ANIMATION,
-                           PACMAN_DEATH_ANIMATION,
-                           PACMAN_GHOSTS_SPRITES_PX_SIZE,
-                           PACMAN_MOVE_ANIMATION_PERIOD_SECS,
-                           PACMAN_DEATH_ANIMATION_PERIOD_SECS,
-                           PacManStates,
-                           PACMAN_SPAWNING_FRAME_IDX,
                            FontColors,
                            GAME_HIGH_SCORE_TEXT_COORDS,
                            GAME_1UP_TEXT_COORDS,
@@ -33,24 +25,23 @@ from src.directions import Vector2
 from src.graphics import utils
 from src.graphics.font import Font
 from src.graphics.ghost_sprites import GhostSprite
+from src.graphics.pacman_sprites import PacManSprite
 
 
 
 class Painter:
     
     def __init__(self):
-        
-        self.new_level()
-
         # Load animated sprites.
-        self._pacman_move_sprite  = utils.load_animated_sprite(PACMAN_MOVE_ANIMATION , PACMAN_GHOSTS_SPRITES_PX_SIZE, PACMAN_MOVE_ANIMATION_PERIOD_SECS)
-        self._pacman_death_sprite = utils.load_animated_sprite(PACMAN_DEATH_ANIMATION, PACMAN_GHOSTS_SPRITES_PX_SIZE, PACMAN_DEATH_ANIMATION_PERIOD_SECS)
-        self._ghost_sprites       = GhostSprite()
+        self._pacman_sprites = PacManSprite()
+        self._ghost_sprites  = GhostSprite()
 
         # Load UI elements.
         self._font = Font()
         self._ui_tiles = utils.load_image_grid(UI_TILES_SHEET_PATH, UI_TILES_PX_SIZE)
 
+        # Load maze and reset child attributes.
+        self.new_level()        
     
 
     def draw_menu(self):
@@ -60,13 +51,19 @@ class Painter:
         image.blit(0, 0)
 
 
-    def update(self):
-        self._ghost_sprites.update()
+    def update(self, pacman):
+        self._pacman_sprites.update(pacman)
+        self._ghost_sprites .update()
+
 
     def new_level(self):
         # Load initial maze image.
         self._maze_image = utils.load_image(MAZE_START_IMAGE)
         self._maze_empty_tile = self._maze_image.get_region(*MAZE_START_IMAGE_EMPTY_TILE_REGION_COORDS, MAZE_TILE_PX_SIZE, MAZE_TILE_PX_SIZE)
+
+        # Reset sprite counters.
+        self._pacman_sprites.reset()
+        self._ghost_sprites .reset()
         
 
     def draw_game(self, pacman, ghosts, score, lives, level):
@@ -75,7 +72,7 @@ class Painter:
 
         self._draw_gui(score, lives, level)
 
-        self._draw_pacman(pacman)
+        self._pacman_sprites.draw(pacman)
 
         self._ghost_sprites.draw(ghosts)
 
@@ -97,61 +94,6 @@ class Painter:
 
     def notify_fright_on(self, fright_duration, fright_flashes):
         self._ghost_sprites.notify_fright_on(fright_duration, fright_flashes)
-
-
-    def _draw_pacman(self, pacman):
-        # Convert in-game coordinates to render space coordinates.
-        pacman_coords = utils.calculate_coords_sprites(pacman.position)
-
-        # Determine rotation of Pac-Man sprite (only used for movement sprite).
-        match pacman.direction:
-            case Vector2.LEFT:
-                rotation = 180
-            case Vector2.UP:
-                rotation = -90
-            case Vector2.DOWN:
-                rotation = 90
-            case Vector2.RIGHT:
-                rotation = 0
-            case _:
-                raise ValueError('Unvalid direction provided for Pac-Man to Painter')
-
-        match pacman.state:
-            case PacManStates.STUCK:
-                # Freeze the animation, as long as Pac-Man is not a full yellow circle.
-                if self._pacman_move_sprite.frame_index != PACMAN_SPAWNING_FRAME_IDX:
-                    self._pacman_move_sprite.paused = True
-
-                # Draw correct sprite.
-                self._pacman_move_sprite.update(x=pacman_coords.x, y=pacman_coords.y, rotation=rotation)
-                self._pacman_move_sprite.draw()
-
-            case PacManStates.SPAWNING:
-                # Freeze the animation on the correct frame.
-                utils.freeze_animated_sprite(self._pacman_move_sprite, PACMAN_SPAWNING_FRAME_IDX)
-
-                # Draw correct sprite.
-                self._pacman_move_sprite.update(x=pacman_coords.x, y=pacman_coords.y, rotation=rotation)
-                self._pacman_move_sprite.draw()
-
-            case PacManStates.MOVING | PacManStates.TURNING:
-                # Unfreeze the animation (this is silently ignored if paused property was already false).
-                self._pacman_move_sprite.paused = False
-
-                # Draw correct sprite.
-                self._pacman_move_sprite.update(x=pacman_coords.x, y=pacman_coords.y, rotation=rotation)
-                self._pacman_move_sprite.draw()
-
-            case PacManStates.DEAD:
-                # Unfreeze the animation (this is silently ignored if paused property was already false).
-                self._pacman_death_sprite.paused = False
-
-                # Draw correct sprite.
-                self._pacman_death_sprite.update(x=pacman_coords.x, y=pacman_coords.y, rotation=0)
-                self._pacman_death_sprite.draw()
-            
-            case _:
-                raise ValueError('Unvalid state provided for Pac-Man to Painter')
 
 
     def _draw_gui(self, score, lives, level):

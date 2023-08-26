@@ -16,6 +16,9 @@ class GhostSprite:
     def __init__(self):
         self._sprites = utils.load_image_grid(GHOSTS_ALL_SPRITES, PACMAN_GHOSTS_SPRITES_PX_SIZE)
 
+        self.reset()
+        
+    def reset(self):
         self._movement_counter     = 0
         self._fright_flash_counter = 0
 

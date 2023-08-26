@@ -36,15 +36,6 @@ def load_image_grid(path, tile_size_px):
     return image_grid
 
 
-def load_animated_sprite(path, tile_size_px, duration):
-    image_grid = load_image_grid(path, tile_size_px)
-
-    animation = pyglet.image.Animation.from_image_sequence(image_grid, duration=duration)
-    sprite = pyglet.sprite.Sprite(img=animation)
-
-    return sprite
-
-
 def load_image(path):
     image = pyglet.image.load(path)
         
@@ -58,19 +49,6 @@ def load_image(path):
     pyglet.gl.glTexParameteri(texture.target, pyglet.gl.GL_TEXTURE_MAG_FILTER, pyglet.gl.GL_NEAREST)
 
     return image
-
-
-def freeze_animated_sprite(sprite, frame_index):
-    sprite.paused = True
-    sprite.frame_index = frame_index
-
-    # Needed due to Pyglet issue #908 present in Pyglet version 2.0.8:
-    # https://github.com/pyglet/pyglet/issues/906
-    frame = sprite._animation.frames[sprite._frame_index]
-    sprite._set_texture(frame.image.get_texture())
-
-    if frame.duration is not None:
-        sprite._next_dt = frame.duration
 
 
 def enable_transparency_blit():

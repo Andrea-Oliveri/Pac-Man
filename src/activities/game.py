@@ -67,9 +67,10 @@ class Game(Activity):
 
         self._pacman .update(self._level, fright, self._maze)
         self._ghosts .update(self._level, fright, self._maze, self._pacman)
-        self._painter.update()
 
         self._calculate_new_game_state()
+
+        self._painter.update(self._pacman)
 
         
     def event_key_pressed(self, symbol, modifiers):

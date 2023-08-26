@@ -75,23 +75,53 @@ GHOST_HOUSE_COLS_RANGE = (11, 16)
 # --------------------------------------------------------------------
 
 # Paths of images containing the sprite sheets for the animations.
-PACMAN_MOVE_ANIMATION  = "./assets/images/Pac-Man Movement Animation Sequence.png"
-PACMAN_DEATH_ANIMATION = "./assets/images/Pac-Man Death Animation Sequence.png"
-GHOSTS_ALL_SPRITES     = "./assets/images/Ghosts.png"
+PACMAN_ALL_SPRITES = "./assets/images/Pac-Man.png"
+GHOSTS_ALL_SPRITES = "./assets/images/Ghosts.png"
 
 # Duration of each frame in the animations.
-PACMAN_MOVE_ANIMATION_PERIOD_SECS  = 2 / GAME_ORIGINAL_FPS
-PACMAN_DEATH_ANIMATION_PERIOD_SECS = 10 / GAME_ORIGINAL_FPS
-GHOSTS_MOVE_ANIMATION_PERIOD_FRAMES = 8
+PACMAN_MOVE_ANIMATION_PERIOD_FRAMES  = 2
+PACMAN_DEATH_ANIMATION_PERIOD_FRAMES = (30, 7, 8, 7, 8, 7, 8, 7, 8, 7, 15)
+GHOSTS_MOVE_ANIMATION_PERIOD_FRAMES  = 8
 GHOSTS_FRIGHT_FLASH_ANIMATION_PERIOD_FRAMES = 14 
 
 # Size of Pac-Man and Ghost sprites expressed in pixels.
 PACMAN_GHOSTS_SPRITES_PX_SIZE = 16
 
-# Index of frame in PACMAN_MOVE_ANIMATION to use when Pac-Man is spawning.
-PACMAN_SPAWNING_FRAME_IDX = 0
+# Function providing the right sprite for each pacman condition.
+# Rows go from bottom to top due to how pyglet increases y-axis.
+PACMAN_SPAWNING_FRAME_IDX = 44
+def PACMAN_SPRITE_IDX(direction, spawning, dead, frame_idx):
+    if dead:
+        return 45 + frame_idx if 0 <= frame_idx <= len(PACMAN_DEATH_ANIMATION_PERIOD_FRAMES) else 3
 
-# Function providing the right sprite for each combination.
+    if spawning:
+        return PACMAN_SPAWNING_FRAME_IDX
+
+    idx = 0
+
+    match frame_idx:
+        case 0:
+            return PACMAN_SPAWNING_FRAME_IDX
+        case 1:
+            idx += 1
+        case 2:
+            idx += 0
+        case 3:
+            idx += 1
+
+    match direction:
+        case Vector2.DOWN:
+            idx += 0
+        case Vector2.UP:
+            idx += 14
+        case Vector2.LEFT:
+            idx += 28
+        case Vector2.RIGHT:
+            idx += 42
+        
+    return idx 
+
+# Function providing the right sprite for each ghost condition.
 # Rows go from bottom to top due to how pyglet increases y-axis.
 def GHOST_SPRITE_IDX(name, frightened_blue, frightened_white, transparent, direction, frame_idx):
     if transparent:
