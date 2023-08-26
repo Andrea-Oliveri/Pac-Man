@@ -64,7 +64,7 @@ class GhostAbstract(Character, ABC):
         best_direction = None
         for direction in (Vector2.UP, Vector2.LEFT, Vector2.DOWN, Vector2.RIGHT):
             # Ghosts are not allowed to willingly flip direction.
-            if direction == direction_from_current_tile * (-1):
+            if direction == -direction_from_current_tile:
                 continue
 
             # Ghosts are not allowed to turn upwards on certain tiles when in chase or frightened mode.
@@ -169,7 +169,7 @@ class GhostAbstract(Character, ABC):
             direction =  directions_clockwise[(starting_idx + offset) % len(directions_clockwise)]
             next_tile = current_tile + direction
 
-            if not maze.tile_is_wall(next_tile) and direction != self._direction * (-1):
+            if not maze.tile_is_wall(next_tile) and direction != -self._direction:
                 return direction
 
         raise RuntimeError("No valid direction found in GhostAbstract._frightened_ghost_random_direction")

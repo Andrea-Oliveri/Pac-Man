@@ -17,9 +17,10 @@ class GhostsCoordinator:
         self._mode_timer = 0
         self._prng = PRNG()
 
-        self._ghosts = {Ghost.BLINKY: Blinky(self._prng), 
+        blinky = Blinky(self._prng)
+        self._ghosts = {Ghost.BLINKY: blinky, 
                         Ghost.PINKY : Pinky (self._prng),
-                        Ghost.INKY  : Inky  (self._prng),
+                        Ghost.INKY  : Inky  (self._prng, blinky),
                         Ghost.CLYDE : Clyde (self._prng)}
 
 
