@@ -12,7 +12,7 @@ class Blinky(GhostAbstract):
 
     def __init__(self, prng):
         super().__init__(Ghost.BLINKY, prng)
-        self._just_exited_pen()
+        self._just_exited_house()
 
     def _calculate_personal_target_tile(self, pacman, maze):
         pacman_tile = maze.get_tile_center(pacman.position)
@@ -24,13 +24,6 @@ class Pinky(GhostAbstract):
     def __init__(self, prng):
         super().__init__(Ghost.PINKY, prng)
     
-        # ----------------------
-        # DEBUG
-        # ----------------------
-        from src.directions import Vector2
-        self._position = Vector2(x = 14, y = 11.5)
-        self._just_exited_pen()
-        # ----------------------
 
     def _calculate_personal_target_tile(self, pacman, maze):
         in_front_tile = maze.get_tile_center(pacman.position)
@@ -48,13 +41,6 @@ class Inky(GhostAbstract):
         super().__init__(Ghost.INKY, prng)
         self._blinky = blinky
 
-        # ----------------------
-        # DEBUG
-        # ----------------------
-        from src.directions import Vector2
-        self._position = Vector2(x = 14, y = 11.5)
-        self._just_exited_pen()
-        # ----------------------
 
     def _calculate_personal_target_tile(self, pacman, maze):
         in_front_tile = maze.get_tile_center(pacman.position)
@@ -75,13 +61,6 @@ class Clyde(GhostAbstract):
     def __init__(self, prng):
         super().__init__(Ghost.CLYDE, prng)
 
-        # ----------------------
-        # DEBUG
-        # ----------------------
-        from src.directions import Vector2
-        self._position = Vector2(x = 14, y = 11.5)
-        self._just_exited_pen()
-        # ----------------------
 
     def _calculate_personal_target_tile(self, pacman, maze):
         distance_squared = Vector2.distance_squared(self._position, pacman.position)

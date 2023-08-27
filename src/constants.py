@@ -63,10 +63,6 @@ WARP_TUNNEL_TELEPORT_MARGIN = 2
 WARP_TUNNEL_COL_LEFT = 4
 WARP_TUNNEL_COL_RIGHT = 23
 
-# Ghost house tiles coords.
-GHOST_HOUSE_ROWS_RANGE = (13, 15)
-GHOST_HOUSE_COLS_RANGE = (11, 16)
-
 # --------------------------------------------------------------------
 
 
@@ -229,11 +225,13 @@ def PACMAN_SPEED(level, fright):
 
     return multiplier * REFERENCE_SPEED
 
-# Function returning the Ghost speed depending on the current level, if fright is on and if ghost is in warp tunnel.
-def GHOSTS_SPEED(level, fright, in_warp_tunnel):
+# Function returning the Ghost speed depending on the current level, if fright is on, if ghost is in warp tunnel or in the house.
+def GHOSTS_SPEED(level, fright, in_warp_tunnel, in_or_exiting_house):
     multiplier = None
 
-    if level == 1:
+    if in_or_exiting_house:
+        multiplier = 0.40
+    elif level == 1:
         multiplier = 0.40 if in_warp_tunnel else 0.50 if fright else 0.75
     elif level <= 4:
         multiplier = 0.45 if in_warp_tunnel else 0.55 if fright else 0.85
@@ -382,9 +380,9 @@ GHOSTS_START_POSITIONS = {Ghost.BLINKY: Vector2(x = 14, y = 11.5),
                           Ghost.CLYDE : Vector2(x = 16, y = 14.5)}
 
 GHOSTS_START_DIRECTIONS = {Ghost.BLINKY: Vector2.LEFT,
-                           Ghost.PINKY : Vector2.UP,
-                           Ghost.INKY  : Vector2.DOWN,
-                           Ghost.CLYDE : Vector2.DOWN}
+                           Ghost.PINKY : Vector2.DOWN,
+                           Ghost.INKY  : Vector2.UP,
+                           Ghost.CLYDE : Vector2.UP}
 
 GHOSTS_START_BEHAVIOUR  = {Ghost.BLINKY: GhostBehaviour.SCATTER,
                            Ghost.PINKY : GhostBehaviour.SCATTER | GhostBehaviour.IN_HOUSE,

@@ -7,9 +7,7 @@ from src.constants import (MazeTiles,
                            MAZE_TILES_ROWS,
                            WARP_TUNNEL_ROW,
                            WARP_TUNNEL_COL_LEFT,
-                           WARP_TUNNEL_COL_RIGHT,
-                           GHOST_HOUSE_ROWS_RANGE,
-                           GHOST_HOUSE_COLS_RANGE)
+                           WARP_TUNNEL_COL_RIGHT)
 
 
 class Maze:
@@ -69,12 +67,6 @@ class Maze:
         """Function that returns True if the tile at desired index is not walkable (is a wall)."""
         return self[index] == MazeTiles.WALL
     
-
-    def tile_is_ghost_house(self, index):
-        _, row, col = self._index_convert(index)
-
-        return (GHOST_HOUSE_ROWS_RANGE[0] <= row <= GHOST_HOUSE_ROWS_RANGE[1]) and \
-               (GHOST_HOUSE_COLS_RANGE[0] <= col <= GHOST_HOUSE_COLS_RANGE[1])
 
     @staticmethod
     def get_tile_center(index):

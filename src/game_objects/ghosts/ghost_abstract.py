@@ -34,9 +34,10 @@ class GhostAbstract(Character, ABC):
 
         self._reverse_direction_signal = False
 
-        # Needed to ensure consistency with original game: ghost eyes change as soon as
-        # they enter a new tile, even if they have not made the turn yet.
-        self._eyes_direction_next = False
+        # Variable capturing whether the last callback called was for the tile edge or tile center. 
+        # Needed to ensure consistency with original game: ghost eyes change as soon as they enter a new tile, even if they have not made the turn yet.
+        # Also needed to avoid oscillations in in-house behaviour.
+        self._last_step_was_edge = False
 
 
 
@@ -44,7 +45,7 @@ class GhostAbstract(Character, ABC):
         # Update position and directions.
         self._update_position(level, fright, maze, pacman)
 
-    def _just_exited_pen(self):
+    def _just_exited_house(self):
         self._direction           = Vector2.LEFT
         self._direction_next      = Vector2.LEFT
         self._direction_next_next = Vector2.LEFT
@@ -104,7 +105,8 @@ class GhostAbstract(Character, ABC):
         while True:
             # Distance that can still be travelled depends on the tile (whether in warp tunnel or not).
             in_warp_tunnel = maze.tile_is_warp_tunnel(self._position)
-            speed = GHOSTS_SPEED(level, fright, in_warp_tunnel)
+            in_or_exiting_house = (GhostBehaviour.IN_HOUSE in self._behaviour) or (GhostBehaviour.EXITING_HOUSE in self._behaviour)
+            speed = GHOSTS_SPEED(level, fright, in_warp_tunnel, in_or_exiting_house)
             residual_distance = speed * dt
             
             # Update position clipping to closest half-tile.
@@ -113,8 +115,10 @@ class GhostAbstract(Character, ABC):
             # Update direction attributes based on behaviours.
             if is_at_tile_center:
                 self._callback_is_at_tile_center()
+                self._last_step_was_edge = False
             elif is_at_tile_edge:
                 self._callback_is_at_tile_edge(maze, pacman)
+                self._last_step_was_edge = True
 
             # Calculate residual dt not used by movement at this speed, if any.
             if residual_distance <= 0:
@@ -124,9 +128,14 @@ class GhostAbstract(Character, ABC):
 
 
     def _callback_is_at_tile_edge(self, maze, pacman):
-        self._eyes_direction_next = True
-        
-        if GhostBehaviour.FRIGHTENED in self._behaviour:
+
+        if GhostBehaviour.IN_HOUSE in self._behaviour:
+            if not self._last_step_was_edge:
+                self._direction *= -1
+                self._direction_next = self._direction
+                self._direction_next_next = None
+
+        elif GhostBehaviour.FRIGHTENED in self._behaviour:
             if self._reverse_direction_signal:
                 self._reverse_direction_signal = False
                 self._direction *= -1
@@ -155,7 +164,6 @@ class GhostAbstract(Character, ABC):
                 self._direction_next_next = self._calculate_direction_at_tile_center(maze, pacman, self._direction_next)
             
                       
-            #'IN_HOUSE', 'EXITING_HOUSE', 'GOING_TO_HOUSE'
 
 
     def _frightened_ghost_random_direction(self, maze):
@@ -177,12 +185,16 @@ class GhostAbstract(Character, ABC):
 
 
     def _callback_is_at_tile_center(self):
-        self._eyes_direction_next = False
+        
+        if GhostBehaviour.IN_HOUSE in self._behaviour:
+            return
 
-        if any(behaviour in self._behaviour for behaviour in (GhostBehaviour.CHASE, GhostBehaviour.SCATTER, GhostBehaviour.FRIGHTENED)):
+        elif any(behaviour in self._behaviour for behaviour in (GhostBehaviour.CHASE, GhostBehaviour.SCATTER, GhostBehaviour.FRIGHTENED)):
             self._direction           = self._direction_next
             self._direction_next      = self._direction_next_next
             self._direction_next_next = None
+
+
 
 
     def add_behaviour(self, behaviour):
@@ -214,4 +226,4 @@ class GhostAbstract(Character, ABC):
     position    = property(lambda self: self._position)
     frightened  = property(lambda self: GhostBehaviour.FRIGHTENED in self._behaviour)
     transparent = property(lambda self: GhostBehaviour.GOING_TO_HOUSE in self._behaviour)
-    eyes_direction = property(lambda self: self._direction_next if self._eyes_direction_next else self._direction)
+    eyes_direction = property(lambda self: self._direction_next if self._last_step_was_edge else self._direction)
