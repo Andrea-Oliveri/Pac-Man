@@ -89,6 +89,9 @@ class Painter:
         origin = utils.calculate_coords_sprites(Vector2(0, 0))
         pyglet.shapes.Circle(origin.x, origin.y, 2, color = (255, 0, 0)).draw()
       
+        from src.constants import GHOSTS_EATEN_TARGET_TILE
+        coords = utils.calculate_coords_sprites(GHOSTS_EATEN_TARGET_TILE)
+        pyglet.shapes.Star(coords.x, coords.y, 5, 2, 4, color = (0, 255, 0)).draw()
         # ----------------------------------------
 
 

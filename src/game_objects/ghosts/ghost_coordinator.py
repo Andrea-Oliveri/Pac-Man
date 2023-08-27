@@ -61,6 +61,17 @@ class GhostsCoordinator:
         for ghost in self._ghosts.values():
             ghost.update(level, fright, maze, pacman)
 
+
+        # ------------------------------
+        # DEBUG
+        # ------------------------------
+        self.counter = self.counter + 1 if hasattr(self, "counter") else 0
+        g = Ghost.PINKY if self.counter == 120 else Ghost.INKY if self.counter == 240 else Ghost.CLYDE if self.counter == 360 else None
+        if g is not None and GhostBehaviour.IN_HOUSE in self._ghosts[g]._behaviour:
+            self._ghosts[g].add_behaviour(GhostBehaviour.EXITING_HOUSE)
+        # ------------------------------
+
+
     def check_collision(self, maze, pacman_position):
         pacman_tile = maze.get_tile_center(pacman_position)
 

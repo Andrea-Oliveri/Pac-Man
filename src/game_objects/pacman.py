@@ -77,13 +77,13 @@ class PacMan(Character):
             return False
 
         # If turn allowed in that direction, do it.
-        if not maze.tile_is_wall(self._position + self._direction_input):
+        if not maze.tile_is_not_walkable(self._position + self._direction_input):
             self._direction       = self._direction_input
             self._direction_input = None
             return True
 
         # If turn will be allowed soon (one-cell forwards), allow anticipating it.
-        if maze.tile_is_wall(self._position + self._direction + self._direction_input):
+        if maze.tile_is_not_walkable(self._position + self._direction + self._direction_input):
             self._direction_input = None
 
         return False

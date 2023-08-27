@@ -6,7 +6,8 @@ from abc import ABC, abstractmethod
 from src.game_objects.character import Character
 
 from src.directions import Vector2
-from src.constants import (GAME_ORIGINAL_UPDATES_INTERVAL,
+from src.constants import (Ghost,
+                           GAME_ORIGINAL_UPDATES_INTERVAL,
                            GHOSTS_START_POSITIONS,
                            GHOSTS_START_DIRECTIONS,
                            GHOSTS_START_BEHAVIOUR,
@@ -49,6 +50,8 @@ class GhostAbstract(Character, ABC):
         self._direction           = Vector2.LEFT
         self._direction_next      = Vector2.LEFT
         self._direction_next_next = Vector2.LEFT
+
+        self._behaviour = self._behaviour & (~GhostBehaviour.IN_HOUSE) & (~GhostBehaviour.EXITING_HOUSE) & (~GhostBehaviour.GOING_TO_HOUSE)
     
     
     def _calculate_direction_at_tile_center(self, maze, pacman, direction_from_current_tile):
@@ -75,7 +78,7 @@ class GhostAbstract(Character, ABC):
             next_next_tile = next_tile + direction
 
             # Ghosts can't go in a wall.
-            if maze.tile_is_wall(next_next_tile):
+            if maze.tile_is_not_walkable(next_next_tile):
                 continue
 
             distance = Vector2.distance_squared(target_tile, next_next_tile)
@@ -110,7 +113,8 @@ class GhostAbstract(Character, ABC):
             residual_distance = speed * dt
             
             # Update position clipping to closest half-tile.
-            residual_distance, _, is_at_tile_center, is_at_tile_edge = super()._update_position_within_tile(residual_distance, maze)
+            collide_with_door = GhostBehaviour.EXITING_HOUSE not in self._behaviour
+            residual_distance, _, is_at_tile_center, is_at_tile_edge = super()._update_position_within_tile(residual_distance, maze, collide_with_door)
 
             # Update direction attributes based on behaviours.
             if is_at_tile_center:
@@ -127,13 +131,36 @@ class GhostAbstract(Character, ABC):
             dt = residual_distance / speed
 
 
+    def _frightened_ghost_random_direction(self, maze):
+        current_tile = maze.get_tile_center(self._position)
+        directions_clockwise = [Vector2.UP, Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT]
+
+        direction = self._prng.get_random_direction()
+        starting_idx = directions_clockwise.index(direction)
+
+        for offset in range(0, len(directions_clockwise)):
+            direction =  directions_clockwise[(starting_idx + offset) % len(directions_clockwise)]
+            next_tile = current_tile + direction
+
+            if not maze.tile_is_not_walkable(next_tile) and direction != -self._direction:
+                return direction
+
+        raise RuntimeError("No valid direction found in GhostAbstract._frightened_ghost_random_direction")
+
+
     def _callback_is_at_tile_edge(self, maze, pacman):
 
-        if GhostBehaviour.IN_HOUSE in self._behaviour:
+        if GhostBehaviour.IN_HOUSE in self._behaviour or \
+           ((GhostBehaviour.EXITING_HOUSE in self._behaviour) and (self._position.x == GHOSTS_START_POSITIONS[self._name].x) and (self._name != Ghost.PINKY)):
             if not self._last_step_was_edge:
                 self._direction *= -1
                 self._direction_next = self._direction
                 self._direction_next_next = None
+
+        elif ((GhostBehaviour.EXITING_HOUSE in self._behaviour) and (round(self._position.x) == GHOSTS_START_POSITIONS[Ghost.PINKY].x)):
+            self._direction = Vector2.UP
+            self._direction_next = self._direction
+            self._direction_next_next = None
 
         elif GhostBehaviour.FRIGHTENED in self._behaviour:
             if self._reverse_direction_signal:
@@ -163,31 +190,25 @@ class GhostAbstract(Character, ABC):
                 # When entering new tile, ghost must decide what it will do in next tile along this direction.
                 self._direction_next_next = self._calculate_direction_at_tile_center(maze, pacman, self._direction_next)
             
-                      
-
-
-    def _frightened_ghost_random_direction(self, maze):
-        current_tile = maze.get_tile_center(self._position)
-        directions_clockwise = [Vector2.UP, Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT]
-
-        direction = self._prng.get_random_direction()
-        starting_idx = directions_clockwise.index(direction)
-
-        for offset in range(0, len(directions_clockwise)):
-            direction =  directions_clockwise[(starting_idx + offset) % len(directions_clockwise)]
-            next_tile = current_tile + direction
-
-            if not maze.tile_is_wall(next_tile) and direction != -self._direction:
-                return direction
-
-        raise RuntimeError("No valid direction found in GhostAbstract._frightened_ghost_random_direction")
-
-
 
     def _callback_is_at_tile_center(self):
         
         if GhostBehaviour.IN_HOUSE in self._behaviour:
             return
+
+        elif GhostBehaviour.EXITING_HOUSE in self._behaviour:
+            if self._position.x == GHOSTS_START_POSITIONS[Ghost.CLYDE].x:
+                self._direction           = Vector2.LEFT
+                self._direction_next      = self._direction
+                self._direction_next_next = None
+            elif self._position.x == GHOSTS_START_POSITIONS[Ghost.INKY].x:
+                self._direction           = Vector2.RIGHT
+                self._direction_next      = self._direction
+                self._direction_next_next = None
+            elif self._position.y == GHOSTS_START_POSITIONS[Ghost.BLINKY].y:
+                self._just_exited_house()
+            elif self._name == Ghost.INKY:
+                print(self._position, GHOSTS_START_POSITIONS[Ghost.BLINKY])
 
         elif any(behaviour in self._behaviour for behaviour in (GhostBehaviour.CHASE, GhostBehaviour.SCATTER, GhostBehaviour.FRIGHTENED)):
             self._direction           = self._direction_next

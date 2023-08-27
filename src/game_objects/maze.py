@@ -63,9 +63,10 @@ class Maze:
         return (row == WARP_TUNNEL_ROW) and (col <= WARP_TUNNEL_COL_LEFT or col >= WARP_TUNNEL_COL_RIGHT)
 
 
-    def tile_is_wall(self, index):
-        """Function that returns True if the tile at desired index is not walkable (is a wall)."""
-        return self[index] == MazeTiles.WALL
+    def tile_is_not_walkable(self, index, collide_with_door = True):
+        """Function that returns True if the tile at desired index is not walkable."""
+        tile_type = self[index]
+        return tile_type == MazeTiles.WALL or (tile_type == MazeTiles.DOOR and collide_with_door)
     
 
     @staticmethod

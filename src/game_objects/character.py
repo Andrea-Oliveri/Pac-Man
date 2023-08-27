@@ -15,7 +15,7 @@ class Character(ABC):
         self._direction = direction
 
 
-    def _update_position_within_tile(self, distance, maze):
+    def _update_position_within_tile(self, distance, maze, collide_with_door = True):
         
         # Find coordinate along which we are travelling.
         match self._direction:
@@ -41,9 +41,9 @@ class Character(ABC):
 
         collision_point = new_position + (self._direction * 0.500000000001)
         
-        if maze.tile_is_wall(new_position):
+        if maze.tile_is_not_walkable(new_position, collide_with_door):
             new_position += self._direction * (-0.5)
-        elif maze.tile_is_wall(collision_point):
+        elif maze.tile_is_not_walkable(collision_point, collide_with_door):
             setattr(new_position, coord_changing, floor(getattr(new_position, coord_changing)) + 0.5)
         else:
             is_stuck = False
