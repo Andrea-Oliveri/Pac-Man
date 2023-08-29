@@ -207,7 +207,7 @@ PACMAN_PELLET_PENALTIES = {MazeTiles.PELLET: 1, MazeTiles.POWER_PELLET: 3}
 # Constants related to speed of Pac-Man and Ghosts.
 # --------------------------------------------------------------------
 
-# Maximum Pac-Man move speed.
+# Maximum Pac-Man move speed in tiles per second.
 REFERENCE_SPEED = 75.75757625 / 8
 
 # Function returning the Pac-Man speed depending on the current level and if fright is on.
@@ -226,10 +226,12 @@ def PACMAN_SPEED(level, fright):
     return multiplier * REFERENCE_SPEED
 
 # Function returning the Ghost speed depending on the current level, if fright is on, if ghost is in warp tunnel or in the house.
-def GHOSTS_SPEED(level, fright, in_warp_tunnel, in_or_exiting_house):
+def GHOSTS_SPEED(level, fright, in_warp_tunnel, going_to_house, in_or_exiting_house):
     multiplier = None
 
-    if in_or_exiting_house:
+    if going_to_house:
+        multiplier = 1.6
+    elif in_or_exiting_house:
         multiplier = 0.40
     elif level == 1:
         multiplier = 0.40 if in_warp_tunnel else 0.50 if fright else 0.75

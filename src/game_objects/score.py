@@ -33,6 +33,7 @@ class Score:
             self._high_score = self._score
             self._load_or_write_high_score(load = False)
 
+        return self
 
     def _load_or_write_high_score(self, load):
         

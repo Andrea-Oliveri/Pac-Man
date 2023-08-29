@@ -17,12 +17,15 @@ class GhostsCoordinator:
         self._mode_timer = 0
         self._prng = PRNG()
 
-        blinky = Blinky(self._prng)
-        self._ghosts = {Ghost.BLINKY: blinky, 
-                        Ghost.PINKY : Pinky (self._prng),
-                        Ghost.INKY  : Inky  (self._prng, blinky),
-                        Ghost.CLYDE : Clyde (self._prng)}
+        # Variables needed to decide when ghosts leave house.
+        self._dot_counter_ghosts = [0 for _ in Ghost]
+        self._dot_counter_global = 0
+        self._dot_counter_global_enable = False
+        self._time_since_dot_eaten = 0
 
+        # Instanciate ghosts.
+        blinky = Blinky(self._prng)
+        self._ghosts = (blinky, Pinky(self._prng), Inky(self._prng, blinky), Clyde(self._prng))
 
     def _update_movement_mode(self, level, fright):
         
@@ -31,7 +34,7 @@ class GhostsCoordinator:
             return
 
         # If fright is off, remove it from all ghosts.
-        for ghost in self._ghosts.values():
+        for ghost in self._ghosts:
             ghost.clear_fright()
 
         # Update timer.
@@ -51,43 +54,47 @@ class GhostsCoordinator:
         raise RuntimeError('Reached end of GhostCoordinator._update_mode without finding a behaviour for current timer')
 
     def _add_behaviour_to_all(self, behaviour):
-        for ghost in self._ghosts.values():
+        for ghost in self._ghosts:
             ghost.add_behaviour(behaviour)
 
     def update(self, level, fright, maze, pacman):
         self._update_movement_mode(level, fright)
+        self._time_since_dot_eaten += 1
         
         # Update all ghosts.
-        for ghost in self._ghosts.values():
+        for ghost in self._ghosts:
             ghost.update(level, fright, maze, pacman)
 
-
-        # ------------------------------
-        # DEBUG
-        # ------------------------------
-        self.counter = self.counter + 1 if hasattr(self, "counter") else 0
-        g = Ghost.PINKY if self.counter == 120 else Ghost.INKY if self.counter == 240 else Ghost.CLYDE if self.counter == 360 else None
-        if g is not None and GhostBehaviour.IN_HOUSE in self._ghosts[g]._behaviour:
-            self._ghosts[g].add_behaviour(GhostBehaviour.EXITING_HOUSE)
-        # ------------------------------
+    def notify_pellet_eaten(self):
+        self._time_since_dot_eaten = 0
 
 
-    def check_collision(self, maze, pacman_position):
-        pacman_tile = maze.get_tile_center(pacman_position)
+    def check_collision(self, maze, pacman):
+        pacman_tile = maze.get_tile_center(pacman.position)
 
-        for ghost in self._ghosts.values():
+        life_lost = False
+        count_eaten = 0
+        for ghost in self._ghosts:
             ghost_tile = maze.get_tile_center(ghost.position)
-            if pacman_tile == ghost_tile:
-                return True
 
-        return False
+            if pacman_tile != ghost_tile:
+                continue
+
+            if ghost.frightened:
+                ghost.notify_was_eaten(maze, pacman)
+                count_eaten += 1
+                continue
+            
+            life_lost = True
+
+        return life_lost, count_eaten
 
     def notify_fright_on(self, fright_duration):
         self._add_behaviour_to_all(GhostBehaviour.FRIGHTENED)
 
         if fright_duration <= 0:
-            for ghost in self._ghosts.values():
+            for ghost in self._ghosts:
                 ghost.clear_fright()
 
     def __iter__(self):
-        return iter(self._ghosts.items())
+        return iter(self._ghosts)

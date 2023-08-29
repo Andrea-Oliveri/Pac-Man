@@ -115,12 +115,16 @@ class Game(Activity):
             self._pellet_eaten(tile_coords, pellet_type)
 
         # Check if collided with any ghosts.
-        if self._ghosts.check_collision(self._maze, self._pacman.position):
-            self._ghost_collision()
+        life_lost, count_eaten = self._ghosts.check_collision(self._maze, self._pacman) 
+        for _ in range(count_eaten):
+            self._score.add_to_score(ScoreActions.EAT_GHOST)
+        if life_lost:
+            self._life_lost()
 
         # Update lives if score high enough.
         if not self._extra_life_awarded and self._score.score >= EXTRA_LIFE_POINTS_REQUIREMENT:
             self._lives += 1
+            self._extra_life_awarded = True
 
         # End level if completed.
         if self._maze.completed():
@@ -135,6 +139,7 @@ class Game(Activity):
     def _pellet_eaten(self, tile_coords, pellet_type):
         self._painter.set_empty_tile(tile_coords)
         self._pacman.add_penalty(pellet_type)
+        self._ghosts.notify_pellet_eaten()
         self._score.add_to_score(ScoreActions.EAT_PELLET if pellet_type == MazeTiles.PELLET else ScoreActions.EAT_POWER_PELLET)
 
         if pellet_type == MazeTiles.POWER_PELLET:
@@ -146,8 +151,11 @@ class Game(Activity):
             self._painter.notify_fright_on(fright_duration, fright_flashes)
 
 
-    def _ghost_collision(self):
-        print('Ghost collision')
+    def _life_lost(self):
+        
+        print('Life lost')
+
+        # TODO: when life is lost, should not delete ghost_coordinator instance as it contains the global dot counter.
 
 
     def _end_level(self):

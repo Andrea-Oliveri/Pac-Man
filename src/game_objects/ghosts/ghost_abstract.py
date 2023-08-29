@@ -92,7 +92,10 @@ class GhostAbstract(Character, ABC):
 
     def _calculate_target_tile(self, pacman, maze):
         
-        if GhostBehaviour.CHASE in self._behaviour:
+        if GhostBehaviour.GOING_TO_HOUSE in self._behaviour:
+            return GHOSTS_EATEN_TARGET_TILE
+
+        elif GhostBehaviour.CHASE in self._behaviour:
             return self._calculate_personal_target_tile(pacman, maze)
 
         elif GhostBehaviour.SCATTER in self._behaviour:
@@ -108,8 +111,9 @@ class GhostAbstract(Character, ABC):
         while True:
             # Distance that can still be travelled depends on the tile (whether in warp tunnel or not).
             in_warp_tunnel = maze.tile_is_warp_tunnel(self._position)
+            going_to_house = GhostBehaviour.GOING_TO_HOUSE in self._behaviour
             in_or_exiting_house = (GhostBehaviour.IN_HOUSE in self._behaviour) or (GhostBehaviour.EXITING_HOUSE in self._behaviour)
-            speed = GHOSTS_SPEED(level, fright, in_warp_tunnel, in_or_exiting_house)
+            speed = GHOSTS_SPEED(level, fright, in_warp_tunnel, going_to_house, in_or_exiting_house)
             residual_distance = speed * dt
             
             # Update position clipping to closest half-tile.
@@ -193,6 +197,9 @@ class GhostAbstract(Character, ABC):
 
     def _callback_is_at_tile_center(self):
         
+        # TODO: at end of GOING_TO_HOUSE behaviour, ghost behaviour should be changed back to 
+
+
         if GhostBehaviour.IN_HOUSE in self._behaviour:
             return
 
@@ -216,6 +223,17 @@ class GhostAbstract(Character, ABC):
             self._direction_next_next = None
 
 
+    def notify_was_eaten(self, maze, pacman):
+        self.add_behaviour(GhostBehaviour.GOING_TO_HOUSE)
+        self.clear_fright()
+            
+        self._direction      = self._calculate_direction_at_tile_center(maze, pacman, Vector2(0, 0))
+        self._direction_next = self._calculate_direction_at_tile_center(maze, pacman, self._direction)
+        if self._last_step_was_edge:
+            self._direction_next_next = self._calculate_direction_at_tile_center(maze, pacman, self._direction_next)
+        else:
+            self._direction_next_next = None
+
 
 
     def add_behaviour(self, behaviour):
@@ -232,7 +250,8 @@ class GhostAbstract(Character, ABC):
                 self._reverse_direction_signal = True
 
             case GhostBehaviour.FRIGHTENED:
-                self._behaviour = self._behaviour | GhostBehaviour.FRIGHTENED
+                if GhostBehaviour.GOING_TO_HOUSE not in self._behaviour:
+                    self._behaviour = self._behaviour | GhostBehaviour.FRIGHTENED
                 self._reverse_direction_signal = True
 
             case GhostBehaviour.IN_HOUSE | GhostBehaviour.EXITING_HOUSE | GhostBehaviour.GOING_TO_HOUSE:
@@ -244,6 +263,7 @@ class GhostAbstract(Character, ABC):
 
 
     # Defining properties for some private attributes.
+    name        = property(lambda self: self._name)
     position    = property(lambda self: self._position)
     frightened  = property(lambda self: GhostBehaviour.FRIGHTENED in self._behaviour)
     transparent = property(lambda self: GhostBehaviour.GOING_TO_HOUSE in self._behaviour)

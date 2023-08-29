@@ -37,8 +37,8 @@ class GhostSprite:
     def draw(self, ghosts):
         utils.enable_transparency_blit()
 
-        for name, ghost in ghosts:
-            sprite_idx = self._get_sprite_idx(name, ghost.frightened, ghost.transparent, ghost.eyes_direction)
+        for ghost in ghosts:
+            sprite_idx = self._get_sprite_idx(ghost.name, ghost.frightened, ghost.transparent, ghost.eyes_direction)
             ghost_coords = utils.calculate_coords_sprites(ghost.position)
             self._sprites[sprite_idx].blit(x=ghost_coords.x, y=ghost_coords.y)
 
