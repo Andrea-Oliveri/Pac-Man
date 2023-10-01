@@ -30,6 +30,7 @@ class GhostAbstract(Character, ABC):
         self._prng = prng
         self._direction_next      = None
         self._direction_next_next = None
+        self._scatter_mode_target_tile = GHOSTS_SCATTER_MODE_TARGET_TILES[name]
 
         self._behaviour = GHOSTS_START_BEHAVIOUR[name]
 
@@ -99,7 +100,7 @@ class GhostAbstract(Character, ABC):
             return self._calculate_personal_target_tile(pacman, maze)
 
         elif GhostBehaviour.SCATTER in self._behaviour:
-            return GHOSTS_SCATTER_MODE_TARGET_TILES[self._name]
+            return self._scatter_mode_target_tile
 
         raise RuntimeError("GhostAbtract._calculate_target_tile was called with invalid behaviour: {self._behaviour.name}")
 
@@ -179,7 +180,7 @@ class GhostAbstract(Character, ABC):
                 self._direction_next = self._frightened_ghost_random_direction(maze)
                 self._direction_next_next = self._calculate_direction_at_tile_center(maze, pacman, self._direction_next)
         
-        elif any(behaviour in self._behaviour for behaviour in (GhostBehaviour.CHASE, GhostBehaviour.SCATTER)):
+        elif any(behaviour in self._behaviour for behaviour in (GhostBehaviour.CHASE, GhostBehaviour.SCATTER, GhostBehaviour.GOING_TO_HOUSE)):
 
             if self._reverse_direction_signal:
                 self._reverse_direction_signal = False
@@ -193,6 +194,11 @@ class GhostAbstract(Character, ABC):
             else:
                 # When entering new tile, ghost must decide what it will do in next tile along this direction.
                 self._direction_next_next = self._calculate_direction_at_tile_center(maze, pacman, self._direction_next)
+
+            if (GhostBehaviour.GOING_TO_HOUSE in self._behaviour) and \
+               (round(self._position.x) == GHOSTS_START_POSITIONS[Ghost.PINKY].x) and \
+               (self._position.y == GHOSTS_EATEN_TARGET_TILE.y):
+                self.add_behaviour(GhostBehaviour.ENTERING_HOUSE)
             
 
     def _callback_is_at_tile_center(self):
@@ -226,13 +232,9 @@ class GhostAbstract(Character, ABC):
     def notify_was_eaten(self, maze, pacman):
         self.add_behaviour(GhostBehaviour.GOING_TO_HOUSE)
         self.clear_fright()
-            
-        self._direction      = self._calculate_direction_at_tile_center(maze, pacman, Vector2(0, 0))
-        self._direction_next = self._calculate_direction_at_tile_center(maze, pacman, self._direction)
-        if self._last_step_was_edge:
-            self._direction_next_next = self._calculate_direction_at_tile_center(maze, pacman, self._direction_next)
-        else:
-            self._direction_next_next = None
+        
+        self._direction_next      = self._calculate_direction_at_tile_center(maze, pacman, self._direction)
+        self._direction_next_next = self._calculate_direction_at_tile_center(maze, pacman, self._direction_next)
 
 
 
@@ -254,9 +256,12 @@ class GhostAbstract(Character, ABC):
                     self._behaviour = self._behaviour | GhostBehaviour.FRIGHTENED
                 self._reverse_direction_signal = True
 
-            case GhostBehaviour.IN_HOUSE | GhostBehaviour.EXITING_HOUSE | GhostBehaviour.GOING_TO_HOUSE:
-                self._behaviour = self._behaviour & (~GhostBehaviour.IN_HOUSE) & (~GhostBehaviour.EXITING_HOUSE) & (~GhostBehaviour.GOING_TO_HOUSE) | behaviour
-
+            case GhostBehaviour.IN_HOUSE | GhostBehaviour.EXITING_HOUSE | GhostBehaviour.GOING_TO_HOUSE | GhostBehaviour.ENTERING_HOUSE:
+                self._behaviour = self._behaviour & (~GhostBehaviour.IN_HOUSE) \
+                                                  & (~GhostBehaviour.EXITING_HOUSE) \
+                                                  & (~GhostBehaviour.GOING_TO_HOUSE) \
+                                                  & (~GhostBehaviour.ENTERING_HOUSE) \
+                                                  | behaviour
 
     def clear_fright(self):
         self._behaviour &= (~GhostBehaviour.FRIGHTENED)
@@ -268,3 +273,4 @@ class GhostAbstract(Character, ABC):
     frightened  = property(lambda self: GhostBehaviour.FRIGHTENED in self._behaviour)
     transparent = property(lambda self: GhostBehaviour.GOING_TO_HOUSE in self._behaviour)
     eyes_direction = property(lambda self: self._direction_next if self._last_step_was_edge else self._direction)
+    is_in_house = property(lambda self: GhostBehaviour.IN_HOUSE in self._behaviour)

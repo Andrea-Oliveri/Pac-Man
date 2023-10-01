@@ -7,7 +7,7 @@ from src.activities.game import Game
 from src.graphics.painter import Painter
 from src.constants import (WINDOW_INIT_KWARGS,
                            WINDOW_MINIMUM_SIZE,
-                           GAME_UPDATES_INTERVAL,
+                           GAME_TENTATIVE_UPDATES_INTERVAL,
                            WINDOW_ICON_PATH,
                            GAME_ORIGINAL_UPDATES_INTERVAL)
 
@@ -27,7 +27,7 @@ class Window(pyglet.window.Window):
         
         # FPS locked to screen refresh rate (vsync enabled).
         # Number of updates per second can be freely chosen though.
-        pyglet.clock.schedule_interval(self.on_state_update, GAME_UPDATES_INTERVAL)
+        pyglet.clock.schedule_interval(self.on_state_update, GAME_TENTATIVE_UPDATES_INTERVAL)
         self._residual_update_interval = 0
 
         

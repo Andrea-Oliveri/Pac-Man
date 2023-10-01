@@ -26,23 +26,19 @@ class Game(Activity):
         """Override of method from Activity class, instancing all game objects."""
         super().__init__(painter)
 
-        self._level = 0
         self._score = Score()
         
         self._lives = STARTING_LIVES_PACMAN
         self._extra_life_awarded = False
 
+        self._level = 0
         self._new_level()
-
-        
-
-        
 
 
     def _new_level(self):
         self._level += 1
 
-        self._maze = Maze()
+        self._maze   = Maze()
         self._pacman = PacMan()
         self._ghosts = GhostsCoordinator()
         
@@ -155,7 +151,7 @@ class Game(Activity):
         
         print('Life lost')
 
-        # TODO: when life is lost, should not delete ghost_coordinator instance as it contains the global dot counter.
+        self._ghosts.notify_life_lost()
 
 
     def _end_level(self):

@@ -3,8 +3,7 @@
 
 from src.game_objects.ghosts.ghost_abstract import GhostAbstract
 
-from src.constants import (Ghost,
-                           GHOSTS_SCATTER_MODE_TARGET_TILES)
+from src.constants import (Ghost, )
 from src.directions import Vector2
 
 
@@ -70,4 +69,4 @@ class Clyde(GhostAbstract):
             pacman_tile = maze.get_tile_center(pacman.position)
             return pacman_tile
 
-        return GHOSTS_SCATTER_MODE_TARGET_TILES[Ghost.CLYDE]
+        return self._scatter_mode_target_tile

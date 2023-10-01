@@ -26,7 +26,7 @@ WINDOW_INIT_KWARGS = {'width' : WINDOW_MINIMUM_SIZE[0],
 # Interval between two game updates in seconds.
 GAME_ORIGINAL_FPS = 60.606061
 GAME_ORIGINAL_UPDATES_INTERVAL = 1 / GAME_ORIGINAL_FPS
-GAME_UPDATES_INTERVAL = 1 / 100
+GAME_TENTATIVE_UPDATES_INTERVAL = 1 / 100
 
 # Constant defining where the image are stored.
 WINDOW_ICON_PATH = "./assets/images/icon.ico"
@@ -373,7 +373,7 @@ def FRIGHT_TIME_AND_FLASHES(level):
 Ghost = IntEnum('Ghost', ['BLINKY', 'PINKY', 'INKY', 'CLYDE'], start = 0)
 
 # Enum defining modes of ghost behaviour.
-GhostBehaviour = IntFlag('GhostBehaviour', ['CHASE', 'SCATTER', 'FRIGHTENED', 'IN_HOUSE', 'EXITING_HOUSE', 'GOING_TO_HOUSE'])
+GhostBehaviour = IntFlag('GhostBehaviour', ['CHASE', 'SCATTER', 'FRIGHTENED', 'IN_HOUSE', 'EXITING_HOUSE', 'GOING_TO_HOUSE', 'ENTERING_HOUSE'])
 
 # Starting positions, directions and behaviour of ghosts.
 GHOSTS_START_POSITIONS = {Ghost.BLINKY: Vector2(x = 14, y = 11.5),
@@ -439,6 +439,33 @@ def SCATTER_CHASE_ALTERNATIONS(level):
     return mode_durations
 
 
+# Dot counter limits for each ghost and each level.
+def DOT_COUNTER_LIMIT(ghost, level):
+    if ghost == Ghost.BLINKY or ghost == Ghost.PINKY:
+        return 0
+
+    elif ghost == Ghost.INKY:
+        if level == 1:
+            return 30
+        
+        return 0
+
+    elif ghost == Ghost.CLYDE:
+        if level == 1:
+            return 60
+        elif level == 2:
+            return 50
+
+        return 0
+
+    raise ValueError(f'invalid value passed to constants.DOT_COUNTER_LIMIT: ghost {ghost}, level {level}')
+
+
+# Global dot counter limits for each ghost.
+DOT_GLOBAL_COUNTER_LIMIT = {Ghost.PINKY: 7, Ghost.INKY: 17, Ghost.CLYDE: 32}
+
+# Threshold for timer counting how long since last dot eaten to force one ghost out.
+DOTS_NOT_EATEN_TIMER_THR = lambda level: (4 if level < 5 else 3) * GAME_ORIGINAL_FPS
 
 
 # --------------------------------------------------------------------
