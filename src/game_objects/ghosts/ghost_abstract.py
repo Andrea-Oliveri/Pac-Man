@@ -86,8 +86,6 @@ class GhostAbstract(Character, ABC):
             dt = residual_distance / speed
 
 
-
-
     def _behaviour_in_house(self, is_at_tile_center, is_at_tile_edge, maze, pacman):
         self._direction_next = self._direction_next_next = None
 
@@ -127,7 +125,6 @@ class GhostAbstract(Character, ABC):
         else:
             self._behaviour_reach_target_tile(is_at_tile_center, is_at_tile_edge, maze, pacman)
             
-
 
     def _behaviour_entering_house(self, is_at_tile_center, is_at_tile_edge, maze, pacman):
         self._direction_next = self._direction_next_next = None
@@ -279,82 +276,6 @@ class GhostAbstract(Character, ABC):
         raise RuntimeError("No valid direction found in GhostAbstract._frightened_ghost_random_direction")
 
 
-# 1) If ghost is in house, oscillate up and down
-# 
-# 2) if ghost leaving house, pre-defined movement to exit. As soon as exited, direction is set to left and recalculate next directions
-# 
-# 3) if ghost going to house, move using target tile and as soon as tile wall above house entrance hit, start entering house
-# 
-# 4) If entering house, pre-defined movement to enter. As soon as in position, start oscillating
-# 
-# 5) If frightened, random movement
-# 
-# 6) If scatter/chase, pathfind to target tile
-# 
-# 
-# Notes:
-# - Can think of it as 3 FSM: SCATTER/CHASE ; FRIGHT ON/OFF ; HOUSE BEHAVIOURS
-# - CHASE/SCATTER/FRIGHTENED on/off are handled entirely by ghost coordinator.
-# - Ghosts can exhibit only one behaviour at a time. The others are present but hidden -> they can only move based on one rule at a time
-# - !!! No direction switch if fright finishes!
-#
-#
-# NEED TO THINK:
-# - How each state affects parameters
-# - How wach flag going on/off needs to change parameters
-#
-#
-
-
-# CHASE ON:
-# _direction -> unchanged until direction forced to switch
-# _direction_next -> unchanged until direction forced to switch
-# _direction_next_next -> unchanged until direction forced to switch
-# _reverse_direction_signal -> set to True
-# _between_tile_edge_and_center -> unchanged until direction forced to switch
-# 
-# CHASE OFF:
-# _direction -> unchanged until direction forced to switch
-# _direction_next -> unchanged until direction forced to switch
-# _direction_next_next -> unchanged until direction forced to switch
-# _reverse_direction_signal -> set to True
-# _between_tile_edge_and_center -> unchanged until direction forced to switch
-# 
-# SCATTER ON:
-# -> see CHASE OFF, the two are linked
-# 
-# SCATTER OFF:
-# -> see CHASE ON, the two are linked
-# 
-# FRIGHTENED ON:
-# _direction -> unchanged until direction forced to switch
-# _direction_next -> random calculated when direction forced to switch
-# _direction_next_next -> None
-# _reverse_direction_signal -> set to True
-# _between_tile_edge_and_center -> unchanged until direction forced to switch
-#  
-# FRIGHTENED OFF:
-#
-#
-#
-# -----------------------
-# ALTERNATIVELY:
-# -----------------------
-# What does each state need to initialize when it is entered?
-#
-#
-#
-#
-#
-#
-#
-
-
-
-
-
-
-
     def _add_behaviour(self, behaviour):
         if behaviour not in GhostBehaviour:
             raise ValueError('Invalid behaviour provided to Ghost._add_behaviour')
@@ -395,122 +316,10 @@ class GhostAbstract(Character, ABC):
 
 
     # Defining properties for some attributes.
-    name        = property(lambda self: self._name)
-    position    = property(lambda self: self._position)
-    frightened  = property(lambda self: GhostBehaviour.FRIGHTENED in self._behaviour)
-    transparent = property(lambda self: GhostBehaviour.GOING_TO_HOUSE in self._behaviour or GhostBehaviour.ENTERING_HOUSE in self._behaviour)
-    is_in_house = property(lambda self: GhostBehaviour.IN_HOUSE in self._behaviour)
-
-    # --------------------------
-    # TODO: Simplify this with direction next is not None, once ensured that direction_next is set to None for all states appropriate
-    # --------------------------
-    eyes_direction = property(lambda self: self._direction_next if self._going_from_tile_edge_to_center and \
-                                                                   (GhostBehaviour.GOING_TO_HOUSE in self._behaviour or \
-                                                                    not any(e in self._behaviour for e in (GhostBehaviour.IN_HOUSE, 
-                                                                                                           GhostBehaviour.EXITING_HOUSE,
-                                                                                                           GhostBehaviour.ENTERING_HOUSE, 
-                                                                                                           GhostBehaviour.FRIGHTENED))) else
-                                           self._direction)
-    
-
-
-
-    
-
-
-
-
-
-
-class OLD_TO_DELETE:
-
-
-
-
-
-    def _just_exited_house(self):
-        self._direction           = Vector2.LEFT
-        self._direction_next      = Vector2.LEFT
-        self._direction_next_next = Vector2.LEFT
-
-        self._behaviour &= (~GhostBehaviour.IN_HOUSE) & (~GhostBehaviour.EXITING_HOUSE) & (~GhostBehaviour.GOING_TO_HOUSE)
-    
-
-
-    def _callback_is_at_tile_edge(self, maze, pacman):
-
-        if GhostBehaviour.IN_HOUSE in self._behaviour or \
-           ((GhostBehaviour.EXITING_HOUSE in self._behaviour) and (self._position.x == GHOSTS_START_POSITIONS[self._name].x) and (self._name != Ghost.PINKY)):
-            if not self._going_from_tile_edge_to_center:
-                self._direction *= -1
-                self._direction_next = self._direction
-                self._direction_next_next = None
-
-        elif ((GhostBehaviour.EXITING_HOUSE in self._behaviour) and (round_half_to_ceiling(self._position.x) == GHOSTS_START_POSITIONS[Ghost.PINKY].x)):
-            self._direction = Vector2.UP
-            self._direction_next = self._direction
-            self._direction_next_next = None
-
-        elif GhostBehaviour.FRIGHTENED in self._behaviour:
-            if self._reverse_direction_signal:
-                self._reverse_direction_signal = False
-                self._direction *= -1
-
-                # We need to invalidate and future directions. Will be recalculated once we step back in the previous tile (next iteration).
-                self._direction_next = None
-                self._direction_next_next = None 
-                
-            else:
-                self._direction_next = self._frightened_ghost_random_direction(maze)
-                self._direction_next_next = self._calculate_direction_at_tile_center(maze, pacman, self._direction_next)
-        
-        elif any(behaviour in self._behaviour for behaviour in (GhostBehaviour.CHASE, GhostBehaviour.SCATTER, GhostBehaviour.GOING_TO_HOUSE)):
-
-            if self._reverse_direction_signal:
-                self._reverse_direction_signal = False
-                self._direction *= -1
-
-                # We need to invalidate and recalculate the direction of the next tile.
-                self._direction_next = self._calculate_direction_at_tile_center(maze, pacman, self._direction)
-
-                # This will be recalculated once we step back in the previous tile (next iteration).
-                self._direction_next_next = None
-            else:
-                # When entering new tile, ghost must decide what it will do in next tile along this direction.
-                self._direction_next_next = self._calculate_direction_at_tile_center(maze, pacman, self._direction_next)
-
-            if (GhostBehaviour.GOING_TO_HOUSE in self._behaviour) and \
-               (round_half_to_ceiling(self._position.x) == GHOSTS_START_POSITIONS[Ghost.PINKY].x) and \
-               (self._position.y == GHOSTS_EATEN_TARGET_TILE.y):
-                self.add_behaviour(GhostBehaviour.ENTERING_HOUSE)
-            
-
-    def _callback_is_at_tile_center(self):
-        
-        # TODO: at end of GOING_TO_HOUSE behaviour, ghost behaviour should be changed back to 
-
-
-        if GhostBehaviour.IN_HOUSE in self._behaviour:
-            return
-
-        elif GhostBehaviour.EXITING_HOUSE in self._behaviour:
-            if self._position.x == GHOSTS_START_POSITIONS[Ghost.CLYDE].x:
-                self._direction           = Vector2.LEFT
-                self._direction_next      = self._direction
-                self._direction_next_next = None
-            elif self._position.x == GHOSTS_START_POSITIONS[Ghost.INKY].x:
-                self._direction           = Vector2.RIGHT
-                self._direction_next      = self._direction
-                self._direction_next_next = None
-            elif self._position.y == GHOSTS_START_POSITIONS[Ghost.BLINKY].y:
-                self._just_exited_house()
-            elif self._name == Ghost.INKY:
-                print(self._position, GHOSTS_START_POSITIONS[Ghost.BLINKY])
-
-        elif any(behaviour in self._behaviour for behaviour in (GhostBehaviour.CHASE, GhostBehaviour.SCATTER, GhostBehaviour.FRIGHTENED)):
-            self._direction           = self._direction_next
-            self._direction_next      = self._direction_next_next
-            self._direction_next_next = None
-
-
+    name           = property(lambda self: self._name)
+    position       = property(lambda self: self._position)
+    frightened     = property(lambda self: GhostBehaviour.FRIGHTENED in self._behaviour)
+    transparent    = property(lambda self: GhostBehaviour.GOING_TO_HOUSE in self._behaviour or GhostBehaviour.ENTERING_HOUSE in self._behaviour)
+    is_in_house    = property(lambda self: GhostBehaviour.IN_HOUSE in self._behaviour)
+    eyes_direction = property(lambda self: self._direction_next if self._going_from_tile_edge_to_center and self._direction_next is not None else self._direction)
     
