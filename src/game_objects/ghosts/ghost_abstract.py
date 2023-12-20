@@ -226,8 +226,9 @@ class GhostAbstract(Character, ABC):
             if direction == -direction_from_current_tile:
                 continue
 
-            # Ghosts are not allowed to turn upwards on certain tiles when in chase or frightened mode.
-            if next_tile in GHOSTS_FORBIDDEN_TURNING_UP_TILES and direction == Vector2.UP:
+            # Ghosts are not allowed to turn upwards on certain tiles when in chase or scatter mode.
+            # They can, however, when returning to house (and in frightened mode).
+            if next_tile in GHOSTS_FORBIDDEN_TURNING_UP_TILES and direction == Vector2.UP and GhostBehaviour.GOING_TO_HOUSE not in self._behaviour:
                 continue
 
             next_next_tile = next_tile + direction
