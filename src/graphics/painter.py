@@ -85,8 +85,11 @@ class Painter:
             pyglet.shapes.Line(c, -160, c, 160, width=1, color=(155, 0, 0)).draw()
             pyglet.shapes.Line(-160, c-4, 160, c-4, width=1, color=(155, 0, 0)).draw()
         pyglet.shapes.Circle(pacman_coords.x, pacman_coords.y, 2, color = (0, 155, 0)).draw()
+        for g in ghosts:
+            g_coords = utils.calculate_coords_sprites(g.position)
+            pyglet.shapes.Circle(g_coords.x, g_coords.y, 2, color = (0, 155, 0)).draw()
         
-        origin = utils.calculate_coords_sprites(Vector2(0, 0))
+        origin = utils.calculate_coords_sprites(Vector2.NULL)
         pyglet.shapes.Circle(origin.x, origin.y, 2, color = (255, 0, 0)).draw()
       
         from src.constants import GHOSTS_EATEN_TARGET_TILE

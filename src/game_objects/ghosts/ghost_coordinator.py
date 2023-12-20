@@ -60,7 +60,7 @@ class GhostsCoordinator:
             cumtime += duration
 
             if self._mode_timer <= cumtime:
-                self._add_behaviour_to_all(mode)
+                self._request_behaviour_to_all(mode)
                 return
 
         raise RuntimeError('Reached end of GhostCoordinator._update_mode without finding a behaviour for current timer')
@@ -102,8 +102,12 @@ class GhostsCoordinator:
             if pacman_tile != ghost_tile:
                 continue
 
+            if ghost.transparent:
+                continue
+
             if ghost.frightened:
-                ghost.notify_was_eaten(maze, pacman)
+                ghost.request_behaviour(GhostBehaviour.GOING_TO_HOUSE)
+                ghost.clear_fright()
                 count_eaten += 1
                 continue
             
@@ -112,7 +116,7 @@ class GhostsCoordinator:
         return life_lost, count_eaten
 
     def notify_fright_on(self, fright_duration):
-        self._add_behaviour_to_all(GhostBehaviour.FRIGHTENED)
+        self._request_behaviour_to_all(GhostBehaviour.FRIGHTENED)
 
         if fright_duration <= 0:
             self._clear_fright_from_all()
@@ -124,9 +128,9 @@ class GhostsCoordinator:
         self._dot_counter_global_enable = True
         
 
-    def _add_behaviour_to_all(self, behaviour):
+    def _request_behaviour_to_all(self, behaviour):
         for ghost in self._ghosts:
-            ghost.add_behaviour(behaviour)
+            ghost.request_behaviour(behaviour)
 
     def _clear_fright_from_all(self):
         for ghost in self._ghosts:
@@ -142,16 +146,16 @@ class GhostsCoordinator:
 
             if self._time_since_dot_eaten >= DOTS_NOT_EATEN_TIMER_THR(level):
                 self._time_since_dot_eaten = 0
-                ghost.add_behaviour(GhostBehaviour.EXITING_HOUSE)
+                ghost.request_behaviour(GhostBehaviour.EXITING_HOUSE)
                 continue
 
             if self._dot_counter_global_enable:
                 if self._dot_counter_global == DOT_GLOBAL_COUNTER_LIMIT[name]:
-                   ghost.add_behaviour(GhostBehaviour.EXITING_HOUSE)
-                   self._dot_counter_global_enable = (name != Ghost.CLYDE)
+                    ghost.request_behaviour(GhostBehaviour.EXITING_HOUSE)
+                    self._dot_counter_global_enable = (name != Ghost.CLYDE)
                 
                 # If global dot counter enabled, don't perform the check with regular dot counters. 
                 continue 
 
             if self._dot_counter_ghosts[name] >= DOT_COUNTER_LIMIT(name, level):
-                ghost.add_behaviour(GhostBehaviour.EXITING_HOUSE)
+                ghost.request_behaviour(GhostBehaviour.EXITING_HOUSE)

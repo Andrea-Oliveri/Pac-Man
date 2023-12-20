@@ -66,6 +66,19 @@ class Window(pyglet.window.Window):
             self.on_state_update_step()
         # --------------------------------------
 
+        # --------------------------------------
+        # DEBUG: force state on ghosts
+        # --------------------------------------
+
+        from pyglet.window import key
+        from src.constants import MazeTiles
+
+        if symbol == key._1:
+            self._current_activity._pellet_eaten((23, 1), MazeTiles.POWER_PELLET)
+        # --------------------------------------
+
+
+
 
     def on_state_update(self, dt):
         if hasattr(self, 'paused') and self.paused:

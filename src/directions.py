@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass
 
-
 # --------------------------------------------------------------------
 # Vector2 dataclass.
 # --------------------------------------------------------------------
@@ -45,6 +44,12 @@ class Vector2:
     def __rmul__(self, other):
         return self * other
 
+
+    def round_to_nearest_half(self):
+        return Vector2(x = round(self.x * 2) / 2,
+                       y = round(self.y * 2) / 2)
+
+
     @staticmethod
     def distance_squared(left_obj, right_obj):
         if not isinstance(left_obj, Vector2) or not isinstance(right_obj, Vector2):
@@ -66,5 +71,6 @@ Vector2.LEFT  = Vector2(-1, 0)
 Vector2.RIGHT = Vector2(+1, 0)
 Vector2.UP    = Vector2(0, -1)
 Vector2.DOWN  = Vector2(0, +1)
+Vector2.NULL  = Vector2(0, 0)
 
 # --------------------------------------------------------------------

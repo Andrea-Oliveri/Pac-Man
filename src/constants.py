@@ -403,6 +403,10 @@ GHOSTS_SCATTER_MODE_TARGET_TILES = {Ghost.BLINKY: Vector2(25.5, -3.5),
 # Target tile to reach when ghost is eaten.
 GHOSTS_EATEN_TARGET_TILE = Vector2(x = 13.5, y = 11.5)
 
+# Target y coord to reach when ghost enters house before resuming chase.
+GHOSTS_EATEN_TARGET_Y_IN_HOUSE = GHOSTS_START_POSITIONS[Ghost.PINKY].y + 0.5
+
+
 # Duration of scatter and chase mode alternations in original game frames.
 def SCATTER_CHASE_ALTERNATIONS(level):
     if level <= 0:

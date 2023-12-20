@@ -11,7 +11,8 @@ class Blinky(GhostAbstract):
 
     def __init__(self, prng):
         super().__init__(Ghost.BLINKY, prng)
-        self._just_exited_house()
+        self._direction_next      = Vector2.LEFT
+        self._direction_next_next = Vector2.LEFT
 
     def _calculate_personal_target_tile(self, pacman, maze):
         pacman_tile = maze.get_tile_center(pacman.position)
@@ -22,7 +23,6 @@ class Pinky(GhostAbstract):
 
     def __init__(self, prng):
         super().__init__(Ghost.PINKY, prng)
-    
 
     def _calculate_personal_target_tile(self, pacman, maze):
         in_front_tile = maze.get_tile_center(pacman.position)
