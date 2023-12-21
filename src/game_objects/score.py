@@ -48,7 +48,7 @@ class Score:
             file.write(self._high_score.to_bytes(length = HIGH_SCORE_FILE_NUM_BYTES, byteorder = 'big', signed = False))
 
     
-    def add_to_score(self, action, fruit = None):
+    def add_to_score(self, action, level = None):
         """Adds points to the score based on the action type and data in parameters dictionary."""
         
         match action:
@@ -60,7 +60,7 @@ class Score:
                 self += SCORE_POINTS_EAT_GHOST_BASE * (2 ** self._ghost_eaten_same_fright)
                 self._ghost_eaten_same_fright += 1
             case ScoreActions.EAT_FRUIT:
-                self += SCORE_POINTS_EAT_FRUIT[fruit]
+                self += SCORE_POINTS_EAT_FRUIT(level)
             case _:
                 raise ValueError(f'Unvalid action provided for Score.add_to_score: {action}')
 

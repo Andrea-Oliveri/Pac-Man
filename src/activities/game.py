@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from random import randint
+
 from pyglet.window import key
 
 from src.activities.activity import Activity
@@ -14,7 +16,9 @@ from src.constants import (MazeTiles,
                            ScoreActions,
                            STARTING_LIVES_PACMAN,
                            EXTRA_LIFE_POINTS_REQUIREMENT,
+                           FRUIT_SPAWN_THRESHOLDS,
                            FRUIT_SPAWN_POSITION,
+                           FRUIT_TIME_ACTIVE_RANGE,
                            FRIGHT_TIME_AND_FLASHES)
 
 
@@ -44,13 +48,15 @@ class Game(Activity):
         
         self._fright_counter = 0
 
+        self._fruit_visible_counter = 0
+
         self._painter.new_level()
 
 
     def event_draw_screen(self):
         """Override of method from Activity class, drawing the controls menu
         on the screen."""
-        self._painter.draw_game(self._pacman, self._ghosts, self._score, self._lives, self._level)
+        self._painter.draw_game(self._pacman, self._ghosts, self._score, self._lives, self._level, self._fruit_visible_counter > 0)
         
 
     def event_update_state(self):
@@ -60,6 +66,9 @@ class Game(Activity):
         if self._fright_counter > 0:
             self._fright_counter -= 1
             fright = True
+
+        if self._fruit_visible_counter > 0:
+            self._fruit_visible_counter -= 1
 
         self._pacman .update(self._level, fright, self._maze)
         self._ghosts .update(self._level, fright, self._maze, self._pacman)
@@ -81,29 +90,20 @@ class Game(Activity):
         elif symbol == key.RIGHT:
             self._pacman.direction = Vector2.RIGHT
 
-        # ------------------------------
-        # DEBUG: slow down pacman
-        # ------------------------------
-        if symbol == key.SPACE:
-            import src.constants as const
-            if not hasattr(self, '_original_speed'):
-                self._original_speed = float(const.REFERENCE_SPEED)
-            const.REFERENCE_SPEED = self._original_speed if const.REFERENCE_SPEED < self._original_speed else self._original_speed * 0.1
-
-        # ------------------------------
-
 
     def _calculate_new_game_state(self):
-        # Check if passed on to fruit spawning point.
-        pacman_old_position = self._pacman.old_position
         pacman_new_position = self._pacman.position
 
-        was_on_fruit = (pacman_old_position.y == pacman_new_position.y == FRUIT_SPAWN_POSITION.y) and \
-                       ((pacman_old_position.x <= FRUIT_SPAWN_POSITION.x <= pacman_new_position.x) or \
-                        (pacman_new_position.x <= FRUIT_SPAWN_POSITION.x <= pacman_old_position.x))
+        # Check if eaten a fruit.
+        if self._fruit_visible_counter:
+            pacman_old_position = self._pacman.old_position
 
-        if was_on_fruit:
-            self._fruit_eaten()
+            was_on_fruit = (pacman_old_position.y == pacman_new_position.y == FRUIT_SPAWN_POSITION.y) and \
+                           ((pacman_old_position.x <= FRUIT_SPAWN_POSITION.x <= pacman_new_position.x) or \
+                            (pacman_new_position.x <= FRUIT_SPAWN_POSITION.x <= pacman_old_position.x))
+            if was_on_fruit:
+                self._fruit_visible_counter = 0
+                self._score.add_to_score(ScoreActions.EAT_FRUIT, self._level)
 
         # Check if eaten a pellet.
         tile_coords, pellet_type = self._maze.eat_check_pellet(pacman_new_position)
@@ -126,12 +126,6 @@ class Game(Activity):
         if self._maze.completed:
             self._end_level()
 
-
-    def _fruit_eaten(self):
-        # TODO: Fill this function
-        print('Was on fruit')
-
-
     def _pellet_eaten(self, tile_coords, pellet_type):
         self._painter.set_empty_tile(tile_coords)
         self._pacman.add_penalty(pellet_type)
@@ -146,6 +140,9 @@ class Game(Activity):
             self._ghosts.notify_fright_on(fright_duration)
             self._painter.notify_fright_on(fright_duration, fright_flashes)
 
+        if self._maze.n_pellets_remaining in FRUIT_SPAWN_THRESHOLDS:
+            self._fruit_visible_counter = randint(*FRUIT_TIME_ACTIVE_RANGE)
+            
 
     def _life_lost(self):
         

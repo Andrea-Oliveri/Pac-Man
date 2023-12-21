@@ -20,7 +20,8 @@ from src.constants import (MAZE_START_IMAGE,
                            GAME_LEFT_LIVES_ICON_COORDS,
                            GAME_RIGHT_FRUIT_ICON_COORDS,
                            GAME_MAX_FRUIT_ICON_NUMBER,
-                           FRUIT_OF_LEVEL)
+                           FRUIT_OF_LEVEL,
+                           FRUIT_SPAWN_POSITION)
 from src.directions import Vector2
 from src.graphics import utils
 from src.graphics.font import Font
@@ -66,7 +67,7 @@ class Painter:
         self._ghost_sprites .reset()
         
 
-    def draw_game(self, pacman, ghosts, score, lives, level):
+    def draw_game(self, pacman, ghosts, score, lives, level, fruit_active):
 
         self._maze_image.blit(0, 0)
 
@@ -75,6 +76,9 @@ class Painter:
         self._pacman_sprites.draw(pacman)
 
         self._ghost_sprites.draw(ghosts)
+
+        if fruit_active:
+            self._draw_fruit(level)
 
         return
         # ----------------------------------------
@@ -130,6 +134,12 @@ class Painter:
         for fruit in fruits:
             self._ui_tiles[fruit].blit(x, y)
             x -= UI_TILES_PX_SIZE
+
+
+    def _draw_fruit(self, level):
+        fruit = FRUIT_OF_LEVEL(level) 
+        fruit_coords = utils.calculate_coords_sprites(FRUIT_SPAWN_POSITION)
+        self._ui_tiles[fruit].blit(fruit_coords.x, fruit_coords.y)
 
 
     def set_empty_tile(self, idx):

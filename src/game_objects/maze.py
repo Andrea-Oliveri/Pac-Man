@@ -7,7 +7,8 @@ from src.constants import (MazeTiles,
                            MAZE_TILES_ROWS,
                            WARP_TUNNEL_ROW,
                            WARP_TUNNEL_COL_LEFT,
-                           WARP_TUNNEL_COL_RIGHT)
+                           WARP_TUNNEL_COL_RIGHT,
+                           MAZE_START_NUM_PELLET)
 
 
 class Maze:
@@ -18,7 +19,7 @@ class Maze:
     def __init__(self):
         """Constructor for the class Maze."""
         self._tiles = list(MAZE_START_TILES)
-        self._n_pellets = sum(elem in (MazeTiles.PELLET, MazeTiles.POWER_PELLET) for elem in self._tiles)
+        self._n_pellets = MAZE_START_NUM_PELLET
 
         # Sanity check
         if len(self._tiles) != MAZE_TILES_ROWS * MAZE_TILES_COLS:

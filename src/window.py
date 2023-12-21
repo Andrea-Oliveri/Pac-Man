@@ -54,6 +54,19 @@ class Window(pyglet.window.Window):
     def on_key_press(self, symbol, modifiers):
         self._current_activity.event_key_pressed(symbol, modifiers)
 
+        # ------------------------------
+        # DEBUG: slow down pacman
+        # ------------------------------
+        from pyglet.window import key
+
+        if symbol == key.SPACE:
+            import src.constants as const
+            if not hasattr(self, '_original_speed'):
+                self._original_speed = float(const.REFERENCE_SPEED)
+            const.REFERENCE_SPEED = self._original_speed if const.REFERENCE_SPEED < self._original_speed else self._original_speed * 0.1
+
+        # ------------------------------
+
         # --------------------------------------
         # DEBUG: single-tick game update
         # --------------------------------------

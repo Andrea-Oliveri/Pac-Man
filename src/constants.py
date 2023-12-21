@@ -63,6 +63,10 @@ WARP_TUNNEL_TELEPORT_MARGIN = 2
 WARP_TUNNEL_COL_LEFT = 4
 WARP_TUNNEL_COL_RIGHT = 23
 
+# Number of pellets in initial maze state.
+MAZE_START_NUM_PELLET = sum(elem in (MazeTiles.PELLET, MazeTiles.POWER_PELLET) for elem in MAZE_START_TILES)
+
+
 # --------------------------------------------------------------------
 
 
@@ -346,7 +350,12 @@ ScoreActions = IntEnum('ScoreActions', ['EAT_PELLET', 'EAT_POWER_PELLET', 'EAT_G
 SCORE_POINTS_EAT_PELLET = 10
 SCORE_POINTS_EAT_POWER_PELLET = 50
 SCORE_POINTS_EAT_GHOST_BASE = 200
-SCORE_POINTS_EAT_FRUIT = {Fruits.CHERRY: 100, Fruits.STRAWBERRY: 300, Fruits.PEACH: 500, Fruits.APPLE: 700, Fruits.GRAPES: 1000, Fruits.GALAXIAN: 2000, Fruits.BELL: 3000, Fruits.KEY: 5000}
+
+def SCORE_POINTS_EAT_FRUIT(level):
+    points_per_fruit = {Fruits.CHERRY: 100, Fruits.STRAWBERRY: 300, Fruits.PEACH: 500, Fruits.APPLE: 700, Fruits.GRAPES: 1000, Fruits.GALAXIAN: 2000, Fruits.BELL: 3000, Fruits.KEY: 5000}
+    
+    return points_per_fruit[FRUIT_OF_LEVEL(level)]
+
 
 # Path of file where to store high score.
 HIGH_SCORE_FILE = os.path.join(os.path.expanduser('~'), '.pacman_game')
@@ -366,10 +375,13 @@ STARTING_LIVES_PACMAN = 3 # 1, 2, 3 or 5 are all valid for this setting
 EXTRA_LIFE_POINTS_REQUIREMENT = 10000 # 10000, 15000 and 20000 are all valid for this setting
 
 # Thresholds at which fruits appear: after eating 70 pellets and 170 pellets.
-FRUIT_SPAWN_THRESHOLDS = (70, 170)
+FRUIT_SPAWN_THRESHOLDS = (MAZE_START_NUM_PELLET - 70, MAZE_START_NUM_PELLET - 170)
 
 # Coordinates at which fruits appear.
 FRUIT_SPAWN_POSITION = Vector2(x = 14, y = 17.5)
+
+# Time for which fruit is vibible and edible: between 9 and 10 seconds. This variable stores it in frames.
+FRUIT_TIME_ACTIVE_RANGE = (int(9 * GAME_ORIGINAL_FPS), int(10 * GAME_ORIGINAL_FPS))
 
 # Duration of fright time (in original game frames) and number of flashes before fright mode ends.
 def FRIGHT_TIME_AND_FLASHES(level):
