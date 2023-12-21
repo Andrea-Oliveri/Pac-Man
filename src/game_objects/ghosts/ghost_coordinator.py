@@ -14,10 +14,12 @@ from src.constants import (Ghost,
                            DOTS_NOT_EATEN_TIMER_THR)
 
 
+# New instance is created at each level.
 class GhostsCoordinator:
 
     def __init__(self):
-        self._reset_new_life()
+        self._died_this_level = False
+        self._reset_new_life(level_start = True)
 
         # Variables needed to decide when ghosts leave house.
         self._dot_counter_ghosts = [0 for _ in Ghost]
@@ -25,7 +27,10 @@ class GhostsCoordinator:
         self._dot_counter_global_enable = False
 
 
-    def _reset_new_life(self):
+    def _reset_new_life(self, level_start = False):
+        if not level_start:
+            self._died_this_level = True
+
         self._mode_timer = 0
         self._prng = PRNG()
 
@@ -73,8 +78,9 @@ class GhostsCoordinator:
         self._check_leave_house(level)
 
         # Update all ghosts.
+        clyde_in_house = self._ghosts[Ghost.CLYDE].is_in_house
         for ghost in self._ghosts:
-            ghost.update(level, fright, maze, pacman)
+            ghost.update(level, fright, maze, pacman, clyde_in_house, self._died_this_level)
 
     def notify_pellet_eaten(self):
         self._time_since_dot_eaten = 0

@@ -87,6 +87,6 @@ class Maze:
         
         return None, None
     
-    def completed(self):
-        """Function that returns True if all the pellets were eaten, False otherwise."""
-        return self._n_pellets == 0
+
+    n_pellets_remaining = property(lambda self: self._n_pellets)
+    completed           = property(lambda self: self._n_pellets == 0)

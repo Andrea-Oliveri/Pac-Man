@@ -3,7 +3,9 @@
 
 from src.game_objects.ghosts.ghost_abstract import GhostAbstract
 
-from src.constants import (Ghost, )
+from src.constants import (Ghost,
+                           CruiseElroyLevel,
+                           CRUISE_ELROY_PELLETS_THR)
 from src.directions import Vector2
 
 
@@ -17,6 +19,20 @@ class Blinky(GhostAbstract):
     def _calculate_personal_target_tile(self, pacman, maze):
         pacman_tile = maze.get_tile_center(pacman.position)
         return pacman_tile
+
+    def _update_cruise_elroy_level(self, level, pellets_remaining, clyde_in_house, died_this_level):
+        if died_this_level and clyde_in_house:
+            self._cruise_elroy_level = CruiseElroyLevel.NULL
+            return
+
+        first_thr, second_thr = CRUISE_ELROY_PELLETS_THR(level)
+
+        if pellets_remaining <= second_thr:
+            self._cruise_elroy_level = CruiseElroyLevel.SECOND
+        elif pellets_remaining <= first_thr:
+            self._cruise_elroy_level = CruiseElroyLevel.FIRST
+        else:
+            self._cruise_elroy_level = CruiseElroyLevel.NULL
 
 
 class Pinky(GhostAbstract):

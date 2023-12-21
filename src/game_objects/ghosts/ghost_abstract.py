@@ -12,6 +12,7 @@ from src.constants import (Ghost,
                            GHOSTS_START_DIRECTIONS,
                            GHOSTS_START_BEHAVIOUR,
                            GhostBehaviour,
+                           CruiseElroyLevel,
                            GHOSTS_SPEED,
                            GHOSTS_FORBIDDEN_TURNING_UP_TILES,
                            GHOSTS_SCATTER_MODE_TARGET_TILES,
@@ -42,9 +43,10 @@ class GhostAbstract(Character, ABC):
         # Also needed to avoid oscillations in in-house behaviour.
         self._going_from_tile_edge_to_center = False
 
+        self._cruise_elroy_level = CruiseElroyLevel.NULL
 
 
-    def update(self, level, fright, maze, pacman):
+    def update(self, level, fright, maze, pacman, clyde_in_house, died_this_level):
 
         dt = GAME_ORIGINAL_UPDATES_INTERVAL            
 
@@ -53,7 +55,8 @@ class GhostAbstract(Character, ABC):
             in_warp_tunnel = maze.tile_is_warp_tunnel(self._position)
             going_to_house = GhostBehaviour.GOING_TO_HOUSE in self._behaviour
             in_or_exiting_house = (GhostBehaviour.IN_HOUSE in self._behaviour) or (GhostBehaviour.EXITING_HOUSE in self._behaviour)
-            speed = GHOSTS_SPEED(level, fright, in_warp_tunnel, going_to_house, in_or_exiting_house)
+            self._update_cruise_elroy_level(level, maze.n_pellets_remaining, clyde_in_house, died_this_level)
+            speed = GHOSTS_SPEED(level, fright, in_warp_tunnel, going_to_house, in_or_exiting_house, self._cruise_elroy_level)
             residual_distance = speed * dt
             
             # Update position clipping to closest half-tile.
@@ -251,7 +254,7 @@ class GhostAbstract(Character, ABC):
         if GhostBehaviour.GOING_TO_HOUSE in self._behaviour:
             return GHOSTS_EATEN_TARGET_TILE
 
-        elif GhostBehaviour.CHASE in self._behaviour:
+        elif GhostBehaviour.CHASE in self._behaviour or self._cruise_elroy_level != CruiseElroyLevel.NULL:
             return self._calculate_personal_target_tile(pacman, maze)
 
         elif GhostBehaviour.SCATTER in self._behaviour:
@@ -324,3 +327,11 @@ class GhostAbstract(Character, ABC):
     is_in_house    = property(lambda self: GhostBehaviour.IN_HOUSE in self._behaviour)
     eyes_direction = property(lambda self: self._direction_next if self._going_from_tile_edge_to_center and self._direction_next is not None else self._direction)
     
+
+    @abstractmethod
+    def _calculate_personal_target_tile(self):
+        raise NotImplementedError
+
+    def _update_cruise_elroy_level(self, level, pellets_remaining, clyde_in_house, died_this_level):
+        return
+        

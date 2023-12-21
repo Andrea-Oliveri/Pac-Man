@@ -210,8 +210,8 @@ PACMAN_PELLET_PENALTIES = {MazeTiles.PELLET: 1, MazeTiles.POWER_PELLET: 3}
 # Levels of speed increase due to ghost becoming Cruise Elroy.
 CruiseElroyLevel = IntEnum('CruiseElroyLevel', ['NULL', 'FIRST', 'SECOND'], start = 0)
 
-# Thresholds for the number of dots remaining in the level for Blinky to turn into Cruise Elroy.
-def CRUISE_ELROY_DOTS_THR(level):
+# Thresholds for the number of pellets remaining in the level for Blinky to turn into Cruise Elroy.
+def CRUISE_ELROY_PELLETS_THR(level):
     if level <= 0:
         raise ValueError(f'invalid level value passed to constants.CRUISE_ELROY_DOTS_THR: {level}')
     elif level >= 19:

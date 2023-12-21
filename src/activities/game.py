@@ -123,7 +123,7 @@ class Game(Activity):
             self._extra_life_awarded = True
 
         # End level if completed.
-        if self._maze.completed():
+        if self._maze.completed:
             self._end_level()
 
 
