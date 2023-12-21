@@ -204,6 +204,29 @@ PACMAN_PELLET_PENALTIES = {MazeTiles.PELLET: 1, MazeTiles.POWER_PELLET: 3}
 
 
 # --------------------------------------------------------------------
+# Constants related to Cruise Elroy.
+# --------------------------------------------------------------------
+
+# Levels of speed increase due to ghost becoming Cruise Elroy.
+CruiseElroyLevel = IntEnum('CruiseElroyLevel', ['NULL', 'FIRST', 'SECOND'], start = 0)
+
+# Thresholds for the number of dots remaining in the level for Blinky to turn into Cruise Elroy.
+def CRUISE_ELROY_DOTS_THR(level):
+    if level <= 0:
+        raise ValueError(f'invalid level value passed to constants.CRUISE_ELROY_DOTS_THR: {level}')
+    elif level >= 19:
+        return 120, 60
+    
+    first_thr  = (20, 30, 40, 40, 40, 50, 50, 50, 60, 60, 60, 80, 80, 80, 100, 100, 100, 100)
+    second_thr = (10, 15, 20, 20, 20, 25, 25, 25, 30, 30, 30, 40, 40, 40, 50 , 50 , 50 , 50 )
+    
+    return first_thr[level - 1], second_thr[level - 1]
+
+# --------------------------------------------------------------------
+
+
+
+# --------------------------------------------------------------------
 # Constants related to speed of Pac-Man and Ghosts.
 # --------------------------------------------------------------------
 
@@ -225,8 +248,9 @@ def PACMAN_SPEED(level, fright):
 
     return multiplier * REFERENCE_SPEED
 
+
 # Function returning the Ghost speed depending on the current level, if fright is on, if ghost is in warp tunnel or in the house.
-def GHOSTS_SPEED(level, fright, in_warp_tunnel, going_to_house, in_or_exiting_house):
+def GHOSTS_SPEED(level, fright, in_warp_tunnel, going_to_house, in_or_exiting_house, cruise_elroy):
     multiplier = None
 
     if going_to_house:
@@ -234,14 +258,12 @@ def GHOSTS_SPEED(level, fright, in_warp_tunnel, going_to_house, in_or_exiting_ho
     elif in_or_exiting_house:
         multiplier = 0.40
     elif level == 1:
-        multiplier = 0.40 if in_warp_tunnel else 0.50 if fright else 0.75
+        multiplier = 0.40 if in_warp_tunnel else 0.50 if fright else 0.80 if cruise_elroy == CruiseElroyLevel.FIRST else 0.85 if cruise_elroy == CruiseElroyLevel.SECOND else 0.75
     elif level <= 4:
-        multiplier = 0.45 if in_warp_tunnel else 0.55 if fright else 0.85
-    elif level <= 20:
-        multiplier = 0.50 if in_warp_tunnel else 0.60 if fright else 0.95
+        multiplier = 0.45 if in_warp_tunnel else 0.55 if fright else 0.90 if cruise_elroy == CruiseElroyLevel.FIRST else 0.95 if cruise_elroy == CruiseElroyLevel.SECOND else 0.85
     else:
-        multiplier = 0.50 if in_warp_tunnel else 0.95
-
+        multiplier = 0.50 if in_warp_tunnel else 0.60 if fright else 1.00 if cruise_elroy == CruiseElroyLevel.FIRST else 1.05 if cruise_elroy == CruiseElroyLevel.SECOND else 0.95
+    
     return multiplier * REFERENCE_SPEED
 
 
