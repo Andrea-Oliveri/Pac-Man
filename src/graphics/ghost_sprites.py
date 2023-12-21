@@ -23,7 +23,11 @@ class GhostSprite:
         self._fright_flash_counter = 0
 
     def notify_fright_on(self, fright_duration, fright_flashes):
-        # The number of flashes vary, but the pattern goes: blue, white for this amount of time, blue for this amount of time, ...., white for this amount of time and then normal.
+        # The regular pattern of flashes goes: blue, white for 14 frames, blue for 14 frames, ...., white for 14 frames and then ghosts not frightened anymore.
+        # On some levels, the full pattern with the correct number of flashes may not fit entirely given the expected duration.
+        # In this case, the pattern starts with white for 14 frames and ends with white, which can however be shorter than 14 frames.
+        # This is consistent with the original game. What is not completely consistent is that the original game does not guarantee 14 white frames even when the
+        # whole flashing could fit. The reason and logic behind this is a mistery and completely undocumented.
 
         flashing_time = (2 * fright_flashes - 1) * GHOSTS_FRIGHT_FLASH_ANIMATION_PERIOD_FRAMES
 

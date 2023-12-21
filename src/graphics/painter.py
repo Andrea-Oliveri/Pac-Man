@@ -76,6 +76,7 @@ class Painter:
 
         self._ghost_sprites.draw(ghosts)
 
+        return
         # ----------------------------------------
         # DEBUG
         # ----------------------------------------

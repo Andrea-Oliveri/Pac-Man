@@ -75,6 +75,8 @@ class Window(pyglet.window.Window):
 
         if symbol == key._1:
             self._current_activity._pellet_eaten((23, 1), MazeTiles.POWER_PELLET)
+        if symbol == key._2:
+            self._current_activity._level += 1
         # --------------------------------------
 
 
