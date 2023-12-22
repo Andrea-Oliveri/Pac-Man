@@ -30,7 +30,7 @@ class PacMan(Character):
 
 
         # --------------------------------
-        # TODO: implement proper swicthing
+        # TODO: implement proper swicthing from SPAWNING and to DEAD
         # --------------------------------
         self._state = PacManStates.MOVING
         # --------------------------------

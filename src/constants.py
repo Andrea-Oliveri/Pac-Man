@@ -347,7 +347,7 @@ def FRUIT_OF_LEVEL(level):
 # --------------------------------------------------------------------
 
 # Possible states for the level.
-LevelStates = IntEnum('LevelStates', ['FIRST_WELCOME', 'READY', 'PLAYING', 'PAUSED', 'DEATH', 'COMPLETED'])
+LevelStates = IntEnum('LevelStates', ['FIRST_WELCOME', 'READY', 'PLAYING', 'PAUSED', 'DEATH', 'COMPLETED', 'GAME_OVER'])
 
 # Duration (in original game frames) of animations corresponding to different level states.
 LEVEL_FIRST_WELCOME_PERIOD_FRAMES             = 150
@@ -357,6 +357,7 @@ LEVEL_DEATH_PERIOD_FRAMES                     = sum(PACMAN_DEATH_ANIMATION_PERIO
 LEVEL_PAUSE_BEFORE_COMPLETED_PERIOD_FRAMES    = 120
 LEVEL_COMPLETED_FLASH_ANIMATION_PERIOD_FRAMES = 12
 LEVEL_PAUSE_AFTER_EATING_PERIOD_FRAMES        = 60
+LEVEL_GAME_OVER_PERIOD_FRAMES                 = 120
 
 # Coordinates and color of 'PLAYER ONE' text.
 LEVEL_PLAYER_ONE_TEXT_COORDS = (-4.5 * MAZE_TILE_PX_SIZE, +4 * MAZE_TILE_PX_SIZE)
@@ -365,6 +366,10 @@ LEVEL_PLAYER_ONE_TEXT_COLOR  = FontColors.CYAN
 # Coordinates and color of 'READY!' text.
 LEVEL_READY_TEXT_COORDS      = (-2.5 * MAZE_TILE_PX_SIZE, -2 * MAZE_TILE_PX_SIZE)
 LEVEL_READY_TEXT_COLOR       = FontColors.YELLOW
+
+# Coordinates and color of 'GAME OVER' text.
+LEVEL_GAME_OVER_TEXT_COORDS  = (-4.5 * MAZE_TILE_PX_SIZE, -2 * MAZE_TILE_PX_SIZE)
+LEVEL_GAME_OVER_TEXT_COLOR   = FontColors.RED
 
 # Number of white flashes for the level completed animation. Level end animation: white, blue, white, blue, white, blue, white, blue.
 LEVEL_COMPLETED_FLASH_NUM = 4
