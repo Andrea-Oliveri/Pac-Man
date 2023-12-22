@@ -127,7 +127,7 @@ class Game(Activity):
             self._end_level()
 
     def _pellet_eaten(self, tile_coords, pellet_type):
-        self._painter.set_empty_tile(tile_coords)
+        self._painter.set_empty_tile(*tile_coords)
         self._pacman.add_penalty(pellet_type)
         self._ghosts.notify_pellet_eaten()
         self._score.add_to_score(ScoreActions.EAT_PELLET if pellet_type == MazeTiles.PELLET else ScoreActions.EAT_POWER_PELLET)

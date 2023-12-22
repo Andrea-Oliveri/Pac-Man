@@ -20,9 +20,7 @@ class Font:
         self._char_tiles = [{char: tile for char, tile in zip(FONT_SHEET_CHARACTERS, iterator)} for color in FontColors]
 
 
-    def print(self, x, y, color, text):
-        utils.enable_transparency_blit()
-        
+    def print(self, x, y, color, text):        
         if color not in FontColors:
             raise ValueError(f'Invalid color provided to Font.print: {color}')
 

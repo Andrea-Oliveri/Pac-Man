@@ -278,6 +278,9 @@ def GHOSTS_SPEED(level, fright, in_warp_tunnel, going_to_house, in_or_exiting_ho
 # Constants related to Game UI.
 # --------------------------------------------------------------------
 
+# Color of background.
+UI_BACKGROUND_COLOR = (0, 0, 0)
+
 # Coordinates of 'HIGH SCORE' text.
 GAME_HIGH_SCORE_TEXT_COORDS   = (- 4.5 * MAZE_TILE_PX_SIZE, +18 * MAZE_TILE_PX_SIZE)
 

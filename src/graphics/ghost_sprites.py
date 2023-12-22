@@ -39,8 +39,6 @@ class GhostSprite:
 
 
     def draw(self, ghosts):
-        utils.enable_transparency_blit()
-
         for ghost in ghosts:
             sprite_idx = self._get_sprite_idx(ghost.name, ghost.frightened, ghost.transparent, ghost.eyes_direction)
             ghost_coords = utils.calculate_coords_sprites(ghost.position)

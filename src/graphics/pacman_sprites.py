@@ -26,8 +26,6 @@ class PacManSprite:
         self._was_already_dead = False
 
     def draw(self, pacman):
-        utils.enable_transparency_blit()
-
         sprite_idx = self._get_sprite_idx(pacman.direction, pacman.state)
         pacman_coords = utils.calculate_coords_sprites(pacman.position)
         self._sprites[sprite_idx].blit(x=pacman_coords.x, y=pacman_coords.y)
