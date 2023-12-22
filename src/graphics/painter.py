@@ -80,12 +80,12 @@ class Painter:
 
         self._draw_gui(score, lives, level)
 
-        self._pacman_sprites.draw(pacman)
+        if fruit_active:
+            self._draw_fruit(level)
 
         self._ghost_sprites.draw(ghosts)
 
-        if fruit_active:
-            self._draw_fruit(level)
+        self._pacman_sprites.draw(pacman)
 
         return
         # ----------------------------------------

@@ -372,7 +372,7 @@ HIGH_SCORE_FILE_NUM_BYTES = 4
 # --------------------------------------------------------------------
 
 # Number of lives at the beginning of the game.
-STARTING_LIVES_PACMAN = 3 # 1, 2, 3 or 5 are all valid for this setting
+STARTING_LIVES_PACMAN = 5 # 1, 2, 3 or 5 are all valid for this setting
 
 # Score above which an extra life is awarded.
 EXTRA_LIFE_POINTS_REQUIREMENT = 10000 # 10000, 15000 and 20000 are all valid for this setting
