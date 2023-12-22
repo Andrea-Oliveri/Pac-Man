@@ -30,8 +30,8 @@ def load_image_grid(path, tile_size_px):
         image.anchor_x = tile_size_px // 2
         image.anchor_y = tile_size_px // 2
 
-        pyglet.gl.glBindTexture(pyglet.gl.GL_TEXTURE_2D, image.get_texture().id)
-        pyglet.gl.glTexParameteri(pyglet.gl.GL_TEXTURE_2D, pyglet.gl.GL_TEXTURE_MAG_FILTER, pyglet.gl.GL_NEAREST)
+        texture = image.get_texture()
+        set_texture_interp_mode(texture)
 
     return image_grid
 
@@ -45,10 +45,14 @@ def load_image(path):
 
     # Interpolate avoiding blur.
     texture = image.get_texture()
-    pyglet.gl.glBindTexture(texture.target, texture.id)
-    pyglet.gl.glTexParameteri(texture.target, pyglet.gl.GL_TEXTURE_MAG_FILTER, pyglet.gl.GL_NEAREST)
+    set_texture_interp_mode(texture)
 
     return image
+
+
+def set_texture_interp_mode(texture):
+    pyglet.gl.glBindTexture(pyglet.gl.GL_TEXTURE_2D, texture.id)
+    pyglet.gl.glTexParameteri(pyglet.gl.GL_TEXTURE_2D, pyglet.gl.GL_TEXTURE_MAG_FILTER, pyglet.gl.GL_NEAREST)
 
 
 def enable_transparency_blit():
