@@ -163,3 +163,13 @@ class Window(pyglet.window.Window):
     def on_draw(self):
         self.clear()
         self._current_activity.event_draw_screen()
+
+        # -------- DEBUG: FPS DISPLAY ----------
+        if not hasattr(self, 'fps_display'):
+            self.fps_display = pyglet.window.FPSDisplay(window=self)
+            self.fps_display.label = pyglet.text.Label('', x=70, y=135, font_size=12, bold=True, color = (255, 0, 0, 255))
+
+        self.fps_display.draw()
+        from src.graphics import utils
+        utils.enable_transparency_blit()
+        # ---------------------------------------

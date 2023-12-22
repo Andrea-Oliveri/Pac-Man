@@ -56,5 +56,6 @@ def set_texture_interp_mode(texture):
 
 
 def enable_transparency_blit():
+    # Note that when calling and Pyglet function to draw shapes or text, this is disabled again.
     pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
     pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)

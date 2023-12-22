@@ -77,7 +77,7 @@ class Painter:
     def draw_game(self, pacman, ghosts, score, lives, level, fruit_active):
 
         self._maze_image.blit(0, 0)
-
+        
         self._draw_gui(score, lives, level)
 
         if fruit_active:

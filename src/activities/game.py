@@ -70,8 +70,8 @@ class Game(Activity):
         if self._fruit_visible_counter > 0:
             self._fruit_visible_counter -= 1
 
-        self._pacman .update(self._level, fright, self._maze)
-        self._ghosts .update(self._level, fright, self._maze, self._pacman)
+        self._pacman.update(self._level, fright, self._maze)
+        self._ghosts.update(self._level, fright, self._maze, self._pacman)
 
         self._calculate_new_game_state()
 
