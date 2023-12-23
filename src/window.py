@@ -152,12 +152,13 @@ class Window(pyglet.window.Window):
         
         retval = self._current_activity.event_update_state()
 
-        if isinstance(self._current_activity, Menu) and retval:
+        if retval and isinstance(self._current_activity, Menu):
             # retval is True if we need to change from Menu to Game.
             self._current_activity = Game(self.painter)
 
-            from pyglet.window import key
-            self.on_key_press(key.P, None)
+        elif retval and isinstance(self._current_activity, Game):
+            # retval is True if we need to change from Game to Menu.
+            self._current_activity = Menu(self.painter)
 
         
     def on_draw(self):

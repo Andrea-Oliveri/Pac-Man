@@ -275,6 +275,34 @@ def GHOSTS_SPEED(level, fright, in_warp_tunnel, going_to_house, in_or_exiting_ho
 
 
 # --------------------------------------------------------------------
+# Constants related to Level animations.
+# --------------------------------------------------------------------
+
+# Possible states for the level.
+LevelStates = IntEnum('LevelStates', ['FIRST_WELCOME', 'READY', 'PLAYING', 
+                                      'DEATH', 'COMPLETED', 'GAME_OVER',
+                                      'PAUSE_AFTER_EATING', 'PAUSE_BEFORE_DEATH', 'PAUSE_BEFORE_COMPLETED'])
+
+# Number and period of white flashes for the level completed animation.
+# Level end animation colors: white, blue, white, blue, white, blue, white, blue.
+LEVEL_COMPLETED_FLASH_NUM = 4
+LEVEL_COMPLETED_FLASH_ANIMATION_PERIOD_FRAMES = 12
+
+# Duration (in original game frames) of animations corresponding to different level states.
+LEVEL_STATES_DURATION = {LevelStates.FIRST_WELCOME         : 150,
+                         LevelStates.READY                 : 120,
+                         LevelStates.PLAYING               : float('inf'),
+                         LevelStates.DEATH                 : sum(PACMAN_DEATH_ANIMATION_PERIOD_FRAMES) + 50,
+                         LevelStates.COMPLETED             : 2 * LEVEL_COMPLETED_FLASH_NUM * LEVEL_COMPLETED_FLASH_ANIMATION_PERIOD_FRAMES,
+                         LevelStates.GAME_OVER             : 120,
+                         LevelStates.PAUSE_AFTER_EATING    : 60,
+                         LevelStates.PAUSE_BEFORE_DEATH    : 60,
+                         LevelStates.PAUSE_BEFORE_COMPLETED: 120}
+
+# --------------------------------------------------------------------
+
+
+# --------------------------------------------------------------------
 # Constants related to Game UI.
 # --------------------------------------------------------------------
 
@@ -306,7 +334,7 @@ UI_TILES_SHEET_PATH = "./assets/images/UI.png"
 UI_TILES_PX_SIZE = 16
 
 # Elements present in UI tiles sheet, ordered as in the sheet.
-Fruits = IntEnum('TileUI', ['CHERRY', 'STRAWBERRY', 'PEACH', 'APPLE', 'GRAPES', 'GALAXIAN', 'BELL', 'KEY'], start = 0)
+Fruits = IntEnum('Fruits', ['CHERRY', 'STRAWBERRY', 'PEACH', 'APPLE', 'GRAPES', 'GALAXIAN', 'BELL', 'KEY'], start = 0)
 LIFE_ICON_UI = max(Fruits) + 1
 
 # Coordinates of left-most life icon.
@@ -339,25 +367,8 @@ def FRUIT_OF_LEVEL(level):
 
     return Fruits.KEY
 
-# --------------------------------------------------------------------
-
-
-# --------------------------------------------------------------------
-# Constants related to Level animations.
-# --------------------------------------------------------------------
-
-# Possible states for the level.
-LevelStates = IntEnum('LevelStates', ['FIRST_WELCOME', 'READY', 'PLAYING', 'PAUSED', 'DEATH', 'COMPLETED', 'GAME_OVER'])
-
-# Duration (in original game frames) of animations corresponding to different level states.
-LEVEL_FIRST_WELCOME_PERIOD_FRAMES             = 150
-LEVEL_READY_PERIOD_FRAMES                     = 120
-LEVEL_PAUSE_BEFORE_DEATH_PERIOD_FRAMES        = 60
-LEVEL_DEATH_PERIOD_FRAMES                     = sum(PACMAN_DEATH_ANIMATION_PERIOD_FRAMES) + 50
-LEVEL_PAUSE_BEFORE_COMPLETED_PERIOD_FRAMES    = 120
-LEVEL_COMPLETED_FLASH_ANIMATION_PERIOD_FRAMES = 12
-LEVEL_PAUSE_AFTER_EATING_PERIOD_FRAMES        = 60
-LEVEL_GAME_OVER_PERIOD_FRAMES                 = 120
+# UI elements which can be optionally drawn during gameplay depending on state.
+DynamicUIElements = IntFlag('DynamicUIElements', ['PACMAN', 'GHOSTS', 'FRUIT', 'READY_TEXT', 'PLAYER_ONE_TEXT', 'GAME_OVER_TEXT'])
 
 # Coordinates and color of 'PLAYER ONE' text.
 LEVEL_PLAYER_ONE_TEXT_COORDS = (-4.5 * MAZE_TILE_PX_SIZE, +4 * MAZE_TILE_PX_SIZE)
@@ -371,11 +382,7 @@ LEVEL_READY_TEXT_COLOR       = FontColors.YELLOW
 LEVEL_GAME_OVER_TEXT_COORDS  = (-4.5 * MAZE_TILE_PX_SIZE, -2 * MAZE_TILE_PX_SIZE)
 LEVEL_GAME_OVER_TEXT_COLOR   = FontColors.RED
 
-# Number of white flashes for the level completed animation. Level end animation: white, blue, white, blue, white, blue, white, blue.
-LEVEL_COMPLETED_FLASH_NUM = 4
-
 # --------------------------------------------------------------------
-
 
 
 # --------------------------------------------------------------------

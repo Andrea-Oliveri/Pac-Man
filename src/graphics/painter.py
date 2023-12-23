@@ -22,7 +22,14 @@ from src.constants import (MAZE_START_IMAGE,
                            GAME_RIGHT_FRUIT_ICON_COORDS,
                            GAME_MAX_FRUIT_ICON_NUMBER,
                            FRUIT_OF_LEVEL,
-                           FRUIT_SPAWN_POSITION)
+                           FRUIT_SPAWN_POSITION,
+                           LEVEL_PLAYER_ONE_TEXT_COORDS,
+                           LEVEL_PLAYER_ONE_TEXT_COLOR,
+                           LEVEL_READY_TEXT_COORDS,
+                           LEVEL_READY_TEXT_COLOR,
+                           LEVEL_GAME_OVER_TEXT_COORDS,
+                           LEVEL_GAME_OVER_TEXT_COLOR,
+                           DynamicUIElements)
 from src.directions import Vector2
 from src.graphics import utils
 from src.graphics.font import Font
@@ -49,13 +56,14 @@ class Painter:
         self._ui_tiles = utils.load_image_grid(UI_TILES_SHEET_PATH, UI_TILES_PX_SIZE)
 
         # Load maze and reset child attributes.
-        self.new_level()
+        self.reset_level()
 
 
-    def new_level(self):
+    def reset_level(self, new = True):
         # Load initial maze image.
-        self._maze_image = utils.load_image(MAZE_START_IMAGE)
-        self._maze_empty_tile = self._maze_image.get_region(*MAZE_START_IMAGE_EMPTY_TILE_REGION_COORDS, MAZE_TILE_PX_SIZE, MAZE_TILE_PX_SIZE)
+        if new:
+            self._maze_image = utils.load_image(MAZE_START_IMAGE)
+            self._maze_empty_tile = self._maze_image.get_region(*MAZE_START_IMAGE_EMPTY_TILE_REGION_COORDS, MAZE_TILE_PX_SIZE, MAZE_TILE_PX_SIZE)
 
         # Reset sprite counters.
         self._pacman_sprites.reset()
@@ -74,18 +82,29 @@ class Painter:
         self._ghost_sprites .update()
 
 
-    def draw_game(self, pacman, ghosts, score, lives, level, fruit_active):
+    def draw_game(self, pacman, ghosts, score, lives, level, ui_elements):
 
         self._maze_image.blit(0, 0)
         
         self._draw_gui(score, lives, level)
 
-        if fruit_active:
+        if DynamicUIElements.READY_TEXT in ui_elements:
+            self._font.print(*LEVEL_READY_TEXT_COORDS     , LEVEL_READY_TEXT_COLOR     , 'READY!')
+
+        if DynamicUIElements.PLAYER_ONE_TEXT in ui_elements:
+            self._font.print(*LEVEL_PLAYER_ONE_TEXT_COORDS, LEVEL_PLAYER_ONE_TEXT_COLOR, 'PLAYER ONE')
+
+        if DynamicUIElements.GAME_OVER_TEXT in ui_elements:
+            self._font.print(*LEVEL_GAME_OVER_TEXT_COORDS , LEVEL_GAME_OVER_TEXT_COLOR , 'GAME  OVER')
+
+        if DynamicUIElements.FRUIT in ui_elements:
             self._draw_fruit(level)
 
-        self._ghost_sprites.draw(ghosts)
+        if DynamicUIElements.GHOSTS in ui_elements:
+            self._ghost_sprites.draw(ghosts)
 
-        self._pacman_sprites.draw(pacman)
+        if DynamicUIElements.PACMAN in ui_elements:
+            self._pacman_sprites.draw(pacman)
 
         return
         # ----------------------------------------
@@ -144,7 +163,7 @@ class Painter:
 
 
     def _draw_fruit(self, level):
-        fruit = FRUIT_OF_LEVEL(level) 
+        fruit = FRUIT_OF_LEVEL(level)
         fruit_coords = utils.calculate_coords_sprites(FRUIT_SPAWN_POSITION)
         self._ui_tiles[fruit].blit(fruit_coords.x, fruit_coords.y)
 

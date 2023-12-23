@@ -19,7 +19,10 @@ from src.constants import (MazeTiles,
                            FRUIT_SPAWN_THRESHOLDS,
                            FRUIT_SPAWN_POSITION,
                            FRUIT_TIME_ACTIVE_RANGE,
-                           FRIGHT_TIME_AND_FLASHES)
+                           FRIGHT_TIME_AND_FLASHES,
+                           LevelStates,
+                           LEVEL_STATES_DURATION,
+                           DynamicUIElements)
 
 
 class Game(Activity):
@@ -35,33 +38,140 @@ class Game(Activity):
         self._lives = STARTING_LIVES_PACMAN
         self._extra_life_awarded = False
 
+        # Create private attributes to hold level state and duration of the state.
+        self._level_state = None
+        self._level_state_counter = 0
+
+        # Create attributes that will be initialized in _new_level.
         self._level = 0
-        self._new_level()
+        self._maze   = None
+        self._pacman = None
+        self._ghosts = None
+        self._fright_counter = None
+        self._fruit_visible_counter = None
+
+        self._set_level_state(LevelStates.FIRST_WELCOME)
 
 
-    def _new_level(self):
-        self._level += 1
-
-        self._maze   = Maze()
+    def _reset_level(self, new = True):
+        if new:
+            self._level  += 1
+            self._maze   = Maze()
+            self._ghosts = GhostsCoordinator()
+        
         self._pacman = PacMan()
-        self._ghosts = GhostsCoordinator()
         
         self._fright_counter = 0
 
         self._fruit_visible_counter = 0
 
-        self._painter.new_level()
+        self._painter.reset_level(new)
+
 
 
     def event_draw_screen(self):
-        """Override of method from Activity class, drawing the controls menu
-        on the screen."""
-        self._painter.draw_game(self._pacman, self._ghosts, self._score, self._lives, self._level, self._fruit_visible_counter > 0)
+        """Override of method from Activity class, drawing the game state on the screen."""
+
+        match self._level_state:
+            case LevelStates.FIRST_WELCOME:
+                ui_elements = DynamicUIElements.READY_TEXT | DynamicUIElements.PLAYER_ONE_TEXT
+            case LevelStates.READY:
+                ui_elements = DynamicUIElements.READY_TEXT | DynamicUIElements.PACMAN | DynamicUIElements.GHOSTS
+            case LevelStates.DEATH | LevelStates.COMPLETED:
+                ui_elements = DynamicUIElements.PACMAN
+            case LevelStates.GAME_OVER:
+                ui_elements = DynamicUIElements.GAME_OVER_TEXT
+            case LevelStates.PAUSE_AFTER_EATING:
+                ui_elements = DynamicUIElements.GHOSTS | DynamicUIElements.FRUIT
+            case LevelStates.PLAYING | LevelStates.PAUSE_BEFORE_DEATH | LevelStates.PAUSE_BEFORE_COMPLETED:
+                ui_elements = DynamicUIElements.PACMAN | DynamicUIElements.GHOSTS 
+                
+                if self._fruit_visible_counter > 0:
+                    ui_elements |= DynamicUIElements.FRUIT
+
+        self._painter.draw_game(self._pacman, self._ghosts, self._score, self._lives, self._level, ui_elements)
         
+
+    def event_key_pressed(self, symbol, modifiers):
+        """Override of method from Activity class, reacting to key presses."""
+        if symbol == key.UP:
+            self._pacman.direction = Vector2.UP
+        elif symbol == key.DOWN:
+            self._pacman.direction = Vector2.DOWN
+        elif symbol == key.LEFT:
+            self._pacman.direction = Vector2.LEFT
+        elif symbol == key.RIGHT:
+            self._pacman.direction = Vector2.RIGHT
+
+
 
     def event_update_state(self):
         """Override of method from Activity class, updating the state of the activity."""
+        
+        # Update level state.
+        if self._level_state == LevelStates.PLAYING:
+            self._update_game()
+        elif self._level_state == LevelStates.DEATH:
+            self._painter.update(self._pacman)
+        # TODO: if pause after eating, update but only ghosts going to house
+        
+        # Transition to new level state if needed.      
+        change_state = self._level_state_counter <= 0
+        self._level_state_counter -= 1
+        
+        match self._level_state:
+            case LevelStates.PLAYING:
+                self._calculate_new_game_state()
 
+            case LevelStates.FIRST_WELCOME:
+                if change_state:
+                    self._set_level_state(LevelStates.READY)
+                    self._reset_level(new = True)
+                    self._lives -= 1
+
+            case LevelStates.READY:
+                if change_state:
+                    self._set_level_state(LevelStates.PLAYING)
+                    self._pacman.state_set_moving()
+
+            case LevelStates.DEATH:
+                if change_state:
+                    self._lives -= 1
+                    if self._lives >= 0:
+                        self._set_level_state(LevelStates.READY)
+                        self._reset_level(new = False)
+                    else:
+                        self._set_level_state(LevelStates.GAME_OVER)
+
+            case LevelStates.COMPLETED:
+                if change_state:
+                    self._set_level_state(LevelStates.READY)
+                    self._reset_level(new = True)
+
+            case LevelStates.GAME_OVER:
+                if change_state:
+                    return True # Tell Window class we need to change activity.
+
+            case LevelStates.PAUSE_AFTER_EATING:
+                if change_state:
+                    self._set_level_state(LevelStates.PLAYING)
+
+            case LevelStates.PAUSE_BEFORE_DEATH:
+                if change_state:
+                    self._set_level_state(LevelStates.DEATH)
+                    self._pacman.state_set_death()
+                    self._ghosts.notify_life_lost()
+            
+            case LevelStates.PAUSE_BEFORE_COMPLETED:
+                if change_state:
+                    self._set_level_state(LevelStates.COMPLETED)
+                    self._pacman.state_become_round()
+
+        return False
+        
+
+
+    def _update_game(self):
         fright = False
         if self._fright_counter > 0:
             self._fright_counter -= 1
@@ -73,22 +183,7 @@ class Game(Activity):
         self._pacman.update(self._level, fright, self._maze)
         self._ghosts.update(self._level, fright, self._maze, self._pacman)
 
-        self._calculate_new_game_state()
-
         self._painter.update(self._pacman)
-
-        
-    def event_key_pressed(self, symbol, modifiers):
-        """Override of method from Activity class, reacting to key presses.
-        Returns True if the game should start and False otherwise."""
-        if symbol == key.UP:
-            self._pacman.direction = Vector2.UP
-        elif symbol == key.DOWN:
-            self._pacman.direction = Vector2.DOWN
-        elif symbol == key.LEFT:
-            self._pacman.direction = Vector2.LEFT
-        elif symbol == key.RIGHT:
-            self._pacman.direction = Vector2.RIGHT
 
 
     def _calculate_new_game_state(self):
@@ -110,13 +205,6 @@ class Game(Activity):
         if tile_coords is not None:
             self._pellet_eaten(tile_coords, pellet_type)
 
-        # Check if collided with any ghosts.
-        life_lost, count_eaten = self._ghosts.check_collision(self._maze, self._pacman) 
-        for _ in range(count_eaten):
-            self._score.add_to_score(ScoreActions.EAT_GHOST)
-        if life_lost:
-            self._life_lost()
-
         # Update lives if score high enough.
         if not self._extra_life_awarded and self._score.score >= EXTRA_LIFE_POINTS_REQUIREMENT:
             self._lives += 1
@@ -124,7 +212,16 @@ class Game(Activity):
 
         # End level if completed.
         if self._maze.completed:
-            self._end_level()
+            self._set_level_state(LevelStates.PAUSE_BEFORE_COMPLETED)
+
+        # Check if collided with any ghosts.
+        life_lost, count_eaten = self._ghosts.check_collision(self._maze, self._pacman) 
+        for _ in range(count_eaten):
+            self._score.add_to_score(ScoreActions.EAT_GHOST)
+            self._set_level_state(LevelStates.PAUSE_AFTER_EATING)
+        if life_lost:
+            self._set_level_state(LevelStates.PAUSE_BEFORE_DEATH)
+
 
     def _pellet_eaten(self, tile_coords, pellet_type):
         self._painter.set_empty_tile(*tile_coords)
@@ -142,14 +239,11 @@ class Game(Activity):
 
         if self._maze.n_pellets_remaining in FRUIT_SPAWN_THRESHOLDS:
             self._fruit_visible_counter = randint(*FRUIT_TIME_ACTIVE_RANGE)
-            
 
-    def _life_lost(self):
+
+    def _set_level_state(self, new_state):
+        if new_state not in LevelStates:
+            raise ValueError('Invalid state provided to Game._set_level_state')
         
-        print('Life lost')
-
-        self._ghosts.notify_life_lost()
-
-
-    def _end_level(self):
-        self._new_level()
+        self._level_state = new_state
+        self._level_state_counter = LEVEL_STATES_DURATION[new_state]

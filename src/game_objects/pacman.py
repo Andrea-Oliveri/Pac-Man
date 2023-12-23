@@ -27,17 +27,6 @@ class PacMan(Character):
 
         self._direction_input = None
 
-
-
-        # --------------------------------
-        # TODO: implement proper swicthing from SPAWNING and to DEAD
-        # --------------------------------
-        self._state = PacManStates.MOVING
-        # --------------------------------
-        
-
-
-
     def update(self, level, fright, maze):
 
         if self._state in (PacManStates.SPAWNING, PacManStates.DEAD):
@@ -92,7 +81,14 @@ class PacMan(Character):
     def add_penalty(self, pellet_type):
         self._penalty += PACMAN_PELLET_PENALTIES[pellet_type]
 
+    def state_become_round(self):
+        self._state = PacManStates.SPAWNING
 
+    def state_set_moving(self):
+        self._state = PacManStates.MOVING
+
+    def state_set_death(self):
+        self._state = PacManStates.DEAD
 
     def _update_position(self, level, fright, maze):
         self._old_position = self._position
