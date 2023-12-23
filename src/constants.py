@@ -289,7 +289,7 @@ LEVEL_COMPLETED_FLASH_NUM = 4
 LEVEL_COMPLETED_FLASH_ANIMATION_PERIOD_FRAMES = 12
 
 # Duration (in original game frames) of animations corresponding to different level states.
-LEVEL_STATES_DURATION = {LevelStates.FIRST_WELCOME         : 150,
+LEVEL_STATES_DURATION = {LevelStates.FIRST_WELCOME         : 130,
                          LevelStates.READY                 : 120,
                          LevelStates.PLAYING               : float('inf'),
                          LevelStates.DEATH                 : sum(PACMAN_DEATH_ANIMATION_PERIOD_FRAMES) + 50,

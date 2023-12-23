@@ -48,7 +48,7 @@ class Game(Activity):
         self._pacman = None
         self._ghosts = None
         self._fright_counter = None
-        self._fruit_visible_counter = None
+        self._fruit_visible_counter = 0
 
         self._set_level_state(LevelStates.FIRST_WELCOME)
 
@@ -77,7 +77,9 @@ class Game(Activity):
                 ui_elements = DynamicUIElements.READY_TEXT | DynamicUIElements.PLAYER_ONE_TEXT
             case LevelStates.READY:
                 ui_elements = DynamicUIElements.READY_TEXT | DynamicUIElements.PACMAN | DynamicUIElements.GHOSTS
-            case LevelStates.DEATH | LevelStates.COMPLETED:
+            case LevelStates.DEATH:
+                ui_elements = DynamicUIElements.PACMAN | DynamicUIElements.FRUIT
+            case LevelStates.COMPLETED:
                 ui_elements = DynamicUIElements.PACMAN
             case LevelStates.GAME_OVER:
                 ui_elements = DynamicUIElements.GAME_OVER_TEXT
@@ -86,8 +88,8 @@ class Game(Activity):
             case LevelStates.PLAYING | LevelStates.PAUSE_BEFORE_DEATH | LevelStates.PAUSE_BEFORE_COMPLETED:
                 ui_elements = DynamicUIElements.PACMAN | DynamicUIElements.GHOSTS 
                 
-                if self._fruit_visible_counter > 0:
-                    ui_elements |= DynamicUIElements.FRUIT
+        if self._fruit_visible_counter <= 0:
+            ui_elements &= (~DynamicUIElements.FRUIT)
 
         self._painter.draw_game(self._pacman, self._ghosts, self._score, self._lives, self._level, ui_elements)
         
@@ -165,7 +167,6 @@ class Game(Activity):
             case LevelStates.PAUSE_BEFORE_COMPLETED:
                 if change_state:
                     self._set_level_state(LevelStates.COMPLETED)
-                    self._pacman.state_become_round()
 
         return False
         
@@ -213,6 +214,7 @@ class Game(Activity):
         # End level if completed.
         if self._maze.completed:
             self._set_level_state(LevelStates.PAUSE_BEFORE_COMPLETED)
+            self._pacman.state_become_round()
 
         # Check if collided with any ghosts.
         life_lost, count_eaten = self._ghosts.check_collision(self._maze, self._pacman) 
