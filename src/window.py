@@ -9,6 +9,7 @@ from src.constants import (WINDOW_INIT_KWARGS,
                            WINDOW_MINIMUM_SIZE,
                            GAME_TENTATIVE_UPDATES_INTERVAL,
                            WINDOW_ICON_PATH,
+                           BACKGROUND_COLOR,
                            GAME_ORIGINAL_UPDATES_INTERVAL)
 
 
@@ -21,6 +22,9 @@ class Window(pyglet.window.Window):
         icon = pyglet.image.load(WINDOW_ICON_PATH)
         self.set_icon(icon)
         
+        # Set background color.
+        pyglet.gl.glClearColor(*BACKGROUND_COLOR, 1)
+
         self.painter = Painter()
 
         self._current_activity = Menu(self.painter)

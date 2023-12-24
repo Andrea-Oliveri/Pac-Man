@@ -31,6 +31,9 @@ GAME_TENTATIVE_UPDATES_INTERVAL = 1 / 100
 # Constant defining where the image are stored.
 WINDOW_ICON_PATH = "./assets/images/icon.ico"
 
+# Color of background.
+BACKGROUND_COLOR = (0, 0, 0)
+
 # --------------------------------------------------------------------
 
 
@@ -305,9 +308,6 @@ LEVEL_STATES_DURATION = {LevelStates.FIRST_WELCOME         : 130,
 # --------------------------------------------------------------------
 # Constants related to Game UI.
 # --------------------------------------------------------------------
-
-# Color of background.
-UI_BACKGROUND_COLOR = (0, 0, 0)
 
 # Coordinates of 'HIGH SCORE' text.
 GAME_HIGH_SCORE_TEXT_COORDS   = (- 4.5 * MAZE_TILE_PX_SIZE, +18 * MAZE_TILE_PX_SIZE)
