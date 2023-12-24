@@ -44,8 +44,10 @@ BACKGROUND_COLOR = (0, 0, 0)
 # Enum defining types of tiles.
 MazeTiles = IntEnum('MazeTiles', ['WALL', 'EMPTY', 'PELLET', 'POWER_PELLET', 'DOOR'])
 
-# Location of image with maze starting configuration.
+# Location of images with maze configurations.
 MAZE_START_IMAGE = "./assets/images/Maze Initial.png"
+MAZE_FLASH_WHITE = "./assets/images/Maze Flash White.png"
+MAZE_FLASH_BLUE  = "./assets/images/Maze Flash Blue.png"
 
 # Coordinates (left pixel counting from left, bottom pixel counting from bottom) of an empty tile in the initial maze.
 MAZE_START_IMAGE_EMPTY_TILE_REGION_COORDS = (0, 128)
@@ -296,7 +298,7 @@ LEVEL_STATES_DURATION = {LevelStates.FIRST_WELCOME         : 130,
                          LevelStates.READY                 : 120,
                          LevelStates.PLAYING               : float('inf'),
                          LevelStates.DEATH                 : sum(PACMAN_DEATH_ANIMATION_PERIOD_FRAMES) + 50,
-                         LevelStates.COMPLETED             : 2 * LEVEL_COMPLETED_FLASH_NUM * LEVEL_COMPLETED_FLASH_ANIMATION_PERIOD_FRAMES,
+                         LevelStates.COMPLETED             : 2 * LEVEL_COMPLETED_FLASH_NUM * LEVEL_COMPLETED_FLASH_ANIMATION_PERIOD_FRAMES - 1,
                          LevelStates.GAME_OVER             : 120,
                          LevelStates.PAUSE_AFTER_EATING    : 60,
                          LevelStates.PAUSE_BEFORE_DEATH    : 60,

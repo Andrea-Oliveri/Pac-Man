@@ -115,12 +115,11 @@ class Game(Activity):
             case LevelStates.PLAYING:
                 self._update_game()
 
-            case LevelStates.DEATH:
+            case LevelStates.DEATH | LevelStates.COMPLETED:
                 self._painter.update(self._pacman)
 
             case LevelStates.PAUSE_AFTER_EATING:
                 self._ghosts.update(self._level, True, self._maze, self._pacman, update_only_transparent = True)
-
         
         # Transition to new level state if needed.      
         change_state = self._level_state_counter <= 0
@@ -176,6 +175,7 @@ class Game(Activity):
             case LevelStates.PAUSE_BEFORE_COMPLETED:
                 if change_state:
                     self._set_level_state(LevelStates.COMPLETED)
+                    self._painter.notify_level_end()
 
         return False
         

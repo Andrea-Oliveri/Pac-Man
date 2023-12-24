@@ -163,3 +163,6 @@ class Painter:
 
     def set_empty_tile(self, maze_row, maze_col):
         self._maze_sprites.set_empty_tile(maze_row, maze_col)
+
+    def notify_level_end(self):
+        self._maze_sprites.notify_level_end()
