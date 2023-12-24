@@ -53,7 +53,7 @@ class Game(Activity):
         self._set_level_state(LevelStates.FIRST_WELCOME)
 
 
-    def _reset_level(self, new = True):
+    def _reset_level(self, new):
         if new:
             self._level  += 1
             self._maze   = Maze()
@@ -86,7 +86,7 @@ class Game(Activity):
             case LevelStates.PAUSE_AFTER_EATING:
                 ui_elements = DynamicUIElements.GHOSTS | DynamicUIElements.FRUIT
             case LevelStates.PLAYING | LevelStates.PAUSE_BEFORE_DEATH | LevelStates.PAUSE_BEFORE_COMPLETED:
-                ui_elements = DynamicUIElements.PACMAN | DynamicUIElements.GHOSTS 
+                ui_elements = DynamicUIElements.PACMAN | DynamicUIElements.GHOSTS | DynamicUIElements.FRUIT
                 
         if self._fruit_visible_counter <= 0:
             ui_elements &= (~DynamicUIElements.FRUIT)
@@ -111,11 +111,16 @@ class Game(Activity):
         """Override of method from Activity class, updating the state of the activity."""
         
         # Update level state.
-        if self._level_state == LevelStates.PLAYING:
-            self._update_game()
-        elif self._level_state == LevelStates.DEATH:
-            self._painter.update(self._pacman)
-        # TODO: if pause after eating, update but only ghosts going to house
+        match self._level_state:
+            case LevelStates.PLAYING:
+                self._update_game()
+
+            case LevelStates.DEATH:
+                self._painter.update(self._pacman)
+
+            case LevelStates.PAUSE_AFTER_EATING:
+                self._ghosts.update(self._level, True, self._maze, self._pacman, update_only_transparent = True)
+
         
         # Transition to new level state if needed.      
         change_state = self._level_state_counter <= 0
@@ -157,6 +162,10 @@ class Game(Activity):
             case LevelStates.PAUSE_AFTER_EATING:
                 if change_state:
                     self._set_level_state(LevelStates.PLAYING)
+                    self._ghosts.notify_clear_was_just_eaten()
+
+                    # Test if collision with another ghost happened in the same spot. If so, function will autoatically change _level_state again.
+                    self._calculate_new_game_state()
 
             case LevelStates.PAUSE_BEFORE_DEATH:
                 if change_state:
@@ -182,7 +191,7 @@ class Game(Activity):
             self._fruit_visible_counter -= 1
 
         self._pacman.update(self._level, fright, self._maze)
-        self._ghosts.update(self._level, fright, self._maze, self._pacman)
+        self._ghosts.update(self._level, fright, self._maze, self._pacman, update_only_transparent = False)
 
         self._painter.update(self._pacman)
 
@@ -217,8 +226,8 @@ class Game(Activity):
             self._pacman.state_become_round()
 
         # Check if collided with any ghosts.
-        life_lost, count_eaten = self._ghosts.check_collision(self._maze, self._pacman) 
-        for _ in range(count_eaten):
+        life_lost, any_eaten = self._ghosts.check_collision(self._maze, self._pacman) 
+        if any_eaten:
             self._score.add_to_score(ScoreActions.EAT_GHOST)
             self._set_level_state(LevelStates.PAUSE_AFTER_EATING)
         if life_lost:

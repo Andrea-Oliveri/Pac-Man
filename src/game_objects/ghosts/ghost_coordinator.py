@@ -19,7 +19,7 @@ class GhostsCoordinator:
 
     def __init__(self):
         self._died_this_level = False
-        self._reset_new_life(level_start = True)
+        self._reset_level(level_start = True)
 
         # Variables needed to decide when ghosts leave house.
         self._dot_counter_ghosts = [0 for _ in Ghost]
@@ -27,7 +27,7 @@ class GhostsCoordinator:
         self._dot_counter_global_enable = False
 
 
-    def _reset_new_life(self, level_start = False):
+    def _reset_level(self, level_start):
         if not level_start:
             self._died_this_level = True
 
@@ -70,17 +70,22 @@ class GhostsCoordinator:
 
         raise RuntimeError('Reached end of GhostCoordinator._update_mode without finding a behaviour for current timer')
 
-    def update(self, level, fright, maze, pacman):
-        self._update_movement_mode(level, fright)
-        self._time_since_dot_eaten += 1
+    def update(self, level, fright, maze, pacman, update_only_transparent):
+        if not update_only_transparent:
+            self._update_movement_mode(level, fright)
+            self._time_since_dot_eaten += 1
 
-        # Check if ghost needs to leave house.
-        self._check_leave_house(level)
+            # Check if ghost needs to leave house.
+            self._check_leave_house(level)
 
         # Update all ghosts.
         clyde_in_house = self._ghosts[Ghost.CLYDE].is_in_house
         for ghost in self._ghosts:
+            if update_only_transparent and (not ghost.transparent or ghost.was_just_eaten):
+                continue
+
             ghost.update(level, fright, maze, pacman, clyde_in_house, self._died_this_level)
+
 
     def notify_pellet_eaten(self):
         self._time_since_dot_eaten = 0
@@ -101,7 +106,7 @@ class GhostsCoordinator:
         pacman_tile = maze.get_tile_center(pacman.position)
 
         life_lost = False
-        count_eaten = 0
+        any_eaten = False
         for ghost in self._ghosts:
             ghost_tile = maze.get_tile_center(ghost.position)
 
@@ -112,14 +117,14 @@ class GhostsCoordinator:
                 continue
 
             if ghost.frightened:
-                ghost.request_behaviour(GhostBehaviour.GOING_TO_HOUSE)
-                ghost.clear_fright()
-                count_eaten += 1
-                continue
+                ghost.notify_was_just_eaten()
+                any_eaten = True
+                life_lost = False
+                break
             
             life_lost = True
 
-        return life_lost, count_eaten
+        return life_lost, any_eaten
 
     def notify_fright_on(self, fright_duration):
         self._request_behaviour_to_all(GhostBehaviour.FRIGHTENED)
@@ -128,11 +133,14 @@ class GhostsCoordinator:
             self._clear_fright_from_all()
 
     def notify_life_lost(self):
-        self._reset_new_life()
+        self._reset_level(level_start = False)
 
         self._dot_counter_global = 0
         self._dot_counter_global_enable = True
         
+    def notify_clear_was_just_eaten(self):
+        for ghost in self._ghosts:
+            ghost.clear_was_just_eaten()
 
     def _request_behaviour_to_all(self, behaviour):
         for ghost in self._ghosts:

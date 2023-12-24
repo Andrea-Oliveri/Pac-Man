@@ -45,10 +45,12 @@ class GhostAbstract(Character, ABC):
 
         self._cruise_elroy_level = CruiseElroyLevel.NULL
 
+        self._was_just_eaten = False
+
 
     def update(self, level, fright, maze, pacman, clyde_in_house, died_this_level):
 
-        dt = GAME_ORIGINAL_UPDATES_INTERVAL            
+        dt = GAME_ORIGINAL_UPDATES_INTERVAL
 
         while dt > 0:
             # Distance that can still be travelled depends on the tile (whether in warp tunnel or not).
@@ -309,7 +311,7 @@ class GhostAbstract(Character, ABC):
                                                   | behaviour
 
     def request_behaviour(self, behaviour):
-        if behaviour not in (GhostBehaviour.CHASE, GhostBehaviour.SCATTER, GhostBehaviour.FRIGHTENED, GhostBehaviour.GOING_TO_HOUSE, GhostBehaviour.EXITING_HOUSE):
+        if behaviour not in (GhostBehaviour.CHASE, GhostBehaviour.SCATTER, GhostBehaviour.FRIGHTENED, GhostBehaviour.EXITING_HOUSE):
             raise ValueError('Invalid behaviour provided to Ghost.request_behaviour')
 
         self._add_behaviour(behaviour)
@@ -319,6 +321,16 @@ class GhostAbstract(Character, ABC):
         self._behaviour &= (~GhostBehaviour.FRIGHTENED)
 
 
+    def notify_was_just_eaten(self):
+        self._add_behaviour(GhostBehaviour.GOING_TO_HOUSE)
+        self.clear_fright()
+        self._was_just_eaten = True
+
+    def clear_was_just_eaten(self):
+        self._was_just_eaten = False
+
+
+
     # Defining properties for some attributes.
     name           = property(lambda self: self._name)
     position       = property(lambda self: self._position)
@@ -326,7 +338,8 @@ class GhostAbstract(Character, ABC):
     transparent    = property(lambda self: GhostBehaviour.GOING_TO_HOUSE in self._behaviour or GhostBehaviour.ENTERING_HOUSE in self._behaviour)
     is_in_house    = property(lambda self: GhostBehaviour.IN_HOUSE in self._behaviour)
     eyes_direction = property(lambda self: self._direction_next if self._going_from_tile_edge_to_center and self._direction_next is not None else self._direction)
-    
+    was_just_eaten = property(lambda self: self._was_just_eaten)
+
 
     @abstractmethod
     def _calculate_personal_target_tile(self):
