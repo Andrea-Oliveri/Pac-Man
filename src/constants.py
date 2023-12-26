@@ -568,3 +568,21 @@ PRNG_ROM_MEM = PRNG_ROM_MEM.split()
 PRNG_BITS_TO_DIRECTION = [Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT, Vector2.UP]
 
 # --------------------------------------------------------------------
+
+
+# --------------------------------------------------------------------
+# Constants related to the recordings for the introduction and intermissions.
+# --------------------------------------------------------------------
+
+# Enum defining which recordings are available.
+RecordingsType = IntEnum('RecordingsType', ['INTRO', 'INTERMISSION_1', 'INTERMISSION_2', 'INTERMISSION_3'])
+
+# Variables describing the path and frame shape for each image containing recordings.
+RECORDINGS_DETAILS = {RecordingsType.INTRO         : {'path': './assets/images/intro.png.xz'        , 'frame_shape': (208, 224)},
+                      RecordingsType.INTERMISSION_1: {'path': './assets/images/intermission1.png.xz', 'frame_shape': (88 , 224)},
+                      RecordingsType.INTERMISSION_2: {'path': './assets/images/intermission2.png.xz', 'frame_shape': (88 , 224)},
+                      RecordingsType.INTERMISSION_3: {'path': './assets/images/intermission3.png.xz', 'frame_shape': (88 , 224)}}
+
+# --------------------------------------------------------------------
+
+

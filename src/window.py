@@ -3,6 +3,7 @@
 import pyglet
 
 from src.activities.menu import Menu
+from src.activities.menu import Recording
 from src.activities.game import Game
 from src.graphics.painter import Painter
 from src.constants import (WINDOW_INIT_KWARGS,
@@ -159,6 +160,9 @@ class Window(pyglet.window.Window):
         elif retval and isinstance(self._current_activity, Game):
             # retval is True if we need to change from Game to Menu.
             self._current_activity = Menu(self.painter)
+
+        elif retval and isinstance(self._current_activity, Recording):
+
 
         
     def on_draw(self):

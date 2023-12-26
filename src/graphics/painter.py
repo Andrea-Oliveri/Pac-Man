@@ -58,6 +58,9 @@ class Painter:
         # Load maze and reset child attributes.
         self.reset_level()
 
+        # variable holding the recording currently being displayed on screen.
+        self._active_recording = None
+
 
     def reset_level(self, new = True):
         # Load initial maze image.
@@ -69,13 +72,6 @@ class Painter:
         self._pacman_sprites.reset()
         self._ghost_sprites .reset()
         
-
-    def draw_menu(self):
-        # TODO: better menu
-        image = utils.load_image(r".\assets\images\TMP-Menu.png")
-
-        image.blit(0, 0)
-
 
     def update(self, pacman):
         self._pacman_sprites.update(pacman)
@@ -191,3 +187,14 @@ class Painter:
                                      source_texture.width,
                                      source_texture.height,
                                      1)
+
+
+    def recording_load(self, path, width, height):
+        self._active_recording = utils.load_image_grid(path, width, height)
+        return len(self._active_recording)
+
+    def recording_draw(self, idx):
+        self._active_recording[idx].blit(0, 0)
+
+    def recording_free(self):
+        self._active_recording = None
