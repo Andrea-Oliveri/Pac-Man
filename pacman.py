@@ -16,9 +16,33 @@ import pyglet
 pyglet.options['shadow_window'] = False
 
 
+# ----------------------------
+# Debug
+# ---------------------------
+
+import cProfile
+
+pr = cProfile.Profile()
+pr.enable()
+# ---------------------------
+
 
 from src.window import Window
 
 window = Window()
 
 pyglet.app.run()
+
+
+
+# ----------------------------
+# Debug
+# ---------------------------
+import time
+pr.disable()
+
+from datetime import datetime
+dt = datetime.now().strftime("%Y-%m-%d %Hh%Mm%S")
+pr.dump_stats(f'./Profiler Results {dt}.prof')
+
+# ---------------------------
