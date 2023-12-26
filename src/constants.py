@@ -31,6 +31,9 @@ GAME_TENTATIVE_UPDATES_INTERVAL = 1 / 100
 # Constant defining where the image are stored.
 WINDOW_ICON_PATH = "./assets/images/icon.ico"
 
+# Color of background.
+BACKGROUND_COLOR = (0, 0, 0)
+
 # --------------------------------------------------------------------
 
 
@@ -41,8 +44,10 @@ WINDOW_ICON_PATH = "./assets/images/icon.ico"
 # Enum defining types of tiles.
 MazeTiles = IntEnum('MazeTiles', ['WALL', 'EMPTY', 'PELLET', 'POWER_PELLET', 'DOOR'])
 
-# Location of image with maze starting configuration.
+# Location of images with maze configurations.
 MAZE_START_IMAGE = "./assets/images/Maze Initial.png"
+MAZE_FLASH_WHITE = "./assets/images/Maze Flash White.png"
+MAZE_FLASH_BLUE  = "./assets/images/Maze Flash Blue.png"
 
 # Coordinates (left pixel counting from left, bottom pixel counting from bottom) of an empty tile in the initial maze.
 MAZE_START_IMAGE_EMPTY_TILE_REGION_COORDS = (0, 128)
@@ -293,7 +298,7 @@ LEVEL_STATES_DURATION = {LevelStates.FIRST_WELCOME         : 130,
                          LevelStates.READY                 : 120,
                          LevelStates.PLAYING               : float('inf'),
                          LevelStates.DEATH                 : sum(PACMAN_DEATH_ANIMATION_PERIOD_FRAMES) + 50,
-                         LevelStates.COMPLETED             : 2 * LEVEL_COMPLETED_FLASH_NUM * LEVEL_COMPLETED_FLASH_ANIMATION_PERIOD_FRAMES,
+                         LevelStates.COMPLETED             : 2 * LEVEL_COMPLETED_FLASH_NUM * LEVEL_COMPLETED_FLASH_ANIMATION_PERIOD_FRAMES - 1,
                          LevelStates.GAME_OVER             : 120,
                          LevelStates.PAUSE_AFTER_EATING    : 60,
                          LevelStates.PAUSE_BEFORE_DEATH    : 60,
@@ -305,9 +310,6 @@ LEVEL_STATES_DURATION = {LevelStates.FIRST_WELCOME         : 130,
 # --------------------------------------------------------------------
 # Constants related to Game UI.
 # --------------------------------------------------------------------
-
-# Color of background.
-UI_BACKGROUND_COLOR = (0, 0, 0)
 
 # Coordinates of 'HIGH SCORE' text.
 GAME_HIGH_SCORE_TEXT_COORDS   = (- 4.5 * MAZE_TILE_PX_SIZE, +18 * MAZE_TILE_PX_SIZE)

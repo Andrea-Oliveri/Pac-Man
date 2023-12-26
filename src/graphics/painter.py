@@ -1,13 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import pyglet.gl
-
-from src.constants import (MAZE_START_IMAGE,
-                           MAZE_TILE_PX_SIZE,
-                           MAZE_TILES_ROWS,
-                           MAZE_START_IMAGE_EMPTY_TILE_REGION_COORDS,
-                           FontColors,
-                           UI_BACKGROUND_COLOR,
+from src.constants import (FontColors,
                            GAME_HIGH_SCORE_TEXT_COORDS,
                            GAME_1UP_TEXT_COORDS,
                            GAME_SCORE_NUMBER_COORDS,
@@ -33,6 +26,7 @@ from src.constants import (MAZE_START_IMAGE,
 from src.directions import Vector2
 from src.graphics import utils
 from src.graphics.font import Font
+from src.graphics.maze_sprites import MazeSprite
 from src.graphics.ghost_sprites import GhostSprite
 from src.graphics.pacman_sprites import PacManSprite
 
@@ -41,8 +35,6 @@ from src.graphics.pacman_sprites import PacManSprite
 class Painter:
     
     def __init__(self):
-        # Set background color.
-        pyglet.gl.glClearColor(*UI_BACKGROUND_COLOR, 1)
 
         # Enable transparency for sprites.
         utils.enable_transparency_blit()
@@ -50,23 +42,23 @@ class Painter:
         # Load animated sprites.
         self._pacman_sprites = PacManSprite()
         self._ghost_sprites  = GhostSprite()
+        self._maze_sprites   = MazeSprite()
 
         # Load UI elements.
         self._font = Font()
         self._ui_tiles = utils.load_image_grid(UI_TILES_SHEET_PATH, UI_TILES_PX_SIZE)
 
-        # Load maze and reset child attributes.
-        self.reset_level()
+        # Reset child attributes.
+        self.reset_level(new = True)
 
         # variable holding the recording currently being displayed on screen.
         self._active_recording = None
 
 
-    def reset_level(self, new = True):
+    def reset_level(self, new):
         # Load initial maze image.
         if new:
-            self._maze_image = utils.load_image(MAZE_START_IMAGE)
-            self._maze_empty_tile = self._maze_image.get_region(*MAZE_START_IMAGE_EMPTY_TILE_REGION_COORDS, MAZE_TILE_PX_SIZE, MAZE_TILE_PX_SIZE)
+            self._maze_sprites.reset()
 
         # Reset sprite counters.
         self._pacman_sprites.reset()
@@ -74,13 +66,14 @@ class Painter:
         
 
     def update(self, pacman):
+        self._maze_sprites  .update()
         self._pacman_sprites.update(pacman)
         self._ghost_sprites .update()
 
 
     def draw_game(self, pacman, ghosts, score, lives, level, ui_elements):
 
-        self._maze_image.blit(0, 0)
+        self._maze_sprites.draw()
         
         self._draw_gui(score, lives, level)
 
@@ -165,29 +158,10 @@ class Painter:
 
 
     def set_empty_tile(self, maze_row, maze_col):
+        self._maze_sprites.set_empty_tile(maze_row, maze_col)
 
-        destination_left_px   = maze_col * MAZE_TILE_PX_SIZE
-        destination_bottom_px = (MAZE_TILES_ROWS - maze_row - 1) * MAZE_TILE_PX_SIZE
-
-        source_texture      = self._maze_empty_tile.get_texture()
-        destination_texture = self._maze_image.get_texture()
-
-        pyglet.gl.glCopyImageSubData(source_texture.id,
- 	                                 source_texture.target,
- 	                                 source_texture.level,
-                                     0,
-                                     0,
-                                     0,
-                                     destination_texture.id,
-                                     destination_texture.target,
-                                     destination_texture.level,
-                                     destination_left_px, 
-                                     destination_bottom_px,
-                                     0,
-                                     source_texture.width,
-                                     source_texture.height,
-                                     1)
-
+    def notify_level_end(self):
+        self._maze_sprites.notify_level_end()
 
     def recording_load(self, path, width, height):
         self._active_recording = utils.load_image_grid(path, width, height)
