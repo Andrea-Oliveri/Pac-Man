@@ -1,6 +1,14 @@
 
 # https://github.com/davudk/OpenGL-TileMap-Demos/blob/master/Renderers/GeometryRenderer.cs
 
+# https://learnopengl.com/Getting-started/Coordinate-Systems
+
+
+
+
+
+
+
 
 import pyglet
 import ctypes
@@ -23,14 +31,13 @@ class VertexBufferedRendererPyglet:
 
         self._tilemap = tilemap
         self._texture = self._tilemap._texture
-        self._batch = pyglet.graphics.Batch()
 
         self._program = self._build_shader_program()
         self._vlist   = self._create_vertex_list()
 
 
     def recalculate(self):
-        self._vlist   = self._create_vertex_list()
+        self._vlist = self._create_vertex_list()
 
 
     def _build_shader_program(self):
@@ -38,8 +45,8 @@ class VertexBufferedRendererPyglet:
         vert_source = """
                          #version 330 core
 
-                         in vec2 aPosition;
-                         in vec2 aTexCoord;
+                         layout (location = 0) in vec2 aPosition;
+                         layout (location = 1) in vec2 aTexCoord;
                          uniform mat4 projection;
 
                          out vec2 texCoord;
@@ -73,17 +80,16 @@ class VertexBufferedRendererPyglet:
 
 
     def _create_vertex_list(self):
-        vlist = self._program.vertex_list(len(self._tilemap) * 6, pyglet.gl.GL_TRIANGLES, batch = self._batch)
+        vertex_count = len(self._tilemap) * 6 # For each tile, 2 triangles, each with 3 vertices.
+        
+        vlist = self._program.vertex_list(vertex_count, pyglet.gl.GL_TRIANGLES)
 
-        n_cells = len(vlist.aPosition)
-
-        positions  = [0] * n_cells
-        tex_coords = [0] * n_cells
+        positions  = [0.0] * len(vlist.aPosition)
+        tex_coords = [0.0] * len(vlist.aTexCoord)
 
         i = 0
         for x in range(N_COLS):
             for y in range(N_ROWS):
-
                 tile = self._tilemap[y, x]
 
                 tx = (tile %  N_TILES_ROW_TEXTURE) * TileTexSize + TileTexPadding
@@ -141,12 +147,15 @@ class VertexBufferedRendererPyglet:
         pyglet.gl.glBindTexture(pyglet.gl.GL_TEXTURE_2D, self._texture.id)
 
         with self._program:
-            projection = pyglet.math.Mat4.from_translation(pyglet.math.Vec3(-1, 0, 0)) @ \
-                        pyglet.math.Mat4.from_scale(pyglet.math.Vec3(TileSize, TileSize, 1)) @ \
-                        pyglet.math.Mat4.from_scale(pyglet.math.Vec3(2 / width, 2 / height, 1))
+            projection = pyglet.math.Mat4.from_translation(pyglet.math.Vec3(0, 0, 0)) @ \
+                         pyglet.math.Mat4.from_scale(pyglet.math.Vec3(TileSize, TileSize, 1)) @ \
+                         pyglet.math.Mat4.from_scale(pyglet.math.Vec3(2 / width, 2 / height, 1))
             
             self._vlist.projection = projection
-        self._batch.draw()
+
+            self._vlist.texture0 = self._texture.id
+
+        self._vlist.draw(pyglet.gl.GL_TRIANGLES)
 
 
 
@@ -179,9 +188,21 @@ class VertexBufferedRenderer:
         pyglet.gl.glBindTexture(pyglet.gl.GL_TEXTURE_2D, self._texture.id)
         pyglet.gl.glBindVertexArray(self._vaoHandle)
 
-        projection = pyglet.math.Mat4.from_translation(pyglet.math.Vec3(0, 0, 0)) @ \
-                     pyglet.math.Mat4.from_scale(pyglet.math.Vec3(TileSize, TileSize, 1)) @ \
-                     pyglet.math.Mat4.from_scale(pyglet.math.Vec3(2 / width, 2 / height, 1))
+        # Input vertex coordinates have origin on the top left with x increasing as we go right and y increasing as we go down.
+        # Each tile has a width and a height of 1.
+
+        # Model matrix so that origin is at the center of the tilemap.
+        # Tilemap x_range = (- N_COLS / 2, N_COLS / 2), y_range = (- N_ROWS / 2, N_ROWS / 2)
+        model_matrix = pyglet.math.Mat4.from_translation(pyglet.math.Vec3(-N_COLS / 2, -N_ROWS / 2, 0))
+
+        # View matrix should not change anything.
+        view_matrix  = pyglet.math.Mat4()
+        
+        # Projection matrix scales so that tilemap fits tightly into clip-space: ranging from -1 to +1 in each coordinate.
+        proj_matrix  = pyglet.math.Mat4.from_scale(pyglet.math.Vec3(2 / N_COLS, 2 / N_ROWS, 0))
+        
+        
+        projection = proj_matrix @ view_matrix @ model_matrix
         
         name = ctypes.create_string_buffer("projection".encode('utf-8'))
         uniform_location = pyglet.gl.glGetUniformLocation(self._shaderHandle, name)
@@ -334,10 +355,12 @@ class VertexBufferedRenderer:
         pyglet.gl.glVertexAttribPointer(1, 2, pyglet.gl.GL_FLOAT, False, 4 * 4, 4 * 2)
 
     def __del__(self):
-        return
-        pyglet.gl.glDeleteVertexArrays(1, self._vaoHandle)
-        pyglet.gl.glDeleteBuffer(self._vboHandle)
-        pyglet.gl.glDeleteProgram(self._shaderHandle)
+        try:
+            pyglet.gl.glDeleteVertexArrays(1, ctypes.c_ulong(self._vaoHandle))
+            pyglet.gl.glDeleteBuffers(1, ctypes.c_ulong(self._vboHandle))
+            pyglet.gl.glDeleteProgram(self._shaderHandle)
+        except ImportError:
+            pass
 
 
 

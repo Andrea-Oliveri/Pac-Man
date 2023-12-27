@@ -11,6 +11,9 @@ class TileMap:
 
     def __init__(self):
         self._texture   = pyglet.image.load('Font.png').get_texture()
+        pyglet.gl.glBindTexture(pyglet.gl.GL_TEXTURE_2D, self._texture.id)
+        pyglet.gl.glTexParameteri(pyglet.gl.GL_TEXTURE_2D, pyglet.gl.GL_TEXTURE_MAG_FILTER, pyglet.gl.GL_NEAREST)
+        
         self._max_value = (self._texture.width // TILE_PX_SIZE) * (self._texture.height // TILE_PX_SIZE) - 1
 
         self._map = [0] * N_ROWS * N_COLS
@@ -47,7 +50,3 @@ class TileMap:
         for row in range(N_ROWS):
             for col in range(N_COLS):
                 self[row, col] = randint(0, self._max_value)
-
-
-
-
