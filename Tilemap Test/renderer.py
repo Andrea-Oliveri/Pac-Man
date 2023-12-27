@@ -146,16 +146,31 @@ class VertexBufferedRendererPyglet:
     def draw(self, width, height):
         pyglet.gl.glBindTexture(pyglet.gl.GL_TEXTURE_2D, self._texture.id)
 
+        # Input vertex coordinates have origin on the top left with x increasing as we go right and y increasing as we go down.
+        # Each tile has a width and a height of 1.
+
+        # Model matrix so that origin is at the center of the tilemap.
+        # Tilemap x_range = (- N_COLS / 2, N_COLS / 2), y_range = (- N_ROWS / 2, N_ROWS / 2)
+        model_matrix = pyglet.math.Mat4.from_translation(pyglet.math.Vec3(-N_COLS / 2, -N_ROWS / 2, 0))
+
+        # View matrix should not change anything.
+        view_matrix  = pyglet.math.Mat4()
+        
+        # Projection matrix scales so that tilemap fits tightly into clip-space: ranging from -1 to +1 in each coordinate.
+        proj_matrix  = pyglet.math.Mat4.from_scale(pyglet.math.Vec3(2 / N_COLS, 2 / N_ROWS, 0))
+        
+        
+        projection = proj_matrix @ view_matrix @ model_matrix
+        
+        pyglet.gl.glBindTexture(pyglet.gl.GL_TEXTURE_2D, self._texture.id)
+        
+
         with self._program:
-            projection = pyglet.math.Mat4.from_translation(pyglet.math.Vec3(0, 0, 0)) @ \
-                         pyglet.math.Mat4.from_scale(pyglet.math.Vec3(TileSize, TileSize, 1)) @ \
-                         pyglet.math.Mat4.from_scale(pyglet.math.Vec3(2 / width, 2 / height, 1))
-            
             self._vlist.projection = projection
 
             self._vlist.texture0 = self._texture.id
 
-        self._vlist.draw(pyglet.gl.GL_TRIANGLES)
+            self._vlist.draw(pyglet.gl.GL_TRIANGLES)
 
 
 
@@ -334,8 +349,7 @@ class VertexBufferedRenderer:
 
 
         l = len(vertexData)
-        import struct
-        vertexData = struct.pack('f'*len(vertexData), *vertexData)
+        vertexData = (ctypes.c_float * len(vertexData))(*vertexData)
 
         pyglet.gl.glBufferData(pyglet.gl.GL_ARRAY_BUFFER, l * 4, vertexData, pyglet.gl.GL_STATIC_DRAW)
 
@@ -385,22 +399,37 @@ class GeomBufferedRenderer:
         self.GenerateVertexBufferObject()
         self.GenerateVertexArrayObject()
 
-    def draw(self, width, height):
-        pyglet.gl.glBindTexture(pyglet.gl.GL_TEXTURE_2D, self._texture.id)
-        pyglet.gl.glBindVertexArray(self._vaoHandle)
+    def recalculate(self):
+        self.GenerateVertexBufferObject()
+        self.GenerateVertexArrayObject()
 
-        projection = pyglet.math.Mat4.from_translation(pyglet.math.Vec3(0, 0, 0)) @ \
-                     pyglet.math.Mat4.from_scale(pyglet.math.Vec3(TileSize, TileSize, 1)) @ \
-                     pyglet.math.Mat4.from_scale(pyglet.math.Vec3(2 / width, 2 / height, 1))
+    def draw(self, width, height):
+
+        # Input vertex coordinates have origin on the top left with x increasing as we go right and y increasing as we go down.
+        # Each tile has a width and a height of 1.
+
+        # Model matrix so that origin is at the center of the tilemap.
+        # Tilemap x_range = (- N_COLS / 2, N_COLS / 2), y_range = (- N_ROWS / 2, N_ROWS / 2)
+        model_matrix = pyglet.math.Mat4.from_translation(pyglet.math.Vec3(-N_COLS / 2, -N_ROWS / 2, 0))
+
+        # View matrix should not change anything.
+        view_matrix  = pyglet.math.Mat4()
+        
+        # Projection matrix scales so that tilemap fits tightly into clip-space: ranging from -1 to +1 in each coordinate.
+        proj_matrix  = pyglet.math.Mat4.from_scale(pyglet.math.Vec3(2 / N_COLS, 2 / N_ROWS, 0))
+        
+        
+        projection = proj_matrix @ view_matrix @ model_matrix
         
         name = ctypes.create_string_buffer("projection".encode('utf-8'))
         uniform_location = pyglet.gl.glGetUniformLocation(self._shaderHandle, name)
-        projection = (ctypes.c_float * len(projection))(*projection)        
+        projection = (ctypes.c_float * len(projection))(*projection)
+        
         pyglet.gl.glProgramUniformMatrix4fv(self._shaderHandle, uniform_location, 1, False, projection)
-
-        #name = ctypes.create_string_buffer("mapSize".encode('utf-8'))
-        #uniform_location = pyglet.gl.glGetUniformLocation(self._shaderHandle, name)
-        #pyglet.gl.glProgramUniform2f(self._shaderHandle, uniform_location, N_COLS, N_ROWS)
+        
+        name = ctypes.create_string_buffer("n_cols".encode('utf-8'))
+        uniform_location = pyglet.gl.glGetUniformLocation(self._shaderHandle, name)
+        pyglet.gl.glProgramUniform1i(self._shaderHandle, uniform_location, N_COLS)
         
         pyglet.gl.glUseProgram(self._shaderHandle)
         pyglet.gl.glDrawArrays(pyglet.gl.GL_POINTS, 0, len(self._tilemap))
@@ -410,11 +439,10 @@ class GeomBufferedRenderer:
         vert_source = """
                          #version 330 core
 
-                         uniform mat4 projection;
-                         uniform ivec2 mapSize;
+                         uniform int n_cols;
 
                          layout (location = 0) in uint aTileId;
-
+ 
                          out VS_OUT {
                              uint tileId;
                          } vs_out;
@@ -422,10 +450,10 @@ class GeomBufferedRenderer:
                          void main()
                          {
                              int i = gl_VertexID;
-                             float x = float(i / 15); //float(i & 15);
-                             float y = float(i % 15); //float((i >> 4) & 15);
-                             gl_Position = vec4(x, y, 0, 1);
-                            
+                             float x = float(int(i % n_cols));
+                             float y = float(int(i / n_cols));
+                             gl_Position = vec4(x, y, 0.0, 1.0);
+                             
                              vs_out.tileId = aTileId;
                          }
                       """.encode("utf8")
@@ -445,7 +473,7 @@ class GeomBufferedRenderer:
 
         geom_source = """
                           #version 330 core
-
+                          
                           uniform mat4 projection;
 
                           in VS_OUT {
@@ -458,63 +486,82 @@ class GeomBufferedRenderer:
                           layout (triangle_strip, max_vertices = 4) out;
 
                           void main() {
-                              uint tileId = gs_in[0].tileId & 255u;
-                              float tileX = float(tileId & 15u) / 16.0;
-                              float tileY = float((tileId >> 4u) & 15u) / 16.0;
+                              uint tileId = gs_in[0].tileId;
+                              float tileX = float(tileId % {n_tiles_row_texture}) * {tile_tex_size} + {tile_tex_padding};
+                              float tileY = float(tileId / {n_tiles_row_texture}) * {tile_tex_size} + {tile_tex_padding};
 
-                              const float B = 1 / 256.0;
-                              const float S = 1 / 15.0;
+                              const float B = {tile_tex_padding};
+                              const float S = {tile_tex_size} - 2 * {tile_tex_padding};
 
                               gl_Position = projection * gl_in[0].gl_Position;
-                              texCoord = vec2(tileX + B, tileY + B);
+                              texCoord = vec2(tileX, tileY);
                               EmitVertex();
 
                               gl_Position = projection * (gl_in[0].gl_Position + vec4(1.0, 0.0, 0.0, 0.0));
-                              texCoord = vec2(tileX + S - B, tileY + B);
+                              texCoord = vec2(tileX + S, tileY);
                               EmitVertex();
 
                               gl_Position = projection * (gl_in[0].gl_Position + vec4(0.0, 1.0, 0.0, 0.0));
-                              texCoord = vec2(tileX + B, tileY + S - B);
+                              texCoord = vec2(tileX, tileY + S);
                               EmitVertex();
 
                               gl_Position = projection * (gl_in[0].gl_Position + vec4(1.0, 1.0, 0.0, 0.0));
-                              texCoord = vec2(tileX + S - B, tileY + S - B);
+                              texCoord = vec2(tileX + S, tileY + S);
                               EmitVertex();
 
                               EndPrimitive();
-                          }  
-                      """.encode('utf8')
-        
-        vertHandle = pyglet.gl.glCreateShader(pyglet.gl.GL_VERTEX_SHADER)
-        source_buffer_pointer = ctypes.cast(ctypes.c_char_p(vert_source), ctypes.POINTER(ctypes.c_char))
-        pyglet.gl.glShaderSource(vertHandle, 1, ctypes.byref(source_buffer_pointer), ctypes.c_int(len(vert_source)))
-        pyglet.gl.glCompileShader(vertHandle)
-
-        fragHandle = pyglet.gl.glCreateShader(pyglet.gl.GL_FRAGMENT_SHADER)
-        source_buffer_pointer = ctypes.cast(ctypes.c_char_p(frag_source), ctypes.POINTER(ctypes.c_char))
-        pyglet.gl.glShaderSource(fragHandle, 1, ctypes.byref(source_buffer_pointer), ctypes.c_int(len(frag_source)))
-        pyglet.gl.glCompileShader(fragHandle)
-
-        geomHandle = pyglet.gl.glCreateShader(pyglet.gl.GL_GEOMETRY_SHADER)
-        source_buffer_pointer = ctypes.cast(ctypes.c_char_p(geom_source), ctypes.POINTER(ctypes.c_char))
-        pyglet.gl.glShaderSource(geomHandle, 1, ctypes.byref(source_buffer_pointer), ctypes.c_int(len(geom_source)))
-        pyglet.gl.glCompileShader(geomHandle)
+                          }
+                      """.replace('{n_tiles_row_texture}', str(N_TILES_ROW_TEXTURE)) \
+                         .replace('{tile_tex_size}'      , str(TileTexSize)) \
+                         .replace('{tile_tex_padding}'   , str(TileTexPadding)) \
+                         .encode('utf8')
+                                                                        
+        handles = []
+        for source, shader_type in [(vert_source, pyglet.gl.GL_VERTEX_SHADER),
+                                    (frag_source, pyglet.gl.GL_FRAGMENT_SHADER),
+                                    (geom_source, pyglet.gl.GL_GEOMETRY_SHADER)]:
+            handle = pyglet.gl.glCreateShader(shader_type)
+            handles.append(handle)
+            source_buffer_pointer = ctypes.cast(ctypes.c_char_p(source), ctypes.POINTER(ctypes.c_char))
+            pyglet.gl.glShaderSource(handle, 1, ctypes.byref(source_buffer_pointer), ctypes.c_int(len(source)))
+            pyglet.gl.glCompileShader(handle)
+            
+            temp = ctypes.c_int(0)
+            pyglet.gl.glGetShaderiv(handle, pyglet.gl.GL_COMPILE_STATUS, ctypes.byref(temp))
+            if not temp:
+                # retrieve the log length
+                pyglet.gl.glGetShaderiv(handle, pyglet.gl.GL_INFO_LOG_LENGTH, ctypes.byref(temp))
+                # create a buffer for the log
+                buffer = ctypes.create_string_buffer(temp.value)
+                # retrieve the log text
+                pyglet.gl.glGetShaderInfoLog(handle, temp, None, buffer)
+                # print the log to the console
+                raise RuntimeError(buffer.value.decode())
+                
 
         self._shaderHandle = pyglet.gl.glCreateProgram()
-
-        pyglet.gl.glAttachShader(self._shaderHandle, vertHandle)
-        pyglet.gl.glAttachShader(self._shaderHandle, fragHandle)
-        pyglet.gl.glAttachShader(self._shaderHandle, geomHandle)
+        
+        for handle in handles:
+            pyglet.gl.glAttachShader(self._shaderHandle, handle)
         pyglet.gl.glLinkProgram(self._shaderHandle)
 
-        pyglet.gl.glDetachShader(self._shaderHandle, vertHandle)
-        pyglet.gl.glDeleteShader(vertHandle)
+        temp = ctypes.c_int(0)
+		# retrieve the link status
+        pyglet.gl.glGetProgramiv(self._shaderHandle, pyglet.gl.GL_LINK_STATUS, ctypes.byref(temp))
+		# if linking failed, print the log
+        if not temp:
+			#   retrieve the log length
+            pyglet.gl.glGetProgramiv(self._shaderHandle, pyglet.gl.GL_INFO_LOG_LENGTH, ctypes.byref(temp))
+			# create a buffer for the log
+            buffer = ctypes.create_string_buffer(temp.value)
+			# retrieve the log text
+            pyglet.gl.glGetProgramInfoLog(self._shaderHandle, temp, None, buffer)
+			# print the log to the console
+            raise RuntimeError(buffer.value.decode())
 
-        pyglet.gl.glDetachShader(self._shaderHandle, fragHandle)
-        pyglet.gl.glDeleteShader(fragHandle)
-
-        pyglet.gl.glDetachShader(self._shaderHandle, geomHandle)
-        pyglet.gl.glDeleteShader(geomHandle)
+        for handle in handles:
+            pyglet.gl.glDetachShader(self._shaderHandle, handle)
+            pyglet.gl.glDeleteShader(handle)
         
         
     def GenerateVertexBufferObject(self):
@@ -526,8 +573,7 @@ class GeomBufferedRenderer:
         vertexData = self._tilemap._map
 
         l = len(vertexData)
-        import struct
-        vertexData = struct.pack('f'*len(vertexData), *vertexData)
+        vertexData = (ctypes.c_uint * len(vertexData))(*vertexData)
 
         pyglet.gl.glBufferData(pyglet.gl.GL_ARRAY_BUFFER, l * 4, vertexData, pyglet.gl.GL_STATIC_DRAW)
 

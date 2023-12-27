@@ -40,6 +40,12 @@ class Window(pyglet.window.Window):
     def on_key_press(self, symbol, modifiers):
         self._tilemap.random_fill()
         self._renderer.recalculate()
+        
+        if symbol == pyglet.window.key.SPACE:
+            if isinstance(self._renderer, GeomBufferedRenderer):
+                self._renderer = VertexBufferedRenderer(self._tilemap)
+            elif isinstance(self._renderer, VertexBufferedRenderer):
+                self._renderer = GeomBufferedRenderer(self._tilemap)
 
         
     def on_draw(self):
