@@ -6,15 +6,17 @@
 
 
 
+import ctypes
+import os
 
 import pyglet
-import ctypes
 
 from src.constants import (TEXTURE_N_TILES_PER_ROW, 
                            TEXTURE_TILE_SIZE_NORMALIZED, 
                            TEXTURE_TILE_PADDING, 
                            TILEMAP_N_ROWS, 
-                           TILEMAP_N_COLS)
+                           TILEMAP_N_COLS,
+                           SHADERS_FOLDER)
 
 
 class VertexBufferedRendererPyglet:
@@ -38,35 +40,8 @@ class VertexBufferedRendererPyglet:
 
     def _build_shader_program(self):
 
-        vert_source = """
-                         #version 330 core
-
-                         layout (location = 0) in vec2 aPosition;
-                         layout (location = 1) in vec2 aTexCoord;
-                         uniform mat4 projection;
-
-                         out vec2 texCoord;
-
-                         void main()
-                         {
-                             gl_Position = projection * vec4(aPosition, 0.0, 1.0);
-                             texCoord = aTexCoord;
-                         }
-                      """
-
-        frag_source = """
-                         #version 330 core
-
-                         out vec4 FragColor;
-                         in vec2 texCoord;
-
-                         uniform sampler2D texture0;
-
-                         void main()
-                         {
-                             FragColor = texture(texture0, texCoord);
-                         }
-                      """
+        vert_source = open(os.path.join(SHADERS_FOLDER, 'VertexBufferedRenderer.vert')).read()
+        frag_source = open(os.path.join(SHADERS_FOLDER, 'VertexBufferedRenderer.frag')).read()
 
         vert_shader = pyglet.graphics.shader.Shader(vert_source, 'vertex')
         frag_shader = pyglet.graphics.shader.Shader(frag_source, 'fragment')
@@ -182,6 +157,7 @@ class CustomGroup(pyglet.graphics.Group):
 
 
 
+
 class VertexBufferedRenderer:
 
     def __init__(self, tilemap):
@@ -230,35 +206,9 @@ class VertexBufferedRenderer:
         pyglet.gl.glDrawArrays(pyglet.gl.GL_TRIANGLES, 0, len(self._tilemap) * 6)
 
     def CreateShader(self):
-        vert_source = """
-                         #version 330 core
-
-                         layout (location = 0) in vec2 aPosition;
-                         layout (location = 1) in vec2 aTexCoord;
-                         uniform mat4 projection;
-
-                         out vec2 texCoord;
-
-                         void main()
-                         {
-                             gl_Position = projection * vec4(aPosition, 0.0, 1.0);
-                             texCoord = aTexCoord;
-                         }
-                      """.encode("utf8")
-
-        frag_source = """
-                         #version 330 core
-
-                         out vec4 FragColor;
-                         in vec2 texCoord;
-
-                         uniform sampler2D texture0;
-
-                         void main()
-                         {
-                             FragColor = texture(texture0, texCoord);
-                         }
-                      """.encode("utf8")
+        
+        vert_source = open(os.path.join(SHADERS_FOLDER, 'VertexBufferedRenderer.vert')).read().encode('utf8')
+        frag_source = open(os.path.join(SHADERS_FOLDER, 'VertexBufferedRenderer.frag')).read().encode('utf8')
             
         vertHandle = pyglet.gl.glCreateShader(pyglet.gl.GL_VERTEX_SHADER)
         source_buffer_pointer = ctypes.cast(ctypes.c_char_p(vert_source), ctypes.POINTER(ctypes.c_char))
@@ -435,86 +385,13 @@ class GeomBufferedRenderer:
         
 
     def CreateShader(self):
-        # in this shader I have put the / 15 and % 15, replacing the use of mapSize !!!
-        vert_source = """
-                         #version 330 core
-
-                         uniform int n_cols;
-
-                         layout (location = 0) in uint aTileId;
- 
-                         out VS_OUT {
-                             uint tileId;
-                         } vs_out;
-
-                         void main()
-                         {
-                             int i = gl_VertexID;
-                             float x = float(int(i % n_cols));
-                             float y = float(int(i / n_cols));
-                             gl_Position = vec4(x, y, 0.0, 1.0);
-                             
-                             vs_out.tileId = aTileId;
-                         }
-                      """.encode("utf8")
-
-        frag_source = """
-                         #version 330 core
-
-                         uniform sampler2D texture0;
-                         in vec2 texCoord;
-                         out vec4 FragColor;
-
-                         void main()
-                         {
-                             FragColor = texture(texture0, texCoord);
-                         }
-                      """.encode("utf8")
-
-        geom_source = """
-                          #version 330 core
-                          
-                          uniform mat4 projection;
-
-                          in VS_OUT {
-                              uint tileId;
-                          } gs_in[];
-
-                          out vec2 texCoord;
-
-                          layout (points) in;
-                          layout (triangle_strip, max_vertices = 4) out;
-
-                          void main() {
-                              uint tileId = gs_in[0].tileId;
-                              float tileX = float(tileId % {TEXTURE_N_TILES_PER_ROW}) * {TEXTURE_TILE_SIZE_NORMALIZED} + {TEXTURE_TILE_PADDING};
-                              float tileY = float(tileId / {TEXTURE_N_TILES_PER_ROW}) * {TEXTURE_TILE_SIZE_NORMALIZED} + {TEXTURE_TILE_PADDING};
-
-                              const float B = {TEXTURE_TILE_PADDING};
-                              const float S = {TEXTURE_TILE_SIZE_NORMALIZED} - 2 * {TEXTURE_TILE_PADDING};
-
-                              gl_Position = projection * gl_in[0].gl_Position;
-                              texCoord = vec2(tileX, tileY);
-                              EmitVertex();
-
-                              gl_Position = projection * (gl_in[0].gl_Position + vec4(1.0, 0.0, 0.0, 0.0));
-                              texCoord = vec2(tileX + S, tileY);
-                              EmitVertex();
-
-                              gl_Position = projection * (gl_in[0].gl_Position + vec4(0.0, 1.0, 0.0, 0.0));
-                              texCoord = vec2(tileX, tileY + S);
-                              EmitVertex();
-
-                              gl_Position = projection * (gl_in[0].gl_Position + vec4(1.0, 1.0, 0.0, 0.0));
-                              texCoord = vec2(tileX + S, tileY + S);
-                              EmitVertex();
-
-                              EndPrimitive();
-                          }
-                      """.replace('{TEXTURE_N_TILES_PER_ROW}'     , str(TEXTURE_N_TILES_PER_ROW)) \
-                         .replace('{TEXTURE_TILE_SIZE_NORMALIZED}', str(TEXTURE_TILE_SIZE_NORMALIZED)) \
-                         .replace('{TEXTURE_TILE_PADDING}'        , str(TEXTURE_TILE_PADDING)) \
-                         .encode('utf8')
+        vert_source = open(os.path.join(SHADERS_FOLDER, 'GeometryShaderRenderer.vert')).read().encode('utf8')
+        frag_source = open(os.path.join(SHADERS_FOLDER, 'GeometryShaderRenderer.frag')).read().encode('utf8')
+        geom_source = open(os.path.join(SHADERS_FOLDER, 'GeometryShaderRenderer.geom')).read() \
+                          .replace('{TEXTURE_N_TILES_PER_ROW}'     , str(TEXTURE_N_TILES_PER_ROW)) \
+                          .replace('{TEXTURE_TILE_SIZE_NORMALIZED}', str(TEXTURE_TILE_SIZE_NORMALIZED)) \
+                          .replace('{TEXTURE_TILE_PADDING}'        , str(TEXTURE_TILE_PADDING)) \
+                          .encode('utf8')
                                                                         
         handles = []
         for source, shader_type in [(vert_source, pyglet.gl.GL_VERTEX_SHADER),
