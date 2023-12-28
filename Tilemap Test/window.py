@@ -17,7 +17,7 @@ class Window(pyglet.window.Window):
         self._tilemap = TileMap()
         self._tilemap.random_fill()
 
-        self._renderer = VertexBufferedRenderer(self._tilemap)
+        self._renderer = GeomBufferedRenderer(self._tilemap)
 
         
     def on_resize(self, width, height):
@@ -38,19 +38,22 @@ class Window(pyglet.window.Window):
 
 
     def on_key_press(self, symbol, modifiers):
-        self._tilemap.random_fill()
-        self._renderer.recalculate()
+        if symbol != pyglet.window.key.SPACE:
+            self._tilemap.random_fill()
+            self._renderer.recalculate()
+            return
         
-        if symbol == pyglet.window.key.SPACE:
-            if isinstance(self._renderer, GeomBufferedRenderer):
-                self._renderer = VertexBufferedRenderer(self._tilemap)
-            elif isinstance(self._renderer, VertexBufferedRenderer):
-                self._renderer = GeomBufferedRenderer(self._tilemap)
+        cls_list = [GeomBufferedRenderer, VertexBufferedRenderer, VertexBufferedRendererPyglet]
+        i, = [idx for idx, e in enumerate(cls_list) if isinstance(self._renderer, e)]
+        i = (i+1) % len(cls_list)
+        
+        self._renderer = cls_list[i](self._tilemap)
+            
 
         
     def on_draw(self):
         self.clear()
-        self._renderer.draw(self.width, self.height)
+        self._renderer.draw()
 
         # Draw FPS counter
         if not hasattr(self, 'fps_display'):
@@ -60,8 +63,8 @@ class Window(pyglet.window.Window):
         self.fps_display.draw()
         
         # Draw coordinate set
-        #pyglet.shapes.Line(0, 0, 100, 0, width=2, color = (255, 0, 0)).draw()
-        #pyglet.shapes.Line(0, 0, 0, 100, width=2, color = (0, 255, 0)).draw()
-        #pyglet.shapes.Circle(0, 0, 5, color=(0, 0, 255)).draw()
+        pyglet.shapes.Line(0, 0, 100, 0, width=2, color = (255, 0, 0)).draw()
+        pyglet.shapes.Line(0, 0, 0, 100, width=2, color = (0, 255, 0)).draw()
+        pyglet.shapes.Circle(0, 0, 5, color=(0, 0, 255)).draw()
 
-        #pyglet.shapes.Circle(-150, -150, 5, color=(0, 0, 255)).draw()
+        pyglet.shapes.Circle(-150, -150, 5, color=(0, 0, 255)).draw()

@@ -7,8 +7,22 @@
 
 
 
-
-
+def glCheckError():
+    errorcode = pyglet.gl.glGetError()
+        
+    while errorcode != pyglet.gl.GL_NO_ERROR:
+        
+        code_to_string = {pyglet.gl.GL_INVALID_ENUM     : "INVALID_ENUM",
+                          pyglet.gl.GL_INVALID_VALUE    : "INVALID_VALUE",
+                          pyglet.gl.GL_INVALID_OPERATION: "GL_INVALID_OPERATION",
+                          pyglet.gl.GL_STACK_OVERFLOW: "GL_STACK_OVERFLOW",
+                          pyglet.gl.GL_STACK_UNDERFLOW: "GL_STACK_UNDERFLOW",
+                          pyglet.gl.GL_OUT_OF_MEMORY: "GL_OUT_OF_MEMORY",
+                          pyglet.gl.GL_INVALID_FRAMEBUFFER_OPERATION: "GL_INVALID_FRAMEBUFFER_OPERATION"}
+        
+        print(code_to_string[errorcode])
+        errorcode = pyglet.gl.glGetError()
+        
 
 import pyglet
 import ctypes
@@ -143,7 +157,7 @@ class VertexBufferedRendererPyglet:
 
         return vlist
 
-    def draw(self, width, height):
+    def draw(self):
         pyglet.gl.glBindTexture(pyglet.gl.GL_TEXTURE_2D, self._texture.id)
 
         # Input vertex coordinates have origin on the top left with x increasing as we go right and y increasing as we go down.
@@ -199,7 +213,7 @@ class VertexBufferedRenderer:
         self.GenerateVertexBufferObject()
         self.GenerateVertexArrayObject()
 
-    def draw(self, width, height):
+    def draw(self):
         pyglet.gl.glBindTexture(pyglet.gl.GL_TEXTURE_2D, self._texture.id)
         pyglet.gl.glBindVertexArray(self._vaoHandle)
 
@@ -351,7 +365,7 @@ class VertexBufferedRenderer:
         l = len(vertexData)
         vertexData = (ctypes.c_float * len(vertexData))(*vertexData)
 
-        pyglet.gl.glBufferData(pyglet.gl.GL_ARRAY_BUFFER, l * 4, vertexData, pyglet.gl.GL_STATIC_DRAW)
+        pyglet.gl.glBufferData(pyglet.gl.GL_ARRAY_BUFFER, l * ctypes.sizeof(ctypes.c_float), vertexData, pyglet.gl.GL_STATIC_DRAW)
 
     def GenerateVertexArrayObject(self):
         arraid = pyglet.gl.GLuint()
@@ -363,10 +377,10 @@ class VertexBufferedRenderer:
         pyglet.gl.glBindBuffer(pyglet.gl.GL_ARRAY_BUFFER, self._vboHandle)
         
         pyglet.gl.glEnableVertexAttribArray(0)
-        pyglet.gl.glVertexAttribPointer(0, 2, pyglet.gl.GL_FLOAT, False, 4 * 4, 0)
+        pyglet.gl.glVertexAttribPointer(0, 2, pyglet.gl.GL_FLOAT, False, ctypes.sizeof(ctypes.c_float) * 4, 0)
 
         pyglet.gl.glEnableVertexAttribArray(1)
-        pyglet.gl.glVertexAttribPointer(1, 2, pyglet.gl.GL_FLOAT, False, 4 * 4, 4 * 2)
+        pyglet.gl.glVertexAttribPointer(1, 2, pyglet.gl.GL_FLOAT, False, ctypes.sizeof(ctypes.c_float) * 4, ctypes.sizeof(ctypes.c_float) * 2)
 
     def __del__(self):
         try:
@@ -385,7 +399,6 @@ class GeomBufferedRenderer:
     def __init__(self, tilemap):
         
         pyglet.gl.glClearColor(0.5, 0.5, 0.5, 1)
-        pyglet.gl.glClipControl(pyglet.gl.GL_UPPER_LEFT, pyglet.gl.GL_NEGATIVE_ONE_TO_ONE)
         pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
         pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
 
@@ -403,7 +416,9 @@ class GeomBufferedRenderer:
         self.GenerateVertexBufferObject()
         self.GenerateVertexArrayObject()
 
-    def draw(self, width, height):
+    def draw(self):
+        pyglet.gl.glBindTexture(pyglet.gl.GL_TEXTURE_2D, self._texture.id)
+        pyglet.gl.glBindVertexArray(self._vaoHandle)
 
         # Input vertex coordinates have origin on the top left with x increasing as we go right and y increasing as we go down.
         # Each tile has a width and a height of 1.
@@ -433,6 +448,8 @@ class GeomBufferedRenderer:
         
         pyglet.gl.glUseProgram(self._shaderHandle)
         pyglet.gl.glDrawArrays(pyglet.gl.GL_POINTS, 0, len(self._tilemap))
+        
+        
 
     def CreateShader(self):
         # in this shader I have put the / 15 and % 15, replacing the use of mapSize !!!
@@ -563,6 +580,8 @@ class GeomBufferedRenderer:
             pyglet.gl.glDetachShader(self._shaderHandle, handle)
             pyglet.gl.glDeleteShader(handle)
         
+        glCheckError()
+        
         
     def GenerateVertexBufferObject(self):
         buffer_id = pyglet.gl.GLuint()
@@ -573,9 +592,10 @@ class GeomBufferedRenderer:
         vertexData = self._tilemap._map
 
         l = len(vertexData)
-        vertexData = (ctypes.c_uint * len(vertexData))(*vertexData)
+        vertexData = (ctypes.c_uint32 * len(vertexData))(*vertexData)
 
-        pyglet.gl.glBufferData(pyglet.gl.GL_ARRAY_BUFFER, l * 4, vertexData, pyglet.gl.GL_STATIC_DRAW)
+        pyglet.gl.glBufferData(pyglet.gl.GL_ARRAY_BUFFER, l * ctypes.sizeof(ctypes.c_uint32), vertexData, pyglet.gl.GL_STATIC_DRAW)
+        glCheckError()
 
 
     def GenerateVertexArrayObject(self):
@@ -588,11 +608,14 @@ class GeomBufferedRenderer:
         pyglet.gl.glBindBuffer(pyglet.gl.GL_ARRAY_BUFFER, self._vboHandle)
         
         pyglet.gl.glEnableVertexAttribArray(0)
-        pyglet.gl.glVertexAttribPointer(0, 1, pyglet.gl.GL_UNSIGNED_INT, False, 4, 0)
+        pyglet.gl.glVertexAttribIPointer(0, 1, pyglet.gl.GL_UNSIGNED_INT, ctypes.sizeof(ctypes.c_uint32), 0)
+        glCheckError()
 
 
     def __del__(self):
-        return
-        pyglet.gl.glDeleteVertexArrays(1, self._vaoHandle)
-        pyglet.gl.glDeleteBuffer(self._vboHandle)
-        pyglet.gl.glDeleteProgram(self._shaderHandle)
+        try:
+            pyglet.gl.glDeleteVertexArrays(1, ctypes.c_ulong(self._vaoHandle))
+            pyglet.gl.glDeleteBuffers(1, ctypes.c_ulong(self._vboHandle))
+            pyglet.gl.glDeleteProgram(self._shaderHandle)
+        except ImportError:
+            pass
