@@ -19,7 +19,8 @@ class Window(pyglet.window.Window):
         self._tilemap = TileMap()
         self._tilemap.random_fill()
 
-        self._renderer = GeomBufferedRenderer(self._tilemap)
+        self._renderer = None
+        self.set_renderer(GeomBufferedRenderer)
 
 
     def _init_gl(self):
@@ -54,19 +55,23 @@ class Window(pyglet.window.Window):
             self._renderer.recalculate()
             return
         
-        cls_list = [GeomBufferedRenderer, VertexBufferedRenderer, VertexBufferedRendererPyglet]
+        cls_list = [GeomBufferedRenderer, VertexBufferedRenderer]
         i, = [idx for idx, e in enumerate(cls_list) if isinstance(self._renderer, e)]
         i = (i+1) % len(cls_list)
         
-        self._renderer = cls_list[i](self._tilemap)
+        self.set_renderer(cls_list[i])
             
 
-        
+    def set_renderer(self, cls):
+        print('Currently active:', cls.__name__)
+        self._renderer = cls(self._tilemap)
+
+
     def on_draw(self):
         self.clear()
         self._renderer.draw()
 
-        self._draw_fps_counter()
+        # self._draw_fps_counter()
 
 
     def _draw_fps_counter(self):

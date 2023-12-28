@@ -1,4 +1,6 @@
 
+from random import randint
+
 import pyglet
 
 from src.constants import TEXTURE_ATLAS_PATH, TEXTURE_TILE_SIZE_PX, TILEMAP_N_ROWS, TILEMAP_N_COLS
@@ -47,8 +49,14 @@ class TileMap:
         return len(self._map)
 
     def random_fill(self):
-        from random import randint
-
         for row in range(self._rows):
             for col in range(self._cols):
                 self[row, col] = randint(0, self._max_value)
+
+    @property
+    def texture_id(self):
+        return self._texture.id
+    
+    @property
+    def map(self):
+        return self._map
