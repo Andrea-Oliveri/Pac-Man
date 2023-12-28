@@ -2,24 +2,35 @@
 
 import pyglet
 
-from tilemap import TileMap
-from renderer import VertexBufferedRenderer, GeomBufferedRenderer, VertexBufferedRendererPyglet, N_ROWS, N_COLS
+from src.tilemap import TileMap
+from src.renderer import VertexBufferedRenderer, GeomBufferedRenderer, VertexBufferedRendererPyglet
 
-WINDOW_MINIMUM_SIZE = (N_COLS * 8, N_ROWS * 8)
+from src.constants import WINDOW_MINIMUM_SIZE
+
 
 
 class Window(pyglet.window.Window):
     def __init__(self):
         super().__init__(*WINDOW_MINIMUM_SIZE, vsync = False, resizable = True)
-        
         self.set_minimum_size(*WINDOW_MINIMUM_SIZE)
+        
+        self._init_gl()
 
         self._tilemap = TileMap()
         self._tilemap.random_fill()
 
         self._renderer = GeomBufferedRenderer(self._tilemap)
 
-        
+
+    def _init_gl(self):
+        # Set background color to black.
+        pyglet.gl.glClearColor(0, 0, 0, 1)
+
+        # Enable transparency.
+        pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
+        pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
+
+
     def on_resize(self, width, height):
         desired_width, desired_height = WINDOW_MINIMUM_SIZE
 
@@ -55,16 +66,15 @@ class Window(pyglet.window.Window):
         self.clear()
         self._renderer.draw()
 
-        # Draw FPS counter
+        self._draw_fps_counter()
+
+
+    def _draw_fps_counter(self):
         if not hasattr(self, 'fps_display'):
             self.fps_display = pyglet.window.FPSDisplay(window=self)
-            self.fps_display.label = pyglet.text.Label('', x=70, y=135, font_size=12, bold=True, color = (255, 0, 0, 255))
+            self.fps_display.label = pyglet.text.Label('', x=70, y=135, font_size=24, bold=True, color = (255, 0, 0, 255))
 
         self.fps_display.draw()
         
-        # Draw coordinate set
-        pyglet.shapes.Line(0, 0, 100, 0, width=2, color = (255, 0, 0)).draw()
-        pyglet.shapes.Line(0, 0, 0, 100, width=2, color = (0, 255, 0)).draw()
-        pyglet.shapes.Circle(0, 0, 5, color=(0, 0, 255)).draw()
-
-        pyglet.shapes.Circle(-150, -150, 5, color=(0, 0, 255)).draw()
+        # Pyglet has a bad habit of disabling transparency.
+        pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
