@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import lzma
+
 from src.constants import (FontColors,
                            GAME_HIGH_SCORE_TEXT_COORDS,
                            GAME_1UP_TEXT_COORDS,
@@ -164,7 +166,9 @@ class Painter:
         self._maze_sprites.notify_level_end()
 
     def recording_load(self, path, width, height):
-        self._active_recording = utils.load_image_grid(path, width, height)
+        with lzma.open(path, 'r') as file:
+            self._active_recording = utils.load_image_grid(path, width, height, file)
+
         return len(self._active_recording)
 
     def recording_draw(self, idx):

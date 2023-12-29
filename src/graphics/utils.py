@@ -17,11 +17,11 @@ def calculate_coords_sprites(maze_coords):
     return new_coords
 
 
-def load_image_grid(path, width_px, height_px = None):
+def load_image_grid(path, width_px, height_px = None, file = None):
     if height_px is None:
         height_px = width_px
 
-    sprite_sheet = pyglet.image.load(path)
+    sprite_sheet = pyglet.image.load(path, file)
 
     n_rows = sprite_sheet.height // height_px
     n_cols = sprite_sheet.width // width_px
@@ -39,8 +39,8 @@ def load_image_grid(path, width_px, height_px = None):
     return image_grid
 
 
-def load_image(path):
-    image = pyglet.image.load(path)
+def load_image(path, file = None):
+    image = pyglet.image.load(path, file)
         
     # Set anchor points to center.
     image.anchor_x = image.width // 2
