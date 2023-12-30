@@ -285,7 +285,7 @@ def GHOSTS_SPEED(level, fright, in_warp_tunnel, going_to_house, in_or_exiting_ho
 
 # Possible states for the level.
 LevelStates = IntEnum('LevelStates', ['FIRST_WELCOME', 'READY', 'PLAYING', 
-                                      'DEATH', 'COMPLETED', 'GAME_OVER',
+                                      'DEATH', 'COMPLETED', 'INTERMISSION', 'GAME_OVER',
                                       'PAUSE_AFTER_EATING', 'PAUSE_BEFORE_DEATH', 'PAUSE_BEFORE_COMPLETED'])
 
 # Number and period of white flashes for the level completed animation.
@@ -299,6 +299,7 @@ LEVEL_STATES_DURATION = {LevelStates.FIRST_WELCOME         : 130,
                          LevelStates.PLAYING               : float('inf'),
                          LevelStates.DEATH                 : sum(PACMAN_DEATH_ANIMATION_PERIOD_FRAMES) + 50,
                          LevelStates.COMPLETED             : 2 * LEVEL_COMPLETED_FLASH_NUM * LEVEL_COMPLETED_FLASH_ANIMATION_PERIOD_FRAMES - 1,
+                         LevelStates.INTERMISSION          : float('inf'),
                          LevelStates.GAME_OVER             : 120,
                          LevelStates.PAUSE_AFTER_EATING    : 60,
                          LevelStates.PAUSE_BEFORE_DEATH    : 60,
@@ -584,6 +585,13 @@ RECORDINGS_DETAILS = {RecordingsType.INTRO         : {'path': './assets/images/i
                       RecordingsType.INTERMISSION_1: {'path': './assets/images/intermission1.png.xz', 'frame_shape': (88 , 224)},
                       RecordingsType.INTERMISSION_2: {'path': './assets/images/intermission2.png.xz', 'frame_shape': (88 , 224)},
                       RecordingsType.INTERMISSION_3: {'path': './assets/images/intermission3.png.xz', 'frame_shape': (88 , 224)}}
+
+# Levels after which intermissions occurr in game.
+LEVEL_WITH_INTERMISSIONS = {2 : RecordingsType.INTERMISSION_1,
+                            5 : RecordingsType.INTERMISSION_2,
+                            9 : RecordingsType.INTERMISSION_3,
+                            13: RecordingsType.INTERMISSION_3,
+                            17: RecordingsType.INTERMISSION_3}
 
 # --------------------------------------------------------------------
 

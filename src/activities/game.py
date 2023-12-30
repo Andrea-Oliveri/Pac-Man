@@ -22,7 +22,8 @@ from src.constants import (MazeTiles,
                            FRIGHT_TIME_AND_FLASHES,
                            LevelStates,
                            LEVEL_STATES_DURATION,
-                           DynamicUIElements)
+                           DynamicUIElements,
+                           LEVEL_WITH_INTERMISSIONS)
 
 
 class Game(Activity):
@@ -79,7 +80,7 @@ class Game(Activity):
                 ui_elements = DynamicUIElements.READY_TEXT | DynamicUIElements.PACMAN | DynamicUIElements.GHOSTS
             case LevelStates.DEATH:
                 ui_elements = DynamicUIElements.PACMAN | DynamicUIElements.FRUIT
-            case LevelStates.COMPLETED:
+            case LevelStates.COMPLETED | LevelStates.INTERMISSION:
                 ui_elements = DynamicUIElements.PACMAN
             case LevelStates.GAME_OVER:
                 ui_elements = DynamicUIElements.GAME_OVER_TEXT
@@ -151,8 +152,17 @@ class Game(Activity):
 
             case LevelStates.COMPLETED:
                 if change_state:
-                    self._set_level_state(LevelStates.READY)
-                    self._reset_level(new = True)
+                    if self._level in LEVEL_WITH_INTERMISSIONS:
+                        self._set_level_state(LevelStates.INTERMISSION)
+                    else:
+                        self._set_level_state(LevelStates.READY)
+                        self._reset_level(new = True)
+
+            case LevelStates.INTERMISSION:
+                old_level = self._level
+                self._set_level_state(LevelStates.READY)
+                self._reset_level(new = True)
+                return old_level
 
             case LevelStates.GAME_OVER:
                 if change_state:
