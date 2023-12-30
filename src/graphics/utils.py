@@ -17,18 +17,21 @@ def calculate_coords_sprites(maze_coords):
     return new_coords
 
 
-def load_image_grid(path, tile_size_px):
-    sprite_sheet = pyglet.image.load(path)
+def load_image_grid(path, width_px, height_px = None, file = None):
+    if height_px is None:
+        height_px = width_px
 
-    n_rows = sprite_sheet.height // tile_size_px
-    n_cols = sprite_sheet.width // tile_size_px
+    sprite_sheet = pyglet.image.load(path, file)
+
+    n_rows = sprite_sheet.height // height_px
+    n_cols = sprite_sheet.width // width_px
 
     image_grid = pyglet.image.ImageGrid(sprite_sheet, rows=n_rows, columns=n_cols)
 
     # Set anchor points to center and interpolate avoiding blur for every frame of animation.
     for image in image_grid:
-        image.anchor_x = tile_size_px // 2
-        image.anchor_y = tile_size_px // 2
+        image.anchor_x = width_px // 2
+        image.anchor_y = height_px // 2
 
         texture = image.get_texture()
         set_texture_interp_mode(texture)
@@ -36,8 +39,8 @@ def load_image_grid(path, tile_size_px):
     return image_grid
 
 
-def load_image(path):
-    image = pyglet.image.load(path)
+def load_image(path, file = None):
+    image = pyglet.image.load(path, file)
         
     # Set anchor points to center.
     image.anchor_x = image.width // 2

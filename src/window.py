@@ -4,6 +4,7 @@ import pyglet
 
 from src.activities.menu import Menu
 from src.activities.game import Game
+from src.activities.intermission import Intermission
 from src.graphics.painter import Painter
 from src.constants import (WINDOW_INIT_KWARGS,
                            WINDOW_MINIMUM_SIZE,
@@ -25,10 +26,11 @@ class Window(pyglet.window.Window):
         # Set background color.
         pyglet.gl.glClearColor(*BACKGROUND_COLOR, 1)
 
-        self.painter = Painter()
+        self._painter = Painter()
 
-        self._current_activity = Menu(self.painter)
-        
+        self._current_activity = Menu(self._painter)
+        self._backup_activity = None # Used only to store Game activity during intermissions.
+
         # FPS locked to screen refresh rate (vsync enabled).
         # Number of updates per second can be freely chosen though.
         pyglet.clock.schedule_interval(self.on_state_update, GAME_TENTATIVE_UPDATES_INTERVAL)
@@ -156,13 +158,25 @@ class Window(pyglet.window.Window):
         
         retval = self._current_activity.event_update_state()
 
-        if retval and isinstance(self._current_activity, Menu):
-            # retval is True if we need to change from Menu to Game.
-            self._current_activity = Game(self.painter)
+        if retval is False:
+            return
 
-        elif retval and isinstance(self._current_activity, Game):
-            # retval is True if we need to change from Game to Menu.
-            self._current_activity = Menu(self.painter)
+        if isinstance(self._current_activity, Menu):
+            # retval is True if we need to change from Menu to Game.
+            self._current_activity = Game(self._painter)
+
+        elif isinstance(self._current_activity, Game):
+            if retval is True:
+                # retval is True if we need to change from Game to Menu.
+                self._current_activity = Menu(self._painter)
+            else:
+                # retval is an integer representing the game level if we need to change from Game to Intermission.
+                self._backup_activity  = self._current_activity
+                self._current_activity = Intermission(self._painter, retval)
+
+        elif isinstance(self._current_activity, Intermission):
+            self._current_activity = self._backup_activity
+            self._backup_activity  = None
 
         
     def on_draw(self):

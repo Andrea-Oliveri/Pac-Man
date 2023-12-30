@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import lzma
+
 from src.constants import (FontColors,
                            GAME_HIGH_SCORE_TEXT_COORDS,
                            GAME_1UP_TEXT_COORDS,
@@ -51,6 +53,9 @@ class Painter:
         # Reset child attributes.
         self.reset_level(new = True)
 
+        # variable holding the recording currently being displayed on screen.
+        self._active_recording = None
+
 
     def reset_level(self, new):
         # Load initial maze image.
@@ -61,13 +66,6 @@ class Painter:
         self._pacman_sprites.reset()
         self._ghost_sprites .reset()
         
-
-    def draw_menu(self):
-        # TODO: better menu
-        image = utils.load_image(r".\assets\images\TMP-Menu.png")
-
-        image.blit(0, 0)
-
 
     def update(self, pacman):
         self._maze_sprites  .update()
@@ -91,7 +89,7 @@ class Painter:
             self._font.print(*LEVEL_GAME_OVER_TEXT_COORDS , LEVEL_GAME_OVER_TEXT_COLOR , 'GAME  OVER')
 
         if DynamicUIElements.FRUIT in ui_elements:
-            self._draw_fruit(level)
+            self._draw_fruit_in_maze(level)
 
         if DynamicUIElements.GHOSTS in ui_elements:
             self._ghost_sprites.draw(ghosts)
@@ -148,6 +146,10 @@ class Painter:
             x += UI_TILES_PX_SIZE
 
         # Draw the fruits.
+        self._draw_fruits(level)
+
+
+    def _draw_fruits(self, level):
         fruits = [FRUIT_OF_LEVEL(i) for i in range(level-GAME_MAX_FRUIT_ICON_NUMBER+1, level+1) if i >= 1]
         x, y = GAME_RIGHT_FRUIT_ICON_COORDS
         for fruit in fruits:
@@ -155,7 +157,7 @@ class Painter:
             x -= UI_TILES_PX_SIZE
 
 
-    def _draw_fruit(self, level):
+    def _draw_fruit_in_maze(self, level):
         fruit = FRUIT_OF_LEVEL(level)
         fruit_coords = utils.calculate_coords_sprites(FRUIT_SPAWN_POSITION)
         self._ui_tiles[fruit].blit(fruit_coords.x, fruit_coords.y)
@@ -166,3 +168,18 @@ class Painter:
 
     def notify_level_end(self):
         self._maze_sprites.notify_level_end()
+
+    def recording_load(self, path, width, height):
+        with lzma.open(path, 'r') as file:
+            self._active_recording = utils.load_image_grid(path, width, height, file)
+
+        return len(self._active_recording)
+
+    def recording_draw(self, idx, level_to_draw_fruits = None):
+        self._active_recording[idx].blit(0, 0)
+
+        if level_to_draw_fruits is not None:
+            self._draw_fruits(level_to_draw_fruits)
+
+    def recording_free(self):
+        self._active_recording = None
