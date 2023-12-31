@@ -8,7 +8,6 @@ from src.constants import (MAZE_START_IMAGE,
                            MAZE_START_IMAGE_EMPTY_TILE_REGION_COORDS,
                            MAZE_TILE_PX_SIZE,
                            MAZE_TILES_ROWS,
-                           LEVEL_COMPLETED_FLASH_NUM,
                            LEVEL_COMPLETED_FLASH_ANIMATION_PERIOD_FRAMES)
 
 from src.graphics import utils

@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import pyglet.image
-
 from src.constants import (FONT_SHEET_PATH,
                            FONT_TILE_PX_SIZE,
                            FontColors,

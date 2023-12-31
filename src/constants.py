@@ -170,9 +170,6 @@ def GHOST_SPRITE_IDX(name, frightened_blue, frightened_white, transparent, direc
         
     return idx + frame_idx 
 
-
-
-
 # --------------------------------------------------------------------
 
 
@@ -193,6 +190,38 @@ FontColors = IntEnum('FontColors', ['WHITE', 'YELLOW', 'MELON', 'CASABLANCA', 'C
 FONT_SHEET_CHARACTERS = r'%%%%%%%         0123456789/-"   PQRSTUVWXYZ!cptsABCDEFGHIJKLMNO '
 
 # --------------------------------------------------------------------
+
+
+# --------------------------------------------------------------------
+# Constants related to the score sprites.
+# --------------------------------------------------------------------
+
+# Path of image containing the font sheet.
+SCORE_SHEET_PATH = "./assets/images/Scores.png"
+
+# Size of scores tiles expressed in pixels.
+SCORES_TILE_PX_SIZE = 16
+
+# Mapping providing the right sprite for each score and the width in number of tiles.
+SCORES_SPRITE_IDX = {100 : (0 , 1),
+                     300 : (1 , 1),
+                     500 : (2 , 1),
+                     700 : (3 , 1),
+                     1000: (4 , 2),
+                     2000: (6 , 2),
+                     3000: (8 , 2),
+                     5000: (10, 2),
+                     200 : (12, 1),
+                     400 : (13, 1),
+                     800 : (14, 1),
+                     1600: (15, 1)} 
+
+# Coordinates of fruits eaten score.
+SCORE_FRUIT_EATEN_COORDS = (0, -2 * MAZE_TILE_PX_SIZE)
+
+
+# --------------------------------------------------------------------
+
 
 
 
@@ -404,7 +433,6 @@ def SCORE_POINTS_EAT_FRUIT(level):
     points_per_fruit = {Fruits.CHERRY: 100, Fruits.STRAWBERRY: 300, Fruits.PEACH: 500, Fruits.APPLE: 700, Fruits.GRAPES: 1000, Fruits.GALAXIAN: 2000, Fruits.BELL: 3000, Fruits.KEY: 5000}
     
     return points_per_fruit[FRUIT_OF_LEVEL(level)]
-
 
 # Path of file where to store high score.
 HIGH_SCORE_FILE = os.path.join(os.path.expanduser('~'), '.pacman_game')

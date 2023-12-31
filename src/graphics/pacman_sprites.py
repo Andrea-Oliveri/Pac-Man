@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 
-from pickle import FRAME
 from src.constants import (PACMAN_ALL_SPRITES,
                            PACMAN_GHOSTS_SPRITES_PX_SIZE,
                            PACMAN_MOVE_ANIMATION_PERIOD_FRAMES,
@@ -10,7 +9,6 @@ from src.constants import (PACMAN_ALL_SPRITES,
                            PACMAN_SPAWNING_FRAME_IDX,
                            PACMAN_SPRITE_IDX)
 from src.graphics import utils
-from src.directions import Vector2
 
 
 class PacManSprite:

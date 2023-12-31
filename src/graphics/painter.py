@@ -2,8 +2,7 @@
 
 import lzma
 
-from src.constants import (FontColors,
-                           GAME_HIGH_SCORE_TEXT_COORDS,
+from src.constants import (GAME_HIGH_SCORE_TEXT_COORDS,
                            GAME_1UP_TEXT_COORDS,
                            GAME_SCORE_NUMBER_COORDS,
                            GAME_HIGH_SCORE_NUMBER_COORDS,
@@ -11,7 +10,6 @@ from src.constants import (FontColors,
                            GAME_DEFAULT_TEXT_COLOR,
                            UI_TILES_SHEET_PATH,
                            UI_TILES_PX_SIZE,
-                           Fruits,
                            LIFE_ICON_UI,
                            GAME_LEFT_LIVES_ICON_COORDS,
                            GAME_RIGHT_FRUIT_ICON_COORDS,
