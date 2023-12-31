@@ -192,38 +192,6 @@ FONT_SHEET_CHARACTERS = r'%%%%%%%         0123456789/-"   PQRSTUVWXYZ!cptsABCDEF
 # --------------------------------------------------------------------
 
 
-# --------------------------------------------------------------------
-# Constants related to the score sprites.
-# --------------------------------------------------------------------
-
-# Path of image containing the font sheet.
-SCORE_SHEET_PATH = "./assets/images/Scores.png"
-
-# Size of scores tiles expressed in pixels.
-SCORES_TILE_PX_SIZE = 16
-
-# Mapping providing the right sprite for each score and the width in number of tiles.
-SCORES_SPRITE_IDX = {100 : (0 , 1),
-                     300 : (1 , 1),
-                     500 : (2 , 1),
-                     700 : (3 , 1),
-                     1000: (4 , 2),
-                     2000: (6 , 2),
-                     3000: (8 , 2),
-                     5000: (10, 2),
-                     200 : (12, 1),
-                     400 : (13, 1),
-                     800 : (14, 1),
-                     1600: (15, 1)} 
-
-# Coordinates of fruits eaten score.
-SCORE_FRUIT_EATEN_COORDS = (0, -2 * MAZE_TILE_PX_SIZE)
-
-
-# --------------------------------------------------------------------
-
-
-
 
 # --------------------------------------------------------------------
 # Constants related to Pac-Man.
@@ -400,7 +368,7 @@ def FRUIT_OF_LEVEL(level):
     return Fruits.KEY
 
 # UI elements which can be optionally drawn during gameplay depending on state.
-DynamicUIElements = IntFlag('DynamicUIElements', ['PACMAN', 'GHOSTS', 'FRUIT', 'READY_TEXT', 'PLAYER_ONE_TEXT', 'GAME_OVER_TEXT'])
+DynamicUIElements = IntFlag('DynamicUIElements', ['PACMAN', 'GHOSTS', 'FRUIT', 'READY_TEXT', 'PLAYER_ONE_TEXT', 'GAME_OVER_TEXT', 'ACTION_SCORES'])
 
 # Coordinates and color of 'PLAYER ONE' text.
 LEVEL_PLAYER_ONE_TEXT_COORDS = (-4.5 * MAZE_TILE_PX_SIZE, +4 * MAZE_TILE_PX_SIZE)
@@ -437,6 +405,30 @@ def SCORE_POINTS_EAT_FRUIT(level):
 # Path of file where to store high score.
 HIGH_SCORE_FILE = os.path.join(os.path.expanduser('~'), '.pacman_game')
 HIGH_SCORE_FILE_NUM_BYTES = 4
+
+# --------------------------------------------------------------------
+
+
+# --------------------------------------------------------------------
+# Constants related to the score sprites.
+# --------------------------------------------------------------------
+
+# Path of image containing the font sheet.
+SCORE_SHEET_PATH = "./assets/images/Scores.png"
+
+# Size of scores tiles expressed in pixels.
+SCORES_TILE_PX_SIZE = 24
+
+# Scores present, ordered as in the score sheet (rows go from bottom to top due to how pyglet increases y-axis).
+SCORE_SHEET_VALUES = (100, 300, 500, 700, 1000, 2000, 3000, 5000, 200, 400, 800, 1600)
+
+# Coordinates where to print score when fruit is eaten.
+SCORE_FRUIT_EATEN_COORDS = (0, -2 * MAZE_TILE_PX_SIZE)
+
+# Time to keep scores on screen.
+SCORE_FRUIT_VISIBLE_DURATION_FRAMES = 120
+SCORE_GHOST_EATEN_DURATION_FRAMES   = LEVEL_STATES_DURATION[LevelStates.PAUSE_AFTER_EATING]
+
 
 # --------------------------------------------------------------------
 

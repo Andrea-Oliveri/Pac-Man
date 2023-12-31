@@ -51,18 +51,22 @@ class Score:
     def add_to_score(self, action, level = None):
         """Adds points to the score based on the action type and data in parameters dictionary."""
         
+        increment = 0
         match action:
             case ScoreActions.EAT_PELLET:
-                self += SCORE_POINTS_EAT_PELLET
+                increment = SCORE_POINTS_EAT_PELLET
             case ScoreActions.EAT_POWER_PELLET:
-                self += SCORE_POINTS_EAT_POWER_PELLET
+                increment = SCORE_POINTS_EAT_POWER_PELLET
             case ScoreActions.EAT_GHOST:
-                self += SCORE_POINTS_EAT_GHOST_BASE * (2 ** self._ghost_eaten_same_fright)
+                increment = SCORE_POINTS_EAT_GHOST_BASE * (2 ** self._ghost_eaten_same_fright)
                 self._ghost_eaten_same_fright += 1
             case ScoreActions.EAT_FRUIT:
-                self += SCORE_POINTS_EAT_FRUIT(level)
+                increment = SCORE_POINTS_EAT_FRUIT(level)
             case _:
                 raise ValueError(f'Unvalid action provided for Score.add_to_score: {action}')
+
+        self += increment
+        return increment
 
 
     def notify_fright_on(self):

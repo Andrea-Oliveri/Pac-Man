@@ -29,6 +29,7 @@ from src.graphics.font import Font
 from src.graphics.maze_sprites import MazeSprite
 from src.graphics.ghost_sprites import GhostSprite
 from src.graphics.pacman_sprites import PacManSprite
+from src.graphics.score_sprites import ScoreSprites
 
 
 
@@ -43,6 +44,7 @@ class Painter:
         self._pacman_sprites = PacManSprite()
         self._ghost_sprites  = GhostSprite()
         self._maze_sprites   = MazeSprite()
+        self._score_sprites  = ScoreSprites()
 
         # Load UI elements.
         self._font = Font()
@@ -63,9 +65,15 @@ class Painter:
         # Reset sprite counters.
         self._pacman_sprites.reset()
         self._ghost_sprites .reset()
-        
+        self._score_sprites .reset()
 
-    def update(self, pacman):
+
+    def update(self, pacman, update_only_scores = False):
+        self._score_sprites .update()
+
+        if update_only_scores:
+            return
+
         self._maze_sprites  .update()
         self._pacman_sprites.update(pacman)
         self._ghost_sprites .update()
@@ -91,6 +99,9 @@ class Painter:
 
         if DynamicUIElements.GHOSTS in ui_elements:
             self._ghost_sprites.draw(ghosts)
+
+        if DynamicUIElements.ACTION_SCORES in ui_elements:
+            self._score_sprites.draw()
 
         if DynamicUIElements.PACMAN in ui_elements:
             self._pacman_sprites.draw(pacman)
@@ -120,6 +131,12 @@ class Painter:
 
     def notify_fright_on(self, fright_duration, fright_flashes):
         self._ghost_sprites.notify_fright_on(fright_duration, fright_flashes)
+
+    def notify_fruit_eaten(self, score):
+        self._score_sprites.notify_fruit_eaten(score)
+
+    def notify_ghost_eaten(self, score, position):
+        self._score_sprites.notify_ghost_eaten(score, position)
 
 
     def _draw_gui(self, score, lives, level):

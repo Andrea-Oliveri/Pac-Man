@@ -85,9 +85,9 @@ class Game(Activity):
             case LevelStates.GAME_OVER:
                 ui_elements = DynamicUIElements.GAME_OVER_TEXT
             case LevelStates.PAUSE_AFTER_EATING:
-                ui_elements = DynamicUIElements.GHOSTS | DynamicUIElements.FRUIT
+                ui_elements = DynamicUIElements.GHOSTS | DynamicUIElements.FRUIT | DynamicUIElements.ACTION_SCORES
             case LevelStates.PLAYING | LevelStates.PAUSE_BEFORE_DEATH | LevelStates.PAUSE_BEFORE_COMPLETED:
-                ui_elements = DynamicUIElements.PACMAN | DynamicUIElements.GHOSTS | DynamicUIElements.FRUIT
+                ui_elements = DynamicUIElements.PACMAN | DynamicUIElements.GHOSTS | DynamicUIElements.FRUIT | DynamicUIElements.ACTION_SCORES
                 
         if self._fruit_visible_counter <= 0:
             ui_elements &= (~DynamicUIElements.FRUIT)
@@ -120,7 +120,9 @@ class Game(Activity):
                 self._painter.update(self._pacman)
 
             case LevelStates.PAUSE_AFTER_EATING:
+                self._painter.update(self._pacman, update_only_scores = True)
                 self._ghosts.update(self._level, True, self._maze, self._pacman, update_only_transparent = True)
+
         
         # Transition to new level state if needed.      
         change_state = self._level_state_counter <= 0
@@ -218,7 +220,8 @@ class Game(Activity):
                             (pacman_new_position.x <= FRUIT_SPAWN_POSITION.x <= pacman_old_position.x))
             if was_on_fruit:
                 self._fruit_visible_counter = 0
-                self._score.add_to_score(ScoreActions.EAT_FRUIT, self._level)
+                score = self._score.add_to_score(ScoreActions.EAT_FRUIT, self._level)
+                self._painter.notify_fruit_eaten(score)
 
         # Check if eaten a pellet.
         tile_coords, pellet_type = self._maze.eat_check_pellet(pacman_new_position)
@@ -236,9 +239,10 @@ class Game(Activity):
             self._pacman.state_become_round()
 
         # Check if collided with any ghosts.
-        life_lost, any_eaten = self._ghosts.check_collision(self._maze, self._pacman) 
+        life_lost, any_eaten, position = self._ghosts.check_collision(self._maze, self._pacman) 
         if any_eaten:
-            self._score.add_to_score(ScoreActions.EAT_GHOST)
+            score = self._score.add_to_score(ScoreActions.EAT_GHOST)
+            self._painter.notify_ghost_eaten(score, position)
             self._set_level_state(LevelStates.PAUSE_AFTER_EATING)
         if life_lost:
             self._set_level_state(LevelStates.PAUSE_BEFORE_DEATH)

@@ -107,6 +107,7 @@ class GhostsCoordinator:
 
         life_lost = False
         any_eaten = False
+        collision_position = None
         for ghost in self._ghosts:
             ghost_tile = maze.get_tile_center(ghost.position)
 
@@ -120,11 +121,13 @@ class GhostsCoordinator:
                 ghost.notify_was_just_eaten()
                 any_eaten = True
                 life_lost = False
+                collision_position = ghost.position
                 break
             
             life_lost = True
+            collision_position = ghost.position
 
-        return life_lost, any_eaten
+        return life_lost, any_eaten, collision_position
 
     def notify_fright_on(self, fright_duration):
         self._request_behaviour_to_all(GhostBehaviour.FRIGHTENED)
