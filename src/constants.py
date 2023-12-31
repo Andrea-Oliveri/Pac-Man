@@ -12,7 +12,7 @@ from src.directions import Vector2
 # --------------------------------------------------------------------
 
 # Minimum size allowed for the window to prevent poor visualization.
-WINDOW_MINIMUM_SIZE = (250, 300)
+WINDOW_MINIMUM_SIZE = (224, 300)
 
 # Pyglet window initialization arguments.
 WINDOW_INIT_KWARGS = {'width' : WINDOW_MINIMUM_SIZE[0],
