@@ -1,35 +1,21 @@
 # -*- coding: utf-8 -*-
 
-
-from src.constants import (PACMAN_ALL_SPRITES,
-                           PACMAN_GHOSTS_SPRITES_PX_SIZE,
-                           PACMAN_MOVE_ANIMATION_PERIOD_FRAMES,
+from src.graphics.sprites.sprite import AbstractSprite
+from src.constants import (PACMAN_MOVE_ANIMATION_PERIOD_FRAMES,
                            PACMAN_DEATH_ANIMATION_PERIOD_FRAMES,
                            PacManStates,
-                           PACMAN_SPAWNING_FRAME_IDX,
-                           PACMAN_SPRITE_IDX)
-from src.graphics import utils
+                           PACMAN_SPRITE_TEX_REGION,
+                           Z_COORD_PACMAN)
 
 
-class PacManSprite:
 
-    def __init__(self):
-        self._sprites = utils.load_image_grid(PACMAN_ALL_SPRITES, PACMAN_GHOSTS_SPRITES_PX_SIZE)
-
-        self.reset()
+class PacManSprite(AbstractSprite):
 
     def reset(self):
         self._frame_counter = 0
-        self._valid_stuck_frame = False
+        self._valid_stuck_frame = False   # Boolean describing if current frame is valid for remaining on it if Pac-Man stuck.
         self._was_already_dead = False
 
-    def draw(self, pacman):
-        sprite_idx = self._get_sprite_idx(pacman.direction, pacman.state)
-        pacman_coords = utils.calculate_coords_sprites(pacman.position)
-        self._sprites[sprite_idx].blit(x=pacman_coords.x, y=pacman_coords.y)
-
-        # Update boolean describing if current frame is valid for remaining on it if Pac-Man stuck.
-        self._valid_stuck_frame = sprite_idx != PACMAN_SPAWNING_FRAME_IDX
 
     def update(self, pacman):
         match pacman.state:
@@ -44,10 +30,9 @@ class PacManSprite:
             case PacManStates.DEAD:
                 if not self._was_already_dead:
                     self._frame_counter = 0
+                    self._was_already_dead = True
                 else:
                     self._frame_counter += 1
-
-                self._was_already_dead = True
 
             case PacManStates.MOVING | PacManStates.TURNING:
                 self._frame_counter += 1
@@ -56,7 +41,12 @@ class PacManSprite:
                 raise ValueError('Unvalid state provided for Pac-Man to PacManSprites.update') 
 
 
-    def _get_sprite_idx(self, direction, state):
+    def send_vertex_data(self, pacman):
+        tex_region, self._valid_stuck_frame = self._get_tex_region(pacman.direction, pacman.state)
+        self._painter.add_quad(pacman.position.x, pacman.position.y, *tex_region, Z_COORD_PACMAN)
+
+
+    def _get_tex_region(self, direction, state):
 
         spawning = state == PacManStates.SPAWNING
         dead     = state == PacManStates.DEAD
@@ -77,5 +67,4 @@ class PacManSprite:
         else:
             frame_idx = (self._frame_counter // PACMAN_MOVE_ANIMATION_PERIOD_FRAMES) % 4
 
-        sprite_idx = PACMAN_SPRITE_IDX(direction, spawning, dead, frame_idx)
-        return sprite_idx
+        return PACMAN_SPRITE_TEX_REGION(direction, spawning, dead, frame_idx)

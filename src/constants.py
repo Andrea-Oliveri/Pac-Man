@@ -2,6 +2,7 @@
 
 from pyglet.window import Window
 from enum import IntEnum, IntFlag
+from collections import namedtuple
 import os
 
 from src.directions import Vector2
@@ -44,17 +45,6 @@ BACKGROUND_COLOR = (0, 0, 0)
 # Enum defining types of tiles.
 MazeTiles = IntEnum('MazeTiles', ['WALL', 'EMPTY', 'PELLET', 'POWER_PELLET', 'DOOR'])
 
-# Location of images with maze configurations.
-MAZE_START_IMAGE = "./assets/images/Maze Initial.png"
-MAZE_FLASH_WHITE = "./assets/images/Maze Flash White.png"
-MAZE_FLASH_BLUE  = "./assets/images/Maze Flash Blue.png"
-
-# Coordinates (left pixel counting from left, bottom pixel counting from bottom) of an empty tile in the initial maze.
-MAZE_START_IMAGE_EMPTY_TILE_REGION_COORDS = (0, 128)
-
-# Size of maze tiles expressed in pixels.
-MAZE_TILE_PX_SIZE = 8
-
 # Initial maze design expressed as a 1D array of tile indices.
 MAZE_START_TILES = (MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.POWER_PELLET, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.POWER_PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.DOOR, MazeTiles.DOOR, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.PELLET, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.PELLET, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.EMPTY, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.POWER_PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.EMPTY, MazeTiles.EMPTY, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.POWER_PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.PELLET, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL, MazeTiles.WALL)
 
@@ -73,124 +63,6 @@ MAZE_START_NUM_PELLET = sum(elem in (MazeTiles.PELLET, MazeTiles.POWER_PELLET) f
 
 
 # --------------------------------------------------------------------
-
-
-# --------------------------------------------------------------------
-# Constants related to the animated sprites.
-# --------------------------------------------------------------------
-
-# Paths of images containing the sprite sheets for the animations.
-PACMAN_ALL_SPRITES = "./assets/images/Pac-Man.png"
-GHOSTS_ALL_SPRITES = "./assets/images/Ghosts.png"
-
-# Duration of each frame in the animations.
-PACMAN_MOVE_ANIMATION_PERIOD_FRAMES  = 2
-PACMAN_DEATH_ANIMATION_PERIOD_FRAMES = (30, 7, 8, 7, 8, 7, 8, 7, 8, 7, 15)
-GHOSTS_MOVE_ANIMATION_PERIOD_FRAMES  = 8
-GHOSTS_FRIGHT_FLASH_ANIMATION_PERIOD_FRAMES = 14 
-
-# Size of Pac-Man and Ghost sprites expressed in pixels.
-PACMAN_GHOSTS_SPRITES_PX_SIZE = 16
-
-# Function providing the right sprite for each pacman condition.
-# Rows go from bottom to top due to how pyglet increases y-axis.
-PACMAN_SPAWNING_FRAME_IDX = 44
-def PACMAN_SPRITE_IDX(direction, spawning, dead, frame_idx):
-    if dead:
-        return 45 + frame_idx if 0 <= frame_idx <= len(PACMAN_DEATH_ANIMATION_PERIOD_FRAMES) else 3
-
-    if spawning:
-        return PACMAN_SPAWNING_FRAME_IDX
-
-    idx = 0
-
-    match frame_idx:
-        case 0:
-            return PACMAN_SPAWNING_FRAME_IDX
-        case 1:
-            idx += 1
-        case 2:
-            idx += 0
-        case 3:
-            idx += 1
-
-    match direction:
-        case Vector2.DOWN:
-            idx += 0
-        case Vector2.UP:
-            idx += 14
-        case Vector2.LEFT:
-            idx += 28
-        case Vector2.RIGHT:
-            idx += 42
-        
-    return idx 
-
-# Function providing the right sprite for each ghost condition.
-# Rows go from bottom to top due to how pyglet increases y-axis.
-def GHOST_SPRITE_IDX(name, frightened_blue, frightened_white, transparent, direction, frame_idx):
-    if transparent:
-        match direction:
-            case Vector2.RIGHT:
-                return 32
-            case Vector2.LEFT:
-                return 33
-            case Vector2.UP:
-                return 34
-            case Vector2.DOWN:
-                return 35
-
-    if frightened_blue:
-        return 44 + frame_idx
-
-    if frightened_white:
-        return 46 + frame_idx
-
-    idx = 0
-
-    match name:
-        case Ghost.BLINKY:
-            idx += 36
-        case Ghost.PINKY:
-            idx += 24
-        case Ghost.INKY:
-            idx += 12
-        case Ghost.CLYDE:
-            idx += 0
-
-    match direction:
-        case Vector2.RIGHT:
-            idx += 0
-        case Vector2.LEFT:
-            idx += 2
-        case Vector2.UP:
-            idx += 4
-        case Vector2.DOWN:
-            idx += 6
-        
-    return idx + frame_idx 
-
-# --------------------------------------------------------------------
-
-
-# --------------------------------------------------------------------
-# Constants related to the font.
-# --------------------------------------------------------------------
-
-# Path of image containing the font sheet.
-FONT_SHEET_PATH = "./assets/images/Font.png"
-
-# Size of font tiles expressed in pixels.
-FONT_TILE_PX_SIZE = 8
-
-# Colors present in font sheet, ordered as in the font sheet (ordered from bottom to top due to how pyglet increases y-axis).
-FontColors = IntEnum('FontColors', ['WHITE', 'YELLOW', 'MELON', 'CASABLANCA', 'CYAN', 'MAUVE', 'RED', 'LAVANDER'], start = 0)
-
-# Characters present, ordered as in the font sheet (rows go from bottom to top due to how pyglet increases y-axis).
-FONT_SHEET_CHARACTERS = r'%%%%%%%         0123456789/-"   PQRSTUVWXYZ!cptsABCDEFGHIJKLMNO '
-
-# --------------------------------------------------------------------
-
 
 
 # --------------------------------------------------------------------
@@ -277,6 +149,19 @@ def GHOSTS_SPEED(level, fright, in_warp_tunnel, going_to_house, in_or_exiting_ho
 
 
 # --------------------------------------------------------------------
+# Constants related to the animated sprites.
+# --------------------------------------------------------------------
+
+# Duration of each frame in the animations.
+PACMAN_MOVE_ANIMATION_PERIOD_FRAMES  = 2
+PACMAN_DEATH_ANIMATION_PERIOD_FRAMES = (30, 7, 8, 7, 8, 7, 8, 7, 8, 7, 15)
+GHOSTS_MOVE_ANIMATION_PERIOD_FRAMES  = 8
+GHOSTS_FRIGHT_FLASH_ANIMATION_PERIOD_FRAMES = 14
+
+# --------------------------------------------------------------------
+
+
+# --------------------------------------------------------------------
 # Constants related to Level animations.
 # --------------------------------------------------------------------
 
@@ -305,85 +190,6 @@ LEVEL_STATES_DURATION = {LevelStates.FIRST_WELCOME         : 130,
 # --------------------------------------------------------------------
 
 
-# --------------------------------------------------------------------
-# Constants related to Game UI.
-# --------------------------------------------------------------------
-
-# Coordinates of 'HIGH SCORE' text.
-GAME_HIGH_SCORE_TEXT_COORDS   = (- 4.5 * MAZE_TILE_PX_SIZE, +18 * MAZE_TILE_PX_SIZE)
-
-# Coordinates of '1UP' text.
-GAME_1UP_TEXT_COORDS          = (-10.5 * MAZE_TILE_PX_SIZE, +18 * MAZE_TILE_PX_SIZE)
-
-# Coordinates of current score left-most digit.
-GAME_SCORE_NUMBER_COORDS      = (-13.5 * MAZE_TILE_PX_SIZE, +17 * MAZE_TILE_PX_SIZE)
-
-# Coordinates of high score left-most digit.
-GAME_HIGH_SCORE_NUMBER_COORDS = (- 3.5 * MAZE_TILE_PX_SIZE, +17 * MAZE_TILE_PX_SIZE)
-
-# Number of digits of the theoretical maximum score.
-MAX_SCORE_NUM_DIGITS = 7
-
-# In-Game UI colors.
-GAME_DEFAULT_TEXT_COLOR = FontColors.WHITE
-
-# Path of image containing the UI tiles (fruits and Pac-Man life).
-UI_TILES_SHEET_PATH = "./assets/images/UI.png"
-
-# Size of UI tiles expressed in pixels.
-UI_TILES_PX_SIZE = 16
-
-# Elements present in UI tiles sheet, ordered as in the sheet.
-Fruits = IntEnum('Fruits', ['CHERRY', 'STRAWBERRY', 'PEACH', 'APPLE', 'GRAPES', 'GALAXIAN', 'BELL', 'KEY'], start = 0)
-LIFE_ICON_UI = max(Fruits) + 1
-
-# Coordinates of left-most life icon.
-GAME_LEFT_LIVES_ICON_COORDS  = (-11 * MAZE_TILE_PX_SIZE, -16.5 * MAZE_TILE_PX_SIZE) 
-
-# Coordinates of right-most fruit icon.
-GAME_RIGHT_FRUIT_ICON_COORDS = (+11 * MAZE_TILE_PX_SIZE, -16.5 * MAZE_TILE_PX_SIZE) 
-
-# Max number of fruits to show on bottom right of screen.
-GAME_MAX_FRUIT_ICON_NUMBER = 7
-
-# Fruit associated to each level.
-def FRUIT_OF_LEVEL(level):
-    if level <= 0:
-        raise ValueError(f'invalid level value passed to constants.FRUIT_OF_LEVEL: {level}')
-    elif level == 1:
-        return Fruits.CHERRY
-    elif level == 2:
-        return Fruits.STRAWBERRY
-    elif level <= 4:
-        return Fruits.PEACH
-    elif level <= 6:
-        return Fruits.APPLE
-    elif level <= 8:
-        return Fruits.GRAPES
-    elif level <= 10:
-        return Fruits.GALAXIAN
-    elif level <= 12:
-        return Fruits.BELL
-
-    return Fruits.KEY
-
-# UI elements which can be optionally drawn during gameplay depending on state.
-DynamicUIElements = IntFlag('DynamicUIElements', ['PACMAN', 'GHOSTS', 'FRUIT', 'READY_TEXT', 'PLAYER_ONE_TEXT', 'GAME_OVER_TEXT', 'ACTION_SCORES'])
-
-# Coordinates and color of 'PLAYER ONE' text.
-LEVEL_PLAYER_ONE_TEXT_COORDS = (-4.5 * MAZE_TILE_PX_SIZE, +4 * MAZE_TILE_PX_SIZE)
-LEVEL_PLAYER_ONE_TEXT_COLOR  = FontColors.CYAN
-
-# Coordinates and color of 'READY!' text.
-LEVEL_READY_TEXT_COORDS      = (-2.5 * MAZE_TILE_PX_SIZE, -2 * MAZE_TILE_PX_SIZE)
-LEVEL_READY_TEXT_COLOR       = FontColors.YELLOW
-
-# Coordinates and color of 'GAME OVER' text.
-LEVEL_GAME_OVER_TEXT_COORDS  = (-4.5 * MAZE_TILE_PX_SIZE, -2 * MAZE_TILE_PX_SIZE)
-LEVEL_GAME_OVER_TEXT_COLOR   = FontColors.RED
-
-# --------------------------------------------------------------------
-
 
 # --------------------------------------------------------------------
 # Constants related to Score.
@@ -405,30 +211,6 @@ def SCORE_POINTS_EAT_FRUIT(level):
 # Path of file where to store high score.
 HIGH_SCORE_FILE = os.path.join(os.path.expanduser('~'), '.pacman_game')
 HIGH_SCORE_FILE_NUM_BYTES = 4
-
-# --------------------------------------------------------------------
-
-
-# --------------------------------------------------------------------
-# Constants related to the score sprites.
-# --------------------------------------------------------------------
-
-# Path of image containing the font sheet.
-SCORE_SHEET_PATH = "./assets/images/Scores.png"
-
-# Size of scores tiles expressed in pixels.
-SCORES_TILE_PX_SIZE = 24
-
-# Scores present, ordered as in the score sheet (rows go from bottom to top due to how pyglet increases y-axis).
-SCORE_SHEET_VALUES = (100, 300, 500, 700, 1000, 2000, 3000, 5000, 200, 400, 800, 1600)
-
-# Coordinates where to print score when fruit is eaten.
-SCORE_FRUIT_EATEN_COORDS = (0, -2 * MAZE_TILE_PX_SIZE)
-
-# Time to keep scores on screen.
-SCORE_FRUIT_VISIBLE_DURATION_FRAMES = 120
-SCORE_GHOST_EATEN_DURATION_FRAMES   = LEVEL_STATES_DURATION[LevelStates.PAUSE_AFTER_EATING]
-
 
 # --------------------------------------------------------------------
 
@@ -464,6 +246,29 @@ def FRIGHT_TIME_AND_FLASHES(level):
     
     return times_secs[level - 1] * GAME_ORIGINAL_FPS, flashes_num[level - 1]
 
+# Possible fruits in the game.
+Fruits = IntEnum('Fruits', ['CHERRY', 'STRAWBERRY', 'PEACH', 'APPLE', 'GRAPES', 'GALAXIAN', 'BELL', 'KEY'], start = 0)
+
+# Fruit associated to each level.
+def FRUIT_OF_LEVEL(level):
+    if level <= 0:
+        raise ValueError(f'invalid level value passed to constants.FRUIT_OF_LEVEL: {level}')
+    elif level == 1:
+        return Fruits.CHERRY
+    elif level == 2:
+        return Fruits.STRAWBERRY
+    elif level <= 4:
+        return Fruits.PEACH
+    elif level <= 6:
+        return Fruits.APPLE
+    elif level <= 8:
+        return Fruits.GRAPES
+    elif level <= 10:
+        return Fruits.GALAXIAN
+    elif level <= 12:
+        return Fruits.BELL
+
+    return Fruits.KEY
 
 # --------------------------------------------------------------------
 
@@ -612,6 +417,296 @@ LEVEL_WITH_INTERMISSIONS = {2 : RecordingsType.INTERMISSION_1,
                             9 : RecordingsType.INTERMISSION_3,
                             13: RecordingsType.INTERMISSION_3,
                             17: RecordingsType.INTERMISSION_3}
+
+# --------------------------------------------------------------------
+
+
+# --------------------------------------------------------------------
+# Constants related to the action score sprites.
+# --------------------------------------------------------------------
+
+# Time to keep scores on screen.
+SCORE_FRUIT_VISIBLE_DURATION_FRAMES = 120
+SCORE_GHOST_EATEN_DURATION_FRAMES   = LEVEL_STATES_DURATION[LevelStates.PAUSE_AFTER_EATING]
+
+
+# --------------------------------------------------------------------
+
+
+
+
+# --------------------------------------------------------------------
+# Constants related to the graphics atlas.
+# --------------------------------------------------------------------
+
+# Path of the atlas image.
+GRAPHICS_ATLAS_PATH = './assets/images/atlas.png'
+
+# Named tuple used to store information on the regions composing the atlas.
+_AtlasRegion = namedtuple('AtlasRegion', ['reg_x_left', 'reg_y_bottom', 'reg_width', 'reg_height', 'elem_width', 'elem_height'])
+
+# Coordinates in pixels of each region composing the atlas.
+# Regions are zones in the atlas where the sub-elements have uniform sizes and are grouped for easy coordinate calculation.
+_GRAPHICS_ATLAS_REGION_FONT   = _AtlasRegion(0  , 0  , 128, 256, 8 , 8 )
+_GRAPHICS_ATLAS_REGION_MAZE   = _AtlasRegion(128, 0  , 672, 248, 8 , 8 )
+_GRAPHICS_ATLAS_REGION_SCORES = _AtlasRegion(800, 0  , 96 , 72 , 24, 24)
+_GRAPHICS_ATLAS_REGION_GHOSTS = _AtlasRegion(0  , 256, 192, 64 , 16, 16)
+_GRAPHICS_ATLAS_REGION_PACMAN = _AtlasRegion(192, 256, 224, 64 , 16, 16)
+_GRAPHICS_ATLAS_REGION_FRUITS = _AtlasRegion(416, 256, 144, 16 , 16, 16)
+
+# Colors present in font sheet, ordered as in the font sheet (ordered from bottom to top due to how pyglet increases y-axis).
+FontColors = IntEnum('FontColors', ['WHITE', 'YELLOW', 'MELON', 'CASABLANCA', 'CYAN', 'MAUVE', 'RED', 'LAVANDER'], start = 0)
+
+# Functions providing the right texture coordinates for each regions based on conditions.
+# When referring to rows and columns, rows are counted bottom to top and cols left to right.
+def _CONVERT_ROW_COL_TO_TEX_COORD(atlas_region, row, col):
+   return (atlas_region.reg_x_left   + col * atlas_region.elem_width,
+           atlas_region.reg_y_bottom + row * atlas_region.elem_height,
+           atlas_region.elem_width,
+           atlas_region.elem_height)
+
+def _GHOST_SPRITE_ROW_COL(name, frightened_blue, frightened_white, transparent, direction, frame_idx):
+    if transparent:
+        match direction:
+            case Vector2.RIGHT:
+                return 2, 8
+            case Vector2.LEFT:
+                return 2, 9
+            case Vector2.UP:
+                return 2, 10
+            case Vector2.DOWN:
+                return 2, 11
+
+    if frightened_blue:
+        return 3, 8 + frame_idx
+
+    if frightened_white:
+        return 3, 10 + frame_idx
+
+    match name:
+        case Ghost.BLINKY:
+            row = 3
+        case Ghost.PINKY:
+            row = 2
+        case Ghost.INKY:
+            row = 1
+        case Ghost.CLYDE:
+            row = 0
+
+    match direction:
+        case Vector2.RIGHT:
+            col = 0
+        case Vector2.LEFT:
+            col = 2
+        case Vector2.UP:
+            col = 4
+        case Vector2.DOWN:
+            col = 6
+        
+    return row, col + frame_idx
+
+def GHOST_SPRITE_TEX_REGION(*args):
+    row, col = _GHOST_SPRITE_ROW_COL(*args)
+    return _CONVERT_ROW_COL_TO_TEX_COORD(_GRAPHICS_ATLAS_REGION_GHOSTS, row, col)
+
+_PACMAN_SPAWNING_ROW_COL = (3, 2)
+def _PACMAN_SPRITE_ROW_COL(direction, spawning, dead, frame_idx):
+    if dead:
+        if 0 <= frame_idx < len(PACMAN_DEATH_ANIMATION_PERIOD_FRAMES):
+            return (3, 3 + frame_idx)
+
+        return (0, 3)
+
+    if spawning:
+        return _PACMAN_SPAWNING_ROW_COL
+
+    match frame_idx:
+        case 0:
+            return _PACMAN_SPAWNING_ROW_COL
+        case 1:
+            col = 1
+        case 2:
+            col = 0
+        case 3:
+            col = 1
+
+    match direction:
+        case Vector2.DOWN:
+            row = 0
+        case Vector2.UP:
+            row = 1
+        case Vector2.LEFT:
+            row = 2
+        case Vector2.RIGHT:
+            row = 3
+
+    return row, col
+
+def PACMAN_SPRITE_TEX_REGION(*args):
+    row, col = _PACMAN_SPRITE_ROW_COL(*args)
+
+    row_spawn, col_spawn = _PACMAN_SPAWNING_ROW_COL
+    valid_stuck_frame = any(row != row_spawn, col != col_spawn)
+    
+    return _CONVERT_ROW_COL_TO_TEX_COORD(_GRAPHICS_ATLAS_REGION_PACMAN, row, col), valid_stuck_frame
+
+def _MAZE_SPRITE_ROW_COL(maze_row, maze_col, tile, flash_blue, flash_white):
+    row = MAZE_TILES_ROWS - 1 - maze_row
+    col = maze_col
+
+    if flash_blue:
+        col += MAZE_TILES_COLS
+    elif flash_white:
+        col += 2 * MAZE_TILES_COLS
+    elif tile == MazeTiles.EMPTY:
+        col += MAZE_TILES_COLS
+
+    return row, col
+
+def MAZE_SPRITE_TEX_REGION(*args):
+    row, col = _MAZE_SPRITE_ROW_COL(*args)
+    return _CONVERT_ROW_COL_TO_TEX_COORD(_GRAPHICS_ATLAS_REGION_MAZE, row, col)
+
+def _SCORE_SPRITE_ROW_COL(value):
+    match value:
+        case 100:
+            return 0, 0
+        case 300:
+            return 0, 1
+        case 500:
+            return 0, 2
+        case 700:
+            return 0, 3
+        case 1000:
+            return 1, 0
+        case 2000:
+            return 1, 1
+        case 3000:
+            return 1, 2
+        case 5000:
+            return 1, 3
+        case 200:
+            return 2, 0
+        case 400:
+            return 2, 1
+        case 800:
+            return 2, 2
+        case 1600:
+            return 2, 3
+        
+def SCORE_SPRITE_TEX_REGION(*args):
+    row, col = _SCORE_SPRITE_ROW_COL(*args)
+    return _CONVERT_ROW_COL_TO_TEX_COORD(_GRAPHICS_ATLAS_REGION_SCORES, row, col)
+
+LIVES_SPRITE_TEX_REGION = _CONVERT_ROW_COL_TO_TEX_COORD(_GRAPHICS_ATLAS_REGION_FRUITS, 0, 8)
+
+def _FRUIT_SPRITE_ROW_COL(fruit):
+    return 0, int(fruit)
+
+def FRUIT_SPRITE_TEX_REGION(*args):
+    row, col = _FRUIT_SPRITE_ROW_COL(*args)
+    return _CONVERT_ROW_COL_TO_TEX_COORD(_GRAPHICS_ATLAS_REGION_FRUITS, row, col)
+
+def _TEXT_SPRITE_ROW_COL(char, color):
+    if color not in FontColors:
+        raise ValueError(f'Invalid color provided to constants._TEXT_SPRITE_ROW_COL: {color}')
+
+    all_chars      = r'%%%%%%%         0123456789/-"   PQRSTUVWXYZ!cptsABCDEFGHIJKLMNO '
+    chars_per_row  = 16
+    rows_per_color = 4
+
+    idx = all_chars.index(char)
+    row = idx // chars_per_row
+    col = idx % chars_per_row
+
+    row += rows_per_color * int(color)
+    return row, col
+
+
+def TEXT_SPRITE_TEX_REGION(*args):
+    row, col = _TEXT_SPRITE_ROW_COL(*args)
+    return _CONVERT_ROW_COL_TO_TEX_COORD(_GRAPHICS_ATLAS_REGION_FRUITS, row, col)
+
+
+# z-coord of different drawables. This determines which elements are drawn on top of which others. 
+# z-coords must be in range [-1, +1] to not be clipped, with more positive values meaning they will be drawn on top.
+Z_COORD_MAZE            = 0.0
+Z_COORD_UI_AND_TEXT     = 0.1  # Score, lives, level fruits, texts
+Z_COORD_FRUIT_IN_MAZE   = 0.2
+Z_COORD_SCORE_FRUIT     = 0.3
+Z_COORD_GHOSTS          = [0.7, 0.6, 0.5, 0.4]  # Same order as in Ghost IntEnum
+Z_COORD_SCORE_GHOST_EAT = 0.8
+Z_COORD_PACMAN          = 0.9
+
+
+# --------------------------------------------------------------------
+
+
+# --------------------------------------------------------------------
+# Constants related to the graphics shaders.
+# --------------------------------------------------------------------
+
+# Path of the source files.
+SHADERS_VERT_PATH = './src/graphics/shaders/quad_renderer.vert'
+SHADERS_GEOM_PATH = './src/graphics/shaders/quad_renderer.geom'
+SHADERS_FRAG_PATH = './src/graphics/shaders/quad_renderer.frag'
+
+# Padding to use when calculating texture coordinates to mitigate the lines-between tiles bug which is caused by the lack of tile margins in the texture atlas.
+SHADERS_TEX_PADDING = 1 / 4096
+
+# Pre-defining max number of quads that can be drawn in order to allocate sufficiently large buffer in GPU.
+SHADERS_MAX_QUADS = 1000
+
+
+# --------------------------------------------------------------------
+
+
+
+# --------------------------------------------------------------------
+# Constants related to Game UI.
+# --------------------------------------------------------------------
+
+# Max number of fruits to show on bottom right of screen.
+UI_MAX_FRUIT_ICON_NUMBER    = 7
+
+# Coordinates of right-most fruit icon.
+UI_RIGHT_FRUIT_ICON_COORDS  = (+11  , -16.5)
+
+# Coordinates of left-most life icon.
+UI_LEFT_LIVES_ICON_COORDS   = (-11  , -16.5)
+
+# Coordinates of 'HIGH SCORE' text.
+UI_HIGH_SCORE_TEXT_COORDS   = (- 4.5, +18)
+
+# Coordinates of '1UP' text.
+UI_1UP_TEXT_COORDS          = (-10.5, +18)
+
+# Coordinates of current score left-most digit.
+UI_SCORE_NUMBER_COORDS      = (-13.5, +17)
+
+# Coordinates of high score left-most digit.
+UI_HIGH_SCORE_NUMBER_COORDS = (- 3.5, +17)
+
+# Number of digits of the theoretical maximum score.
+UI_MAX_SCORE_NUM_DIGITS     = 7
+
+# In-Game UI colors.
+UI_DEFAULT_TEXT_COLOR       = FontColors.WHITE
+
+# UI elements which can be optionally drawn during gameplay depending on state.
+DynamicUIElements = IntFlag('DynamicUIElements', ['PACMAN', 'GHOSTS', 'FRUIT', 'READY_TEXT', 'PLAYER_ONE_TEXT', 'GAME_OVER_TEXT', 'ACTION_SCORES'])
+
+# Coordinates and color of 'PLAYER ONE' text.
+UI_PLAYER_ONE_TEXT_COORDS = (-4.5, +4)
+UI_PLAYER_ONE_TEXT_COLOR  = FontColors.CYAN
+
+# Coordinates and color of 'READY!' text.
+UI_READY_TEXT_COORDS      = (-2.5, -2)
+UI_READY_TEXT_COLOR       = FontColors.YELLOW
+
+# Coordinates and color of 'GAME OVER' text.
+UI_GAME_OVER_TEXT_COORDS  = (-4.5, -2)
+UI_GAME_OVER_TEXT_COLOR   = FontColors.RED
 
 # --------------------------------------------------------------------
 

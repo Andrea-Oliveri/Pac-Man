@@ -1,200 +1,118 @@
 # -*- coding: utf-8 -*-
 
-import lzma
+import array
 
-from src.constants import (GAME_HIGH_SCORE_TEXT_COORDS,
-                           GAME_1UP_TEXT_COORDS,
-                           GAME_SCORE_NUMBER_COORDS,
-                           GAME_HIGH_SCORE_NUMBER_COORDS,
-                           MAX_SCORE_NUM_DIGITS,
-                           GAME_DEFAULT_TEXT_COLOR,
-                           UI_TILES_SHEET_PATH,
-                           UI_TILES_PX_SIZE,
-                           LIFE_ICON_UI,
-                           GAME_LEFT_LIVES_ICON_COORDS,
-                           GAME_RIGHT_FRUIT_ICON_COORDS,
-                           GAME_MAX_FRUIT_ICON_NUMBER,
-                           FRUIT_OF_LEVEL,
-                           FRUIT_SPAWN_POSITION,
-                           LEVEL_PLAYER_ONE_TEXT_COORDS,
-                           LEVEL_PLAYER_ONE_TEXT_COLOR,
-                           LEVEL_READY_TEXT_COORDS,
-                           LEVEL_READY_TEXT_COLOR,
-                           LEVEL_GAME_OVER_TEXT_COORDS,
-                           LEVEL_GAME_OVER_TEXT_COLOR,
-                           DynamicUIElements)
-from src.directions import Vector2
+import pyglet
+
+
 from src.graphics import utils
-from src.graphics.font import Font
-from src.graphics.maze_sprites import MazeSprite
-from src.graphics.ghost_sprites import GhostSprite
-from src.graphics.pacman_sprites import PacManSprite
-from src.graphics.score_sprites import ScoreSprites
+from src.constants import (GRAPHICS_ATLAS_PATH, 
+                           SHADERS_VERT_PATH,
+                           SHADERS_GEOM_PATH,
+                           SHADERS_FRAG_PATH,
+                           SHADERS_TEX_PADDING,
+                           WINDOW_MINIMUM_SIZE,
+                           SHADERS_MAX_QUADS)
+
+
+
+
 
 
 
 class Painter:
-    
+
     def __init__(self):
+        image = utils.load_image(GRAPHICS_ATLAS_PATH)
+        self._texture_width_px  = image.width
+        self._texture_height_px = image.height
 
-        # Enable transparency for sprites.
-        utils.enable_transparency_blit()
+        # Store whole texture rather than just ID to avoid deallocation.
+        self._texture = image.get_texture()
 
-        # Load animated sprites.
-        self._pacman_sprites = PacManSprite()
-        self._ghost_sprites  = GhostSprite()
-        self._maze_sprites   = MazeSprite()
-        self._score_sprites  = ScoreSprites()
+        self._shader_program = None
+        self._vertex_list = None
+        self._attributes_tmp_buffer = None
+        self._attributes_tmp_buffer_idx = None
 
-        # Load UI elements.
-        self._font = Font()
-        self._ui_tiles = utils.load_image_grid(UI_TILES_SHEET_PATH, UI_TILES_PX_SIZE)
-
-        # Reset child attributes.
-        self.reset_level(new = True)
-
-        # variable holding the recording currently being displayed on screen.
-        self._active_recording = None
-
-
-    def reset_level(self, new):
-        # Load initial maze image.
-        if new:
-            self._maze_sprites.reset()
-
-        # Reset sprite counters.
-        self._pacman_sprites.reset()
-        self._ghost_sprites .reset()
-        self._score_sprites .reset()
-
-
-    def update(self, pacman, update_only_scores = False):
-        self._score_sprites .update()
-
-        if update_only_scores:
-            return
-
-        self._maze_sprites  .update()
-        self._pacman_sprites.update(pacman)
-        self._ghost_sprites .update()
-
-
-    def draw_game(self, pacman, ghosts, score, lives, level, ui_elements):
-
-        self._maze_sprites.draw()
+        self._create_shader()
+        self._set_uniforms()
+        self._allocate_vertex_list()
         
-        self._draw_gui(score, lives, level)
 
-        if DynamicUIElements.READY_TEXT in ui_elements:
-            self._font.print(*LEVEL_READY_TEXT_COORDS     , LEVEL_READY_TEXT_COLOR     , 'READY!')
+    def _create_shader(self):
+        vert_shader = pyglet.graphics.shader.Shader(SHADERS_VERT_PATH, 'vertex')
+        geom_shader = pyglet.graphics.shader.Shader(SHADERS_GEOM_PATH, 'geometry')
+        frag_shader = pyglet.graphics.shader.Shader(SHADERS_FRAG_PATH, 'fragment')
+        self._shader_program = pyglet.graphics.shader.ShaderProgram(vert_shader, geom_shader, frag_shader)
 
-        if DynamicUIElements.PLAYER_ONE_TEXT in ui_elements:
-            self._font.print(*LEVEL_PLAYER_ONE_TEXT_COORDS, LEVEL_PLAYER_ONE_TEXT_COLOR, 'PLAYER ONE')
 
-        if DynamicUIElements.GAME_OVER_TEXT in ui_elements:
-            self._font.print(*LEVEL_GAME_OVER_TEXT_COORDS , LEVEL_GAME_OVER_TEXT_COLOR , 'GAME  OVER')
+    def _get_projection_matrix(self):
+        # Input vertex coordinates have origin on the top left with x increasing as we go right and y increasing as we go down.
+        # Each quad has a width and a height of equal to the number of pixels in original loaded texture.
 
-        if DynamicUIElements.FRUIT in ui_elements:
-            self._draw_fruit_in_maze(level)
+        width, height = WINDOW_MINIMUM_SIZE
 
-        if DynamicUIElements.GHOSTS in ui_elements:
-            self._ghost_sprites.draw(ghosts)
+        # Model matrix so that origin is at the center of the tilemap.
+        # x_range = (- WINDOW_MINIMUM_SIZE.WIDTH / 2, WINDOW_MINIMUM_SIZE.WIDTH / 2), y_range = (- WINDOW_MINIMUM_SIZE.HEIGHT / 2, WINDOW_MINIMUM_SIZE.HEIGHT / 2)
+        model_matrix = pyglet.math.Mat4.from_translation(pyglet.math.Vec3(width / 2, height / 2, 0))
 
-        if DynamicUIElements.ACTION_SCORES in ui_elements:
-            self._score_sprites.draw()
-
-        if DynamicUIElements.PACMAN in ui_elements:
-            self._pacman_sprites.draw(pacman)
-
-        return
-        # ----------------------------------------
-        # DEBUG
-        # ----------------------------------------
-        pacman_coords = utils.calculate_coords_sprites(pacman.position)
-
-        for c in range(-160, 160, 8):
-            pyglet.shapes.Line(c, -160, c, 160, width=1, color=(155, 0, 0)).draw()
-            pyglet.shapes.Line(-160, c-4, 160, c-4, width=1, color=(155, 0, 0)).draw()
-        pyglet.shapes.Circle(pacman_coords.x, pacman_coords.y, 2, color = (0, 155, 0)).draw()
-        for g in ghosts:
-            g_coords = utils.calculate_coords_sprites(g.position)
-            pyglet.shapes.Circle(g_coords.x, g_coords.y, 2, color = (0, 155, 0)).draw()
+        # View matrix should not change anything.
+        view_matrix  = pyglet.math.Mat4()
         
-        origin = utils.calculate_coords_sprites(Vector2.NULL)
-        pyglet.shapes.Circle(origin.x, origin.y, 2, color = (255, 0, 0)).draw()
-      
-        from src.constants import GHOSTS_EATEN_TARGET_TILE
-        coords = utils.calculate_coords_sprites(GHOSTS_EATEN_TARGET_TILE)
-        pyglet.shapes.Star(coords.x, coords.y, 5, 2, 4, color = (0, 255, 0)).draw()
-        # ----------------------------------------
-
-
-    def notify_fright_on(self, fright_duration, fright_flashes):
-        self._ghost_sprites.notify_fright_on(fright_duration, fright_flashes)
-
-    def notify_fruit_eaten(self, score):
-        self._score_sprites.notify_fruit_eaten(score)
-
-    def notify_ghost_eaten(self, score, position):
-        self._score_sprites.notify_ghost_eaten(score, position)
-
-
-    def _draw_gui(self, score, lives, level):
-        # Print text on top of screen.
-        self._font.print(*GAME_HIGH_SCORE_TEXT_COORDS, GAME_DEFAULT_TEXT_COLOR, 'HIGH SCORE')
-        self._font.print(*GAME_1UP_TEXT_COORDS       , GAME_DEFAULT_TEXT_COLOR, '1UP')
+        # Projection matrix scales so that tilemap fits tightly into clip-space: ranging from -1 to +1 in each coordinate.
+        proj_matrix  = pyglet.math.Mat4.from_scale(pyglet.math.Vec3(2 / width, 2 / height, 0))
         
-        # Print score and high score numbers.
-        high_score = score.high_score
-        score      = score.score
-
-        high_score = (''   if high_score == 0 else str(high_score)).rjust(MAX_SCORE_NUM_DIGITS, ' ')
-        score      = ('00' if score      == 0 else str(score))     .rjust(MAX_SCORE_NUM_DIGITS, ' ')
-        
-        self._font.print(*GAME_HIGH_SCORE_NUMBER_COORDS, GAME_DEFAULT_TEXT_COLOR, high_score)
-        self._font.print(*GAME_SCORE_NUMBER_COORDS     , GAME_DEFAULT_TEXT_COLOR, score)
-
-        # Draw the lives.
-        x, y = GAME_LEFT_LIVES_ICON_COORDS
-        for _ in range(lives):
-            self._ui_tiles[LIFE_ICON_UI].blit(x, y)
-            x += UI_TILES_PX_SIZE
-
-        # Draw the fruits.
-        self._draw_fruits(level)
+        return proj_matrix @ view_matrix @ model_matrix
 
 
-    def _draw_fruits(self, level):
-        fruits = [FRUIT_OF_LEVEL(i) for i in range(level-GAME_MAX_FRUIT_ICON_NUMBER+1, level+1) if i >= 1]
-        x, y = GAME_RIGHT_FRUIT_ICON_COORDS
-        for fruit in fruits:
-            self._ui_tiles[fruit].blit(x, y)
-            x -= UI_TILES_PX_SIZE
+    def _set_uniforms(self):
+        self._shader_program.use()
+
+        self._shader_program.width_whole_tex_px  = self._texture_width_px
+        self._shader_program.height_whole_tex_px = self._texture_height_px
+        self._shader_program.tex_padding         = SHADERS_TEX_PADDING
+        self._shader_program.projection          = self._get_projection_matrix()
+
+        self._shader_program.stop()
 
 
-    def _draw_fruit_in_maze(self, level):
-        fruit = FRUIT_OF_LEVEL(level)
-        fruit_coords = utils.calculate_coords_sprites(FRUIT_SPAWN_POSITION)
-        self._ui_tiles[fruit].blit(fruit_coords.x, fruit_coords.y)
+    def _allocate_vertex_list(self):
+        self._vertex_list = self._shader_program.vertex_list(SHADERS_MAX_QUADS, pyglet.gl.GL_POINTS)
+        self._reset_attributes_tmp_buffer()
 
 
-    def set_empty_tile(self, maze_row, maze_col):
-        self._maze_sprites.set_empty_tile(maze_row, maze_col)
+    def _reset_attributes_tmp_buffer(self):
+        nan_list = [float('nan')] * SHADERS_MAX_QUADS
 
-    def notify_level_end(self):
-        self._maze_sprites.notify_level_end()
+        # Initialize local buffers to allow providing entire buffers to Pyglet's ShaderProgram.
+        self._attributes_tmp_buffer = {name: array.array('f', nan_list) for name in self._shader_program.attributes.keys()}
+        self._attributes_tmp_buffer_idx = 0
 
-    def recording_load(self, path, width, height):
-        with lzma.open(path, 'r') as file:
-            self._active_recording = utils.load_image_grid(path, width, height, file)
 
-        return len(self._active_recording)
+    def add_quad(self, x_pos_center, y_pos_center, x_tex_left_px, y_tex_bottom_px, width_px, height_px, z_coord):
+        idx = self._attributes_tmp_buffer_idx
+        self._attributes_tmp_buffer_idx += 1
 
-    def recording_draw(self, idx, level_to_draw_fruits = None):
-        self._active_recording[idx].blit(0, 0)
+        self._vertex_list_attributes_tmp_buffer['x_pos_center']   [idx] = x_pos_center
+        self._vertex_list_attributes_tmp_buffer['y_pos_center']   [idx] = y_pos_center
+        self._vertex_list_attributes_tmp_buffer['x_tex_left_px']  [idx] = x_tex_left_px
+        self._vertex_list_attributes_tmp_buffer['y_tex_bottom_px'][idx] = y_tex_bottom_px
+        self._vertex_list_attributes_tmp_buffer['width_px']       [idx] = width_px
+        self._vertex_list_attributes_tmp_buffer['height_px']      [idx] = height_px
+        self._vertex_list_attributes_tmp_buffer['z_coord']        [idx] = z_coord
 
-        if level_to_draw_fruits is not None:
-            self._draw_fruits(level_to_draw_fruits)
 
-    def recording_free(self):
-        self._active_recording = None
+    def draw(self):
+        # Push buffers into ShaderProgram and reset them.
+        for name, data in self._attributes_tmp_buffer.item():
+            getattr(self._vertex_list, name)[:] = data
+        self._reset_attributes_tmp_buffer()
+
+        # Draw.
+        self._shader_program.use()
+
+        self._texture.bind()
+        self._vertex_list.draw(pyglet.gl.GL_POINTS)
+
+        self._shader_program.stop()
