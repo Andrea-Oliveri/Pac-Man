@@ -63,8 +63,8 @@ class UiSprite(AbstractSprite):
         high_score = (''   if high_score == 0 else str(high_score)).rjust(UI_MAX_SCORE_NUM_DIGITS, ' ')
         score      = ('00' if score      == 0 else str(score))     .rjust(UI_MAX_SCORE_NUM_DIGITS, ' ')
         
-        self._font.print(*UI_HIGH_SCORE_NUMBER_COORDS, UI_DEFAULT_TEXT_COLOR, high_score)
-        self._font.print(*UI_SCORE_NUMBER_COORDS     , UI_DEFAULT_TEXT_COLOR, score)
+        self._print(*UI_HIGH_SCORE_NUMBER_COORDS, UI_DEFAULT_TEXT_COLOR, high_score)
+        self._print(*UI_SCORE_NUMBER_COORDS     , UI_DEFAULT_TEXT_COLOR, score)
 
 
     def _draw_lives(self, lives):

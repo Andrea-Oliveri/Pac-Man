@@ -25,8 +25,11 @@ class GhostSprite(AbstractSprite):
             if ghost.was_just_eaten:
                 continue
 
-            tex_region = self._get_tex_region(ghost.name, ghost.frightened, ghost.transparent, ghost.eyes_direction)
-            self._painter.add_quad(ghost.position.x, ghost.position.y, *tex_region, Z_COORD_GHOSTS)
+            name    = ghost.name
+            z_coord = Z_COORD_GHOSTS[name]
+
+            tex_region = self._get_tex_region(name, ghost.frightened, ghost.transparent, ghost.eyes_direction)
+            self._painter.add_quad(ghost.position.x, ghost.position.y, *tex_region, z_coord)
 
 
     def notify_fright_on(self, fright_duration, fright_flashes):

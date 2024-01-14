@@ -21,6 +21,7 @@ class MazeSprite(AbstractSprite):
 
 
     def send_vertex_data(self, maze):
+
         if self._flash_counter is None:
             flash_blue  = False
             flash_white = False
@@ -36,8 +37,10 @@ class MazeSprite(AbstractSprite):
                 tile = maze[row, col]
 
                 tex_region = MAZE_SPRITE_TEX_REGION(row, col, tile, flash_blue, flash_white)
+
                 self._painter.add_quad(col + 0.5, row + 0.5, *tex_region, Z_COORD_MAZE)
  
+
 
     def notify_level_end(self):
         self._flash_counter = 0

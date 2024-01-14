@@ -5,9 +5,9 @@ class Activity(ABC):
     """Class Activity. Class representing a program state that can be shown on the window."""
          
     
-    def __init__(self, painter):
+    def __init__(self, graphics):
         """Constructor for the class Activity."""
-        self._painter = painter
+        self._graphics = graphics
     
     @abstractmethod
     def event_draw_screen(self):

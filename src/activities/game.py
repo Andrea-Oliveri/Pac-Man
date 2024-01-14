@@ -30,9 +30,9 @@ class Game(Activity):
     """Class Game. Implements screen update, reaction to key presses
     and releases and game engine when the program is showing the game."""
     
-    def __init__(self, painter):
+    def __init__(self, graphics):
         """Override of method from Activity class, instancing all game objects."""
-        super().__init__(painter)
+        super().__init__(graphics)
 
         self._score = Score()
         
@@ -52,6 +52,7 @@ class Game(Activity):
         self._fruit_visible_counter = 0
 
         self._set_level_state(LevelStates.FIRST_WELCOME)
+        self._reset_level(new = True)
 
 
     def _reset_level(self, new):
@@ -66,7 +67,7 @@ class Game(Activity):
 
         self._fruit_visible_counter = 0
 
-        self._painter.reset_level(new)
+        self._graphics.reset_level()
 
 
 
@@ -92,7 +93,7 @@ class Game(Activity):
         if self._fruit_visible_counter <= 0:
             ui_elements &= (~DynamicUIElements.FRUIT)
 
-        self._painter.draw_game(self._pacman, self._ghosts, self._score, self._lives, self._level, ui_elements)
+        self._graphics.draw_game(self._maze, self._pacman, self._ghosts, self._score, self._lives, self._level, ui_elements)
         
 
     def event_key_pressed(self, symbol, modifiers):
@@ -117,11 +118,11 @@ class Game(Activity):
                 self._update_game()
 
             case LevelStates.DEATH | LevelStates.COMPLETED:
-                self._painter.update(self._pacman)
+                self._graphics.update(self._pacman)
 
             case LevelStates.PAUSE_AFTER_EATING:
-                self._painter.update(self._pacman, update_only_scores = True)
-                self._ghosts.update(self._level, True, self._maze, self._pacman, update_only_transparent = True)
+                self._graphics.update(self._pacman, update_only_scores = True)
+                self._ghosts  .update(self._level, True, self._maze, self._pacman, update_only_transparent = True)
 
         
         # Transition to new level state if needed.      
@@ -135,7 +136,6 @@ class Game(Activity):
             case LevelStates.FIRST_WELCOME:
                 if change_state:
                     self._set_level_state(LevelStates.READY)
-                    self._reset_level(new = True)
                     self._lives -= 1
 
             case LevelStates.READY:
@@ -187,7 +187,7 @@ class Game(Activity):
             case LevelStates.PAUSE_BEFORE_COMPLETED:
                 if change_state:
                     self._set_level_state(LevelStates.COMPLETED)
-                    self._painter.notify_level_end()
+                    self._graphics.notify_level_end()
 
         return False
         
@@ -205,7 +205,7 @@ class Game(Activity):
         self._pacman.update(self._level, fright, self._maze)
         self._ghosts.update(self._level, fright, self._maze, self._pacman, update_only_transparent = False)
 
-        self._painter.update(self._pacman)
+        self._graphics.update(self._pacman)
 
 
     def _calculate_new_game_state(self):
@@ -221,7 +221,7 @@ class Game(Activity):
             if was_on_fruit:
                 self._fruit_visible_counter = 0
                 score = self._score.add_to_score(ScoreActions.EAT_FRUIT, self._level)
-                self._painter.notify_fruit_eaten(score)
+                self._graphics.notify_fruit_eaten(score)
 
         # Check if eaten a pellet.
         tile_coords, pellet_type = self._maze.eat_check_pellet(pacman_new_position)
@@ -242,14 +242,14 @@ class Game(Activity):
         life_lost, any_eaten, position = self._ghosts.check_collision(self._maze, self._pacman) 
         if any_eaten:
             score = self._score.add_to_score(ScoreActions.EAT_GHOST)
-            self._painter.notify_ghost_eaten(score, position)
+            self._graphics.notify_ghost_eaten(score, position)
             self._set_level_state(LevelStates.PAUSE_AFTER_EATING)
         if life_lost:
             self._set_level_state(LevelStates.PAUSE_BEFORE_DEATH)
 
 
     def _pellet_eaten(self, tile_coords, pellet_type):
-        self._painter.set_empty_tile(*tile_coords)
+        self._graphics.set_empty_tile(*tile_coords)
         self._pacman.add_penalty(pellet_type)
         self._ghosts.notify_pellet_eaten()
         self._score.add_to_score(ScoreActions.EAT_PELLET if pellet_type == MazeTiles.PELLET else ScoreActions.EAT_POWER_PELLET)
@@ -260,7 +260,7 @@ class Game(Activity):
             self._fright_counter = fright_duration
             self._score.notify_fright_on()
             self._ghosts.notify_fright_on(fright_duration)
-            self._painter.notify_fright_on(fright_duration, fright_flashes)
+            self._graphics.notify_fright_on(fright_duration, fright_flashes)
 
         if self._maze.n_pellets_remaining in FRUIT_SPAWN_THRESHOLDS:
             self._fruit_visible_counter = randint(*FRUIT_TIME_ACTIVE_RANGE)

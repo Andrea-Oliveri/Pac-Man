@@ -5,7 +5,7 @@ import pyglet
 from src.activities.menu import Menu
 from src.activities.game import Game
 from src.activities.intermission import Intermission
-from src.graphics.painter import Painter
+from src.graphics import Graphics
 from src.constants import (WINDOW_INIT_KWARGS,
                            WINDOW_MINIMUM_SIZE,
                            GAME_TENTATIVE_UPDATES_INTERVAL,
@@ -26,9 +26,9 @@ class Window(pyglet.window.Window):
         # Set background color.
         pyglet.gl.glClearColor(*BACKGROUND_COLOR, 1)
 
-        self._painter = Painter()
+        self._graphics = Graphics()
 
-        self._current_activity = Menu(self._painter)
+        self._current_activity = Menu(self._graphics)
         self._backup_activity = None # Used only to store Game activity during intermissions.
 
         # FPS locked to screen refresh rate (vsync enabled).
@@ -163,16 +163,16 @@ class Window(pyglet.window.Window):
 
         if isinstance(self._current_activity, Menu):
             # retval is True if we need to change from Menu to Game.
-            self._current_activity = Game(self._painter)
+            self._current_activity = Game(self._graphics)
 
         elif isinstance(self._current_activity, Game):
             if retval is True:
                 # retval is True if we need to change from Game to Menu.
-                self._current_activity = Menu(self._painter)
+                self._current_activity = Menu(self._graphics)
             else:
                 # retval is an integer representing the game level if we need to change from Game to Intermission.
                 self._backup_activity  = self._current_activity
-                self._current_activity = Intermission(self._painter, retval)
+                self._current_activity = Intermission(self._graphics, retval)
 
         elif isinstance(self._current_activity, Intermission):
             self._current_activity = self._backup_activity
@@ -182,7 +182,7 @@ class Window(pyglet.window.Window):
     def on_draw(self):
         self.clear()
         self._current_activity.event_draw_screen()
-
+        return
         # -------- DEBUG: FPS DISPLAY ----------
         if not hasattr(self, 'fps_display'):
             self.fps_display = pyglet.window.FPSDisplay(window=self)

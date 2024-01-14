@@ -41,10 +41,18 @@ class Painter:
         
 
     def _create_shader(self):
-        vert_shader = pyglet.graphics.shader.Shader(SHADERS_VERT_PATH, 'vertex')
-        geom_shader = pyglet.graphics.shader.Shader(SHADERS_GEOM_PATH, 'geometry')
-        frag_shader = pyglet.graphics.shader.Shader(SHADERS_FRAG_PATH, 'fragment')
-        self._shader_program = pyglet.graphics.shader.ShaderProgram(vert_shader, geom_shader, frag_shader)
+        shaders = []
+        for path, shader_type in [(SHADERS_VERT_PATH, 'vertex'),
+                                  (SHADERS_GEOM_PATH, 'geometry'),
+                                  (SHADERS_FRAG_PATH, 'fragment')]:
+
+            with open(path, 'r') as file:
+                source = file.read()
+
+            shader = pyglet.graphics.shader.Shader(source, shader_type)
+            shaders.append(shader)
+        
+        self._shader_program = pyglet.graphics.shader.ShaderProgram(*shaders)
 
 
     def _get_projection_matrix(self):
@@ -69,10 +77,10 @@ class Painter:
     def _set_uniforms(self):
         self._shader_program.use()
 
-        self._shader_program.width_whole_tex_px  = self._texture_width_px
-        self._shader_program.height_whole_tex_px = self._texture_height_px
-        self._shader_program.tex_padding         = SHADERS_TEX_PADDING
-        self._shader_program.projection          = self._get_projection_matrix()
+        self._shader_program['width_whole_tex_px']  = self._texture_width_px
+        self._shader_program['height_whole_tex_px'] = self._texture_height_px
+        self._shader_program['tex_padding']         = SHADERS_TEX_PADDING
+        self._shader_program['projection']          = self._get_projection_matrix()
 
         self._shader_program.stop()
 
@@ -94,18 +102,18 @@ class Painter:
         idx = self._attributes_tmp_buffer_idx
         self._attributes_tmp_buffer_idx += 1
 
-        self._vertex_list_attributes_tmp_buffer['x_pos_center']   [idx] = x_pos_center
-        self._vertex_list_attributes_tmp_buffer['y_pos_center']   [idx] = y_pos_center
-        self._vertex_list_attributes_tmp_buffer['x_tex_left_px']  [idx] = x_tex_left_px
-        self._vertex_list_attributes_tmp_buffer['y_tex_bottom_px'][idx] = y_tex_bottom_px
-        self._vertex_list_attributes_tmp_buffer['width_px']       [idx] = width_px
-        self._vertex_list_attributes_tmp_buffer['height_px']      [idx] = height_px
-        self._vertex_list_attributes_tmp_buffer['z_coord']        [idx] = z_coord
+        self._attributes_tmp_buffer['x_pos_center']   [idx] = x_pos_center
+        self._attributes_tmp_buffer['y_pos_center']   [idx] = y_pos_center
+        self._attributes_tmp_buffer['x_tex_left_px']  [idx] = x_tex_left_px
+        self._attributes_tmp_buffer['y_tex_bottom_px'][idx] = y_tex_bottom_px
+        self._attributes_tmp_buffer['width_px']       [idx] = width_px
+        self._attributes_tmp_buffer['height_px']      [idx] = height_px
+        self._attributes_tmp_buffer['z_coord']        [idx] = z_coord
 
 
     def draw(self):
         # Push buffers into ShaderProgram and reset them.
-        for name, data in self._attributes_tmp_buffer.item():
+        for name, data in self._attributes_tmp_buffer.items():
             getattr(self._vertex_list, name)[:] = data
         self._reset_attributes_tmp_buffer()
 

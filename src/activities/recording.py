@@ -8,25 +8,25 @@ from src.constants import RECORDINGS_DETAILS
 class Recording(Activity):
          
     
-    def __init__(self, painter, which):
+    def __init__(self, graphics, which):
         """Constructor for the class Recording."""
-        super().__init__(painter)
+        super().__init__(graphics)
         
         details = RECORDINGS_DETAILS[which]
         path    = details['path']
         height, width = details['frame_shape']
 
-        self._n_frames = self._painter.recording_load(path, width, height)
+        self._n_frames = self._graphics.recording_load(path, width, height)
         self._frame_idx = self._n_frames - 1
 
         self._ended = False
 
     def __del__(self):
-        self._painter.recording_free()
+        self._graphics.recording_free()
 
     def event_draw_screen(self):
         """Redraws the activity in the window."""
-        self._painter.recording_draw(self._frame_idx)
+        self._graphics.recording_draw(self._frame_idx)
 
     def event_update_state(self):
         """Updates the state of the activity."""

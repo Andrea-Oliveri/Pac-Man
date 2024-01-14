@@ -12,8 +12,8 @@ class Menu(Recording):
     when the program is showing the main menu."""
     
 
-    def __init__(self, painter):
-        super().__init__(painter, RecordingsType.INTRO)
+    def __init__(self, graphics):
+        super().__init__(graphics, RecordingsType.INTRO)
         self.must_switch_to_game = False
   
     def event_update_state(self):

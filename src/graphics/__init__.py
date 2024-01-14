@@ -4,6 +4,7 @@ import lzma
 
 from src.constants import DynamicUIElements
 from src.graphics import utils
+from src.graphics.painter import Painter
 from src.graphics.sprites.ghost_sprite import GhostSprite
 from src.graphics.sprites.maze_sprite import MazeSprite
 from src.graphics.sprites.pacman_sprite import PacManSprite
@@ -25,12 +26,15 @@ class Graphics:
         # Variable holding the recording currently being displayed on screen.
         self._active_recording = None
 
+        # Instanciate object to render using shaders.
+        self._painter = Painter()
+
         # Load sprite coordinators.
-        self._pacman_sprite = PacManSprite()
-        self._ghost_sprite  = GhostSprite()
-        self._maze_sprite   = MazeSprite()
-        self._score_sprite  = ScoreSprite()
-        self._ui_sprite     = UiSprite()
+        self._pacman_sprite = PacManSprite(self._painter)
+        self._ghost_sprite  = GhostSprite (self._painter)
+        self._maze_sprite   = MazeSprite  (self._painter)
+        self._score_sprite  = ScoreSprite (self._painter)
+        self._ui_sprite     = UiSprite    (self._painter)
 
 
     def reset_level(self):
@@ -73,6 +77,8 @@ class Graphics:
             
         if DynamicUIElements.PACMAN in ui_elements:
             self._pacman_sprite.send_vertex_data(pacman)
+
+        self._painter.draw()
 
         
         # ----------------------------------------

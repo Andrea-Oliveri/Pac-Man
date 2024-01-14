@@ -447,7 +447,7 @@ _AtlasRegion = namedtuple('AtlasRegion', ['reg_x_left', 'reg_y_bottom', 'reg_wid
 
 # Coordinates in pixels of each region composing the atlas.
 # Regions are zones in the atlas where the sub-elements have uniform sizes and are grouped for easy coordinate calculation.
-_GRAPHICS_ATLAS_REGION_FONT   = _AtlasRegion(0  , 0  , 128, 256, 8 , 8 )
+_GRAPHICS_ATLAS_REGION_TEXT   = _AtlasRegion(0  , 0  , 128, 256, 8 , 8 )
 _GRAPHICS_ATLAS_REGION_MAZE   = _AtlasRegion(128, 0  , 672, 248, 8 , 8 )
 _GRAPHICS_ATLAS_REGION_SCORES = _AtlasRegion(800, 0  , 96 , 72 , 24, 24)
 _GRAPHICS_ATLAS_REGION_GHOSTS = _AtlasRegion(0  , 256, 192, 64 , 16, 16)
@@ -546,7 +546,7 @@ def PACMAN_SPRITE_TEX_REGION(*args):
     row, col = _PACMAN_SPRITE_ROW_COL(*args)
 
     row_spawn, col_spawn = _PACMAN_SPAWNING_ROW_COL
-    valid_stuck_frame = any(row != row_spawn, col != col_spawn)
+    valid_stuck_frame = (row != row_spawn) or (col != col_spawn)
     
     return _CONVERT_ROW_COL_TO_TEX_COORD(_GRAPHICS_ATLAS_REGION_PACMAN, row, col), valid_stuck_frame
 
@@ -565,6 +565,7 @@ def _MAZE_SPRITE_ROW_COL(maze_row, maze_col, tile, flash_blue, flash_white):
 
 def MAZE_SPRITE_TEX_REGION(*args):
     row, col = _MAZE_SPRITE_ROW_COL(*args)
+
     return _CONVERT_ROW_COL_TO_TEX_COORD(_GRAPHICS_ATLAS_REGION_MAZE, row, col)
 
 def _SCORE_SPRITE_ROW_COL(value):
@@ -625,7 +626,7 @@ def _TEXT_SPRITE_ROW_COL(char, color):
 
 def TEXT_SPRITE_TEX_REGION(*args):
     row, col = _TEXT_SPRITE_ROW_COL(*args)
-    return _CONVERT_ROW_COL_TO_TEX_COORD(_GRAPHICS_ATLAS_REGION_FRUITS, row, col)
+    return _CONVERT_ROW_COL_TO_TEX_COORD(_GRAPHICS_ATLAS_REGION_TEXT, row, col)
 
 
 # z-coord of different drawables. This determines which elements are drawn on top of which others. 
