@@ -171,15 +171,15 @@ class GhostAbstract(Character, ABC):
         # This only happens when fright is cleared (due to it ending or being eaten), as all other transitions set all directions before leaving.
         if self._direction_next is None:
             if is_at_tile_center:
-                self._direction_next      = self._calculate_direction_at_tile_center(maze, pacman, Vector2.NULL)
+                self._direction_next      = self._calculate_direction_at_tile_center(maze, pacman, Vector2.ZERO)
                 self._direction_next_next = self._calculate_direction_at_tile_center(maze, pacman, self._direction_next)
             elif is_at_tile_edge:
                 if not self._reverse_direction_signal:
-                    self._direction_next  = self._calculate_direction_at_tile_center(maze, pacman, Vector2.NULL)
+                    self._direction_next  = self._calculate_direction_at_tile_center(maze, pacman, Vector2.ZERO)
                 # If reverse signal is True, then the regular function behaviour will recalculate _direction_next.
             else:
                 if self._going_from_tile_edge_to_center:
-                    self._direction_next      = self._calculate_direction_at_tile_center(maze, pacman, Vector2.NULL)
+                    self._direction_next      = self._calculate_direction_at_tile_center(maze, pacman, Vector2.ZERO)
                     self._direction_next_next = self._calculate_direction_at_tile_center(maze, pacman, self._direction_next)
                 elif not self._reverse_direction_signal:
                     self._direction_next      = self._calculate_direction_at_tile_center(maze, pacman, self._direction)

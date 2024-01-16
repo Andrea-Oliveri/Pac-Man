@@ -690,6 +690,9 @@ UI_GAME_OVER_TEXT_COLOR   = FontColors.RED
 # Constants related to Game UI.
 # --------------------------------------------------------------------
 
+# Conversion ration between texture pixels and world space.
+LAYOUT_PX_PER_UNIT_LENGHT = 8
+
 # Size of tiles grid representing world space.
 LAYOUT_N_ROWS_TILES = 37
 LAYOUT_N_COLS_TILES = 28

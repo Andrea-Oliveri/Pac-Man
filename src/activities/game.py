@@ -224,9 +224,9 @@ class Game(Activity):
                 self._graphics.notify_fruit_eaten(score)
 
         # Check if eaten a pellet.
-        tile_coords, pellet_type = self._maze.eat_check_pellet(pacman_new_position)
-        if tile_coords is not None:
-            self._pellet_eaten(tile_coords, pellet_type)
+        pellet_type = self._maze.eat_check_pellet(pacman_new_position)
+        if pellet_type is not None:
+            self._pellet_eaten(pellet_type)
 
         # Update lives if score high enough.
         if not self._extra_life_awarded and self._score.score >= EXTRA_LIFE_POINTS_REQUIREMENT:
@@ -248,8 +248,7 @@ class Game(Activity):
             self._set_level_state(LevelStates.PAUSE_BEFORE_DEATH)
 
 
-    def _pellet_eaten(self, tile_coords, pellet_type):
-        self._graphics.set_empty_tile(*tile_coords)
+    def _pellet_eaten(self, pellet_type):
         self._pacman.add_penalty(pellet_type)
         self._ghosts.notify_pellet_eaten()
         self._score.add_to_score(ScoreActions.EAT_PELLET if pellet_type == MazeTiles.PELLET else ScoreActions.EAT_POWER_PELLET)

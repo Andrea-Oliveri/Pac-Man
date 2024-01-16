@@ -9,6 +9,9 @@ layout (location = 4) in float width_px;
 layout (location = 5) in float height_px;
 layout (location = 6) in float z_coord;
 
+uniform float px_per_unit_lenght;
+uniform int n_rows_grid;
+
 
 out VS_OUT {
     float x_tex_left_px;
@@ -20,8 +23,14 @@ out VS_OUT {
 
 void main()
 {
-    vec2 pos_bottom_left = vec2(x_pos_center, y_pos_center) - vec2(0.5, 0.5);
+    // Convert vertex from pointing to center into pointing to lower-left of quadrilater.
+    vec2 pos_bottom_left = vec2(x_pos_center, y_pos_center) - vec2(width_px, height_px) / px_per_unit_lenght / 2;
 
+    // Convert vertex so that grid has row 0 on the top instead of bottom and increases going down.
+    pos_bottom_left.y = n_rows_grid - 1 - pos_bottom_left.y;
+
+
+    // Send attributes to geometry shader.
     gl_Position = vec4(pos_bottom_left, z_coord, 1.0);
     
     vs_out.x_tex_left_px   = x_tex_left_px;

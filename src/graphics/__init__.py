@@ -87,26 +87,12 @@ class Graphics:
         return
         import pyglet 
 
-        for c in range(-160, 160, 8):
+        for c in range(-5, 50):
             pyglet.shapes.Line(c, -160, c, 160, width=1, color=(155, 0, 0)).draw()
             pyglet.shapes.Line(-160, c-4, 160, c-4, width=1, color=(155, 0, 0)).draw()
-
-        if pacman is not None:
-            pacman_coords = utils.calculate_coords_sprites(pacman.position)
-            pyglet.shapes.Circle(pacman_coords.x, pacman_coords.y, 2, color = (0, 155, 0)).draw()
         
-        if ghosts is not None:
-            for g in ghosts:
-                g_coords = utils.calculate_coords_sprites(g.position)
-                pyglet.shapes.Circle(g_coords.x, g_coords.y, 2, color = (0, 155, 0)).draw()
-        
-        from src.directions import Vector2
-        origin = utils.calculate_coords_sprites(Vector2.NULL)
-        pyglet.shapes.Circle(origin.x, origin.y, 2, color = (255, 0, 0)).draw()
+        pyglet.shapes.Circle(0, 0, 4, color = (255, 0, 0)).draw()
       
-        from src.constants import GHOSTS_EATEN_TARGET_TILE
-        coords = utils.calculate_coords_sprites(GHOSTS_EATEN_TARGET_TILE)
-        pyglet.shapes.Star(coords.x, coords.y, 5, 2, 4, color = (0, 255, 0)).draw()
         # ----------------------------------------
 
 

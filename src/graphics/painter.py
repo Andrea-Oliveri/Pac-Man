@@ -13,7 +13,8 @@ from src.constants import (GRAPHICS_ATLAS_PATH,
                            SHADERS_TEX_PADDING,
                            SHADERS_MAX_QUADS,
                            LAYOUT_N_ROWS_TILES,
-                           LAYOUT_N_COLS_TILES)
+                           LAYOUT_N_COLS_TILES,
+                           LAYOUT_PX_PER_UNIT_LENGHT)
 
 
 
@@ -79,6 +80,8 @@ class Painter:
     def _set_uniforms(self):
         self._shader_program.use()
 
+        self._shader_program['px_per_unit_lenght']  = LAYOUT_PX_PER_UNIT_LENGHT
+        self._shader_program['n_rows_grid']         = LAYOUT_N_ROWS_TILES
         self._shader_program['width_whole_tex_px']  = self._texture_width_px
         self._shader_program['height_whole_tex_px'] = self._texture_height_px
         self._shader_program['tex_padding']         = SHADERS_TEX_PADDING

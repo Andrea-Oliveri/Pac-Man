@@ -78,15 +78,15 @@ class Maze:
     def eat_check_pellet(self, pacman_position):
         """Updates maze if needed by replacing a pellet with an empty tile. Returns the (row, col) coordinates of
         the tile in the array if such a replacement was performed and the type, None otherwise."""
-        index, row, col = self._index_convert(pacman_position)
+        index, _, _ = self._index_convert(pacman_position)
         tile = self[pacman_position]
 
         if tile in (MazeTiles.PELLET, MazeTiles.POWER_PELLET):
             self._tiles[index] = MazeTiles.EMPTY
             self._n_pellets -= 1
-            return (row, col), tile
+            return tile
         
-        return None, None
+        return None
     
 
     n_pellets_remaining = property(lambda self: self._n_pellets)

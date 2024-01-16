@@ -23,6 +23,7 @@ from src.constants import (LIVES_SPRITE_TEX_REGION,
                            LAYOUT_GAME_OVER_TEXT_COORDS,
                            LAYOUT_RIGHT_FRUIT_ICON_COORDS,
                            LAYOUT_LEFT_LIVES_ICON_COORDS)
+from src.graphics.utils import convert_maze_coord_to_layout_coord
 
 
 
@@ -47,7 +48,7 @@ class UiSprite(AbstractSprite):
             self._print(*LAYOUT_GAME_OVER_TEXT_COORDS , UI_GAME_OVER_TEXT_COLOR , 'GAME  OVER')
 
         if show_fruit_in_maze:
-            self._draw_fruit_in_maze()
+            self._draw_fruit_in_maze(level)
 
         self._draw_score_texts(score, high_score)
         self._draw_lives      (lives)
@@ -90,7 +91,7 @@ class UiSprite(AbstractSprite):
 
         for char in text:
             if char == '\n':
-                y -= 1
+                y += 1
                 x = x_start
                 continue
 
@@ -101,5 +102,8 @@ class UiSprite(AbstractSprite):
 
     def _draw_fruit_in_maze(self, level):
         fruit = FRUIT_OF_LEVEL(level)
+
         tex_coords = FRUIT_SPRITE_TEX_REGION(fruit)
-        self._painter.add_quad(*FRUIT_SPAWN_POSITION, *tex_coords, Z_COORD_FRUIT_IN_MAZE)
+        coords = convert_maze_coord_to_layout_coord(FRUIT_SPAWN_POSITION)
+
+        self._painter.add_quad(coords.x, coords.y, *tex_coords, Z_COORD_FRUIT_IN_MAZE)
