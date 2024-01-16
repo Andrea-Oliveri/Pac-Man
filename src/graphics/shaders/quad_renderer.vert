@@ -20,7 +20,7 @@ out VS_OUT {
 
 void main()
 {
-    vec2 pos_bottom_left = vec2(x_pos_center, y_pos_center) - (vec2(width_px, height_px) / 2);
+    vec2 pos_bottom_left = vec2(x_pos_center, y_pos_center) - vec2(0.5, 0.5);
 
     gl_Position = vec4(pos_bottom_left, z_coord, 1.0);
     

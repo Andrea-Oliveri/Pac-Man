@@ -38,7 +38,6 @@ pyglet.app.run()
 # ----------------------------
 # Debug
 # ---------------------------
-import time
 pr.disable()
 
 from datetime import datetime

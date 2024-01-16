@@ -5,6 +5,7 @@ from src.constants import (GHOSTS_MOVE_ANIMATION_PERIOD_FRAMES,
                            GHOSTS_FRIGHT_FLASH_ANIMATION_PERIOD_FRAMES,
                            GHOST_SPRITE_TEX_REGION,
                            Z_COORD_GHOSTS)
+from src.graphics.utils import convert_maze_coord_to_layout_coord
 
 
 
@@ -29,7 +30,9 @@ class GhostSprite(AbstractSprite):
             z_coord = Z_COORD_GHOSTS[name]
 
             tex_region = self._get_tex_region(name, ghost.frightened, ghost.transparent, ghost.eyes_direction)
-            self._painter.add_quad(ghost.position.x, ghost.position.y, *tex_region, z_coord)
+            coords = convert_maze_coord_to_layout_coord(ghost.position)
+
+            self._painter.add_quad(coords.x, coords.y, *tex_region, z_coord)
 
 
     def notify_fright_on(self, fright_duration, fright_flashes):

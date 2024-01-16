@@ -668,47 +668,44 @@ SHADERS_MAX_QUADS = 1000
 # --------------------------------------------------------------------
 
 # Max number of fruits to show on bottom right of screen.
-UI_MAX_FRUIT_ICON_NUMBER    = 7
-
-# Coordinates of right-most fruit icon.
-UI_RIGHT_FRUIT_ICON_COORDS  = (+11  , -16.5)
-
-# Coordinates of left-most life icon.
-UI_LEFT_LIVES_ICON_COORDS   = (-11  , -16.5)
-
-# Coordinates of 'HIGH SCORE' text.
-UI_HIGH_SCORE_TEXT_COORDS   = (- 4.5, +18)
-
-# Coordinates of '1UP' text.
-UI_1UP_TEXT_COORDS          = (-10.5, +18)
-
-# Coordinates of current score left-most digit.
-UI_SCORE_NUMBER_COORDS      = (-13.5, +17)
-
-# Coordinates of high score left-most digit.
-UI_HIGH_SCORE_NUMBER_COORDS = (- 3.5, +17)
+UI_MAX_FRUIT_ICON_NUMBER = 7
 
 # Number of digits of the theoretical maximum score.
-UI_MAX_SCORE_NUM_DIGITS     = 7
-
-# In-Game UI colors.
-UI_DEFAULT_TEXT_COLOR       = FontColors.WHITE
+UI_MAX_SCORE_NUM_DIGITS  = 7
 
 # UI elements which can be optionally drawn during gameplay depending on state.
 DynamicUIElements = IntFlag('DynamicUIElements', ['PACMAN', 'GHOSTS', 'FRUIT', 'READY_TEXT', 'PLAYER_ONE_TEXT', 'GAME_OVER_TEXT', 'ACTION_SCORES'])
 
-# Coordinates and color of 'PLAYER ONE' text.
-UI_PLAYER_ONE_TEXT_COORDS = (-4.5, +4)
+# Colors of different writable texts.
+UI_DEFAULT_TEXT_COLOR     = FontColors.WHITE
 UI_PLAYER_ONE_TEXT_COLOR  = FontColors.CYAN
-
-# Coordinates and color of 'READY!' text.
-UI_READY_TEXT_COORDS      = (-2.5, -2)
 UI_READY_TEXT_COLOR       = FontColors.YELLOW
-
-# Coordinates and color of 'GAME OVER' text.
-UI_GAME_OVER_TEXT_COORDS  = (-4.5, -2)
 UI_GAME_OVER_TEXT_COLOR   = FontColors.RED
 
 # --------------------------------------------------------------------
 
 
+
+# --------------------------------------------------------------------
+# Constants related to Game UI.
+# --------------------------------------------------------------------
+
+# Size of tiles grid representing world space.
+LAYOUT_N_ROWS_TILES = 37
+LAYOUT_N_COLS_TILES = 28
+
+# Coordinates in world space of the center of different reference objects.
+# The coordinates are always for the left-most, up-most object of the group.
+# Coordinates are in (col, row) format for consistency with (x, y) ordering.
+LAYOUT_1UP_TEXT_COORDS          = ( 3.5,  0.5)
+LAYOUT_HIGH_SCORE_TEXT_COORDS   = ( 9.5,  0.5)
+LAYOUT_SCORE_NUMBER_COORDS      = ( 0.5,  1.5)
+LAYOUT_HIGH_SCORE_NUMBER_COORDS = (10.5,  1.5)
+LAYOUT_MAZE_COORDS              = ( 0.5,  3.5)
+LAYOUT_PLAYER_ONE_TEXT_COORDS   = ( 9.5, 14.5)
+LAYOUT_READY_TEXT_COORDS        = (11.5, 20.5)
+LAYOUT_GAME_OVER_TEXT_COORDS    = ( 9.5, 20.5)
+LAYOUT_RIGHT_FRUIT_ICON_COORDS  = (25.0, 35.0)
+LAYOUT_LEFT_LIVES_ICON_COORDS   = ( 3.0, 35.0)
+
+# --------------------------------------------------------------------

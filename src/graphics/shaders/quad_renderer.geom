@@ -32,15 +32,15 @@ void main() {
     tex_coord = vec2(x_tex_left_norm, y_tex_bottom_norm);
     EmitVertex();
 
-    gl_Position = projection * (gl_in[0].gl_Position + vec4(gs_in[0].width_px, 0.0, 0.0, 0.0));
+    gl_Position = projection * (gl_in[0].gl_Position + vec4(1, 0.0, 0.0, 0.0));
     tex_coord = vec2(x_tex_left_norm + width_norm, y_tex_bottom_norm);
     EmitVertex();
 
-    gl_Position = projection * (gl_in[0].gl_Position + vec4(0.0, gs_in[0].height_px, 0.0, 0.0));
+    gl_Position = projection * (gl_in[0].gl_Position + vec4(0.0, 1, 0.0, 0.0));
     tex_coord = vec2(x_tex_left_norm, y_tex_bottom_norm + height_norm);
     EmitVertex();
 
-    gl_Position = projection * (gl_in[0].gl_Position + vec4(gs_in[0].width_px, gs_in[0].height_px, 0.0, 0.0));
+    gl_Position = projection * (gl_in[0].gl_Position + vec4(1, 1, 0.0, 0.0));
     tex_coord = vec2(x_tex_left_norm + width_norm, y_tex_bottom_norm + height_norm);
     EmitVertex();
 

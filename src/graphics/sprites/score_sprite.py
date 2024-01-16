@@ -7,6 +7,7 @@ from src.constants import (FRUIT_SPAWN_POSITION,
                            SCORE_SPRITE_TEX_REGION,
                            Z_COORD_SCORE_FRUIT,
                            Z_COORD_SCORE_GHOST_EAT)
+from src.graphics.utils import convert_maze_coord_to_layout_coord
 
 
 class ScoreSprite(AbstractSprite):
@@ -30,12 +31,14 @@ class ScoreSprite(AbstractSprite):
 
     def send_vertex_data(self):
         if self._fruit_score_frame_counter > 0:
-            tex_coord = SCORE_SPRITE_TEX_REGION(self._fruit_score_value)
-            self._painter.add_quad(FRUIT_SPAWN_POSITION.x, FRUIT_SPAWN_POSITION.y, *tex_coord, Z_COORD_SCORE_FRUIT)
+            tex_region = SCORE_SPRITE_TEX_REGION(self._fruit_score_value)
+            coords = convert_maze_coord_to_layout_coord(FRUIT_SPAWN_POSITION)
+            self._painter.add_quad(coords.x, coords.y, *tex_region, Z_COORD_SCORE_FRUIT)
         
         if self._ghost_score_frame_counter > 0:
-            tex_coord = SCORE_SPRITE_TEX_REGION(self._ghost_score_value)
-            self._painter.add_quad(self._ghost_score_position.x, self._ghost_score_position.y, *tex_coord, Z_COORD_SCORE_FRUIT)
+            tex_region = SCORE_SPRITE_TEX_REGION(self._ghost_score_value)
+            coords = convert_maze_coord_to_layout_coord(self._ghost_score_position)
+            self._painter.add_quad(coords.x, coords.y, *tex_region, Z_COORD_SCORE_GHOST_EAT)
 
     
     def notify_fruit_eaten(self, score):

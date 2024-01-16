@@ -6,6 +6,7 @@ from src.constants import (PACMAN_MOVE_ANIMATION_PERIOD_FRAMES,
                            PacManStates,
                            PACMAN_SPRITE_TEX_REGION,
                            Z_COORD_PACMAN)
+from src.graphics.utils import convert_maze_coord_to_layout_coord
 
 
 
@@ -43,7 +44,9 @@ class PacManSprite(AbstractSprite):
 
     def send_vertex_data(self, pacman):
         tex_region, self._valid_stuck_frame = self._get_tex_region(pacman.direction, pacman.state)
-        self._painter.add_quad(pacman.position.x, pacman.position.y, *tex_region, Z_COORD_PACMAN)
+        coords = convert_maze_coord_to_layout_coord(pacman.position)
+
+        self._painter.add_quad(coords.x, coords.y, *tex_region, Z_COORD_PACMAN)
 
 
     def _get_tex_region(self, direction, state):

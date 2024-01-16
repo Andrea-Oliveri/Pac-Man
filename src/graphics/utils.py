@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import pyglet.image
-import pyglet.gl
+import pyglet
 
-
-
+from src.constants import LAYOUT_MAZE_COORDS
+from src.directions import Vector2
 
 
 def load_image(path, file = None):
@@ -56,3 +55,7 @@ def enable_transparency_blit():
 
 def enable_depth_testing():
     pyglet.gl.glEnable(pyglet.gl.GL_DEPTH_TEST)
+
+
+def convert_maze_coord_to_layout_coord(position):
+    return position + Vector2(0, int(LAYOUT_MAZE_COORDS[1]))
