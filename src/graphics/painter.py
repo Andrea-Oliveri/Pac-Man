@@ -72,7 +72,7 @@ class Painter:
         view_matrix  = pyglet.math.Mat4()
         
         # Projection matrix scales so that tilemap fits tightly into clip-space: ranging from -1 to +1 in each coordinate.
-        proj_matrix  = pyglet.math.Mat4.from_scale(pyglet.math.Vec3(2 / width, 2 / height, 0))
+        proj_matrix  = pyglet.math.Mat4.from_scale(pyglet.math.Vec3(2 / width, 2 / height, 1))
         
         return proj_matrix @ view_matrix @ model_matrix
 
