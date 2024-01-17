@@ -630,14 +630,14 @@ def TEXT_SPRITE_TEX_REGION(*args):
 
 
 # z-coord of different drawables. This determines which elements are drawn on top of which others. 
-# z-coords must be in range [-1, +1] to not be clipped, with more positive values meaning they will be drawn on top.
-Z_COORD_MAZE            = 0.0
-Z_COORD_UI_AND_TEXT     = 0.1  # Score, lives, level fruits, texts
-Z_COORD_FRUIT_IN_MAZE   = 0.2
-Z_COORD_SCORE_FRUIT     = 0.3
-Z_COORD_GHOSTS          = [0.7, 0.6, 0.5, 0.4]  # Same order as in Ghost IntEnum
-Z_COORD_SCORE_GHOST_EAT = 0.8
-Z_COORD_PACMAN          = 0.9
+# z-coords must be in range ]-1, +1[ to not be clipped, with more negative values meaning they will be drawn on top.
+Z_COORD_MAZE            = 0.9
+Z_COORD_UI_AND_TEXT     = 0.8  # Score, lives, level fruits, texts
+Z_COORD_FRUIT_IN_MAZE   = 0.7
+Z_COORD_SCORE_FRUIT     = 0.6
+Z_COORD_GHOSTS          = [0.2, 0.3, 0.4, 0.5]  # Same order as in Ghost IntEnum
+Z_COORD_SCORE_GHOST_EAT = 0.1
+Z_COORD_PACMAN          = 0.0
 
 
 # --------------------------------------------------------------------

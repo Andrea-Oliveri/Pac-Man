@@ -30,18 +30,23 @@ void main() {
     float width_lenghts     = float(gs_in[0].width_px)        / px_per_unit_lenght;
     float height_lenghts    = float(gs_in[0].height_px)       / px_per_unit_lenght;
 
+    // Bottom left vertex of quadrilateral.
     gl_Position = projection * gl_in[0].gl_Position;
     tex_coord = vec2(x_tex_left_norm, y_tex_bottom_norm);
     EmitVertex();
 
+    // Bottom right vertex of quadrilateral.
     gl_Position = projection * (gl_in[0].gl_Position + vec4(width_lenghts, 0.0, 0.0, 0.0));
     tex_coord = vec2(x_tex_left_norm + width_norm, y_tex_bottom_norm);
     EmitVertex();
 
+
+    // Top left vertex of quadrilateral.
     gl_Position = projection * (gl_in[0].gl_Position + vec4(0.0, height_lenghts, 0.0, 0.0));
     tex_coord = vec2(x_tex_left_norm, y_tex_bottom_norm + height_norm);
     EmitVertex();
 
+    // Top right vertex of quadrilateral.
     gl_Position = projection * (gl_in[0].gl_Position + vec4(width_lenghts, height_lenghts, 0.0, 0.0));
     tex_coord = vec2(x_tex_left_norm + width_norm, y_tex_bottom_norm + height_norm);
     EmitVertex();
