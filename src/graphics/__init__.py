@@ -80,21 +80,6 @@ class Graphics:
 
         self._painter.draw()
 
-        
-        # ----------------------------------------
-        # DEBUG
-        # ----------------------------------------
-        return
-        import pyglet 
-
-        for c in range(-5, 50):
-            pyglet.shapes.Line(c, -160, c, 160, width=1, color=(155, 0, 0)).draw()
-            pyglet.shapes.Line(-160, c-4, 160, c-4, width=1, color=(155, 0, 0)).draw()
-        
-        pyglet.shapes.Circle(0, 0, 4, color = (255, 0, 0)).draw()
-      
-        # ----------------------------------------
-
 
     def notify_fright_on(self, fright_duration, fright_flashes):
         self._ghost_sprite.notify_fright_on(fright_duration, fright_flashes)

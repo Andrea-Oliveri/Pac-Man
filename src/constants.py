@@ -13,7 +13,7 @@ from src.directions import Vector2
 # --------------------------------------------------------------------
 
 # Minimum size allowed for the window to prevent poor visualization.
-WINDOW_MINIMUM_SIZE = (224, 300)
+WINDOW_MINIMUM_SIZE = (250, 300)
 
 # Pyglet window initialization arguments.
 WINDOW_INIT_KWARGS = {'width' : WINDOW_MINIMUM_SIZE[0],
@@ -694,7 +694,7 @@ UI_GAME_OVER_TEXT_COLOR   = FontColors.RED
 LAYOUT_PX_PER_UNIT_LENGHT = 8
 
 # Size of tiles grid representing world space.
-LAYOUT_N_ROWS_TILES = 37
+LAYOUT_N_ROWS_TILES = 36
 LAYOUT_N_COLS_TILES = 28
 
 # Coordinates in world space of the center of different reference objects.

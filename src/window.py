@@ -11,7 +11,10 @@ from src.constants import (WINDOW_INIT_KWARGS,
                            GAME_TENTATIVE_UPDATES_INTERVAL,
                            WINDOW_ICON_PATH,
                            BACKGROUND_COLOR,
-                           GAME_ORIGINAL_UPDATES_INTERVAL)
+                           GAME_ORIGINAL_UPDATES_INTERVAL,
+                           LAYOUT_PX_PER_UNIT_LENGHT,
+                           LAYOUT_N_ROWS_TILES,
+                           LAYOUT_N_COLS_TILES)
 
 
 class Window(pyglet.window.Window):
@@ -38,7 +41,8 @@ class Window(pyglet.window.Window):
 
         
     def on_resize(self, width, height):
-        desired_width, desired_height = WINDOW_MINIMUM_SIZE
+        desired_width  = LAYOUT_N_COLS_TILES * LAYOUT_PX_PER_UNIT_LENGHT
+        desired_height = LAYOUT_N_ROWS_TILES * LAYOUT_PX_PER_UNIT_LENGHT
 
         scale = min(width // desired_width, height // desired_height)
         viewport_width  = desired_width * scale
@@ -48,11 +52,6 @@ class Window(pyglet.window.Window):
         pad_y = (height - viewport_height) / 2
 
         self.viewport = (pad_x, pad_y, viewport_width, viewport_height)
-
-        x_max = desired_width  / 2
-        y_max = desired_height / 2
-
-        self.projection = pyglet.math.Mat4.orthogonal_projection(-x_max, +x_max, -y_max, +y_max, -255, 255)
         
         return pyglet.event.EVENT_HANDLED   # Don't call the default handler
 
@@ -93,7 +92,7 @@ class Window(pyglet.window.Window):
         from src.constants import MazeTiles
 
         if symbol == key._1:
-            self._current_activity._pellet_eaten((23, 1), MazeTiles.POWER_PELLET)
+            self._current_activity._pellet_eaten(MazeTiles.POWER_PELLET)
         if symbol == key._2:
             self._current_activity._level += 1
         # --------------------------------------
@@ -182,6 +181,14 @@ class Window(pyglet.window.Window):
     def on_draw(self):
         self.clear()
         self._current_activity.event_draw_screen()
+
+
+        from src.graphics.painter import Painter
+        self.projection = Painter._get_projection_matrix()
+        for i in range(100):
+            pyglet.shapes.Line(-100, i, 100, i, width=0.1, color = (255, 0, 0, 255)).draw()
+            pyglet.shapes.Line(i, -100, i, 100, width=0.1, color = (255, 0, 0, 255)).draw()
+
         return
         # -------- DEBUG: FPS DISPLAY ----------
         if not hasattr(self, 'fps_display'):

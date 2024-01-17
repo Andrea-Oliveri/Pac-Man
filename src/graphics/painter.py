@@ -57,7 +57,8 @@ class Painter:
         self._shader_program = pyglet.graphics.shader.ShaderProgram(*shaders)
 
 
-    def _get_projection_matrix(self):
+    @staticmethod
+    def _get_projection_matrix():
         # Input vertex coordinates have origin on the top left with x increasing as we go right and y increasing as we go down.
         # Each quad has a width and a height equal to 1.
 
