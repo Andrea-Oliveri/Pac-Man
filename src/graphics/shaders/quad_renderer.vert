@@ -23,12 +23,12 @@ out VS_OUT {
 
 void main()
 {
-    // Convert vertex from pointing to center into pointing to lower-left of quadrilater.
-    vec2 pos_bottom_left = vec2(x_pos_center, y_pos_center) - vec2(width_px, height_px) / px_per_unit_lenght / 2;
-
     // Convert vertex so that grid has row 0 on the top instead of bottom and increases going down.
-    pos_bottom_left.y = n_rows_grid - 1 - pos_bottom_left.y;
+    vec2 new_pos_center = vec2(x_pos_center, n_rows_grid - y_pos_center);
 
+    // Convert vertex from pointing to center into pointing to lower-left of quadrilater.
+    vec2 pos_bottom_left = new_pos_center - (vec2(width_px, height_px) / px_per_unit_lenght) / 2;
+    
 
     // Send attributes to geometry shader.
     gl_Position = vec4(pos_bottom_left, z_coord, 1.0);
