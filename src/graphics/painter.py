@@ -59,22 +59,10 @@ class Painter:
 
     def _get_projection_matrix(self):
         # Input vertex coordinates have origin on the top left with x increasing as we go right and y increasing as we go down.
-        # Each quad has a width and a height of equal to 1.
+        # Each quad has a width and a height equal to 1.
+
+        return pyglet.math.Mat4.orthogonal_projection(0, LAYOUT_N_COLS_TILES, 0, LAYOUT_N_ROWS_TILES, +1, -1)
     
-        height = LAYOUT_N_ROWS_TILES
-        width  = LAYOUT_N_COLS_TILES
-
-        # Model matrix so that origin is at the center of the tilemap.
-        # x_range = (- LAYOUT_N_COLS_TILES / 2, LAYOUT_N_COLS_TILES / 2), y_range = (- LAYOUT_N_ROWS_TILES / 2, LAYOUT_N_ROWS_TILES / 2)
-        model_matrix = pyglet.math.Mat4.from_translation(pyglet.math.Vec3(-width / 2, -height / 2, 0))
-
-        # View matrix should not change anything.
-        view_matrix  = pyglet.math.Mat4()
-        
-        # Projection matrix scales so that tilemap fits tightly into clip-space: ranging from -1 to +1 in each coordinate.
-        proj_matrix  = pyglet.math.Mat4.from_scale(pyglet.math.Vec3(2 / width, 2 / height, 1))
-        
-        return proj_matrix @ view_matrix @ model_matrix
 
 
     def _set_uniforms(self):
