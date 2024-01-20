@@ -189,7 +189,7 @@ class Window(pyglet.window.Window):
         self._current_activity.event_draw_screen()
 
 
-        return
+        
         # -------- DEBUG: FPS DISPLAY ----------
         if not hasattr(self, 'fps_display'):
             self.fps_display = pyglet.window.FPSDisplay(window=self)

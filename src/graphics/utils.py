@@ -50,5 +50,6 @@ def enable_transparency_blit():
 def enable_depth_testing():
     pyglet.gl.glEnable(pyglet.gl.GL_DEPTH_TEST)
 
+
 def convert_maze_coord_to_layout_coord(position):
     return position + Vector2(0, int(LAYOUT_MAZE_COORDS[1]))
