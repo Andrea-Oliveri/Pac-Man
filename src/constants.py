@@ -429,7 +429,6 @@ LEVEL_WITH_INTERMISSIONS = {2 : RecordingsType.INTERMISSION_1,
 SCORE_FRUIT_VISIBLE_DURATION_FRAMES = 120
 SCORE_GHOST_EATEN_DURATION_FRAMES   = LEVEL_STATES_DURATION[LevelStates.PAUSE_AFTER_EATING]
 
-
 # --------------------------------------------------------------------
 
 
@@ -638,6 +637,7 @@ Z_COORD_SCORE_FRUIT     = 0.6
 Z_COORD_GHOSTS          = [0.2, 0.3, 0.4, 0.5]  # Same order as in Ghost IntEnum
 Z_COORD_SCORE_GHOST_EAT = 0.1
 Z_COORD_PACMAN          = 0.0
+Z_COORD_RECORDING       = -0.1
 
 
 # --------------------------------------------------------------------
@@ -687,7 +687,7 @@ UI_GAME_OVER_TEXT_COLOR   = FontColors.RED
 
 
 # --------------------------------------------------------------------
-# Constants related to Game UI.
+# Constants related to window layout.
 # --------------------------------------------------------------------
 
 # Conversion ration between texture pixels and world space.
@@ -710,5 +710,6 @@ LAYOUT_READY_TEXT_COORDS        = (11.5, 20.5)
 LAYOUT_GAME_OVER_TEXT_COORDS    = ( 9.5, 20.5)
 LAYOUT_RIGHT_FRUIT_ICON_COORDS  = (25.0, 35.0)
 LAYOUT_LEFT_LIVES_ICON_COORDS   = ( 3.0, 35.0)
+LAYOUT_RECORDINS_COORDS         = (14.0, 18.0)
 
 # --------------------------------------------------------------------

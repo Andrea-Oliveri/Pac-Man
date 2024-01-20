@@ -52,7 +52,7 @@ class UiSprite(AbstractSprite):
 
         self._draw_score_texts(score, high_score)
         self._draw_lives      (lives)
-        self._draw_fruits     (level)
+        self. draw_fruits     (level)
 
 
     def _draw_score_texts(self, score, high_score):
@@ -77,7 +77,7 @@ class UiSprite(AbstractSprite):
             x += 2
 
 
-    def _draw_fruits(self, level):
+    def draw_fruits(self, level):
         fruits = [FRUIT_OF_LEVEL(i) for i in range(level-UI_MAX_FRUIT_ICON_NUMBER+1, level+1) if i >= 1]
         x, y = LAYOUT_RIGHT_FRUIT_ICON_COORDS
         for fruit in fruits:

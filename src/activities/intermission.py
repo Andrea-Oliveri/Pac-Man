@@ -16,4 +16,4 @@ class Intermission(Recording):
         
     def event_draw_screen(self):
         """Redraws the activity in the window."""
-        self._graphics.recording_draw(self._frame_idx, self._game_level)
+        super().event_draw_screen(level_to_draw_fruits = self._game_level)

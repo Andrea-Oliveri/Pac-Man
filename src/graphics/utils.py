@@ -8,10 +8,6 @@ from src.directions import Vector2
 
 def load_image(path, file = None):
     image = pyglet.image.load(path, file)
-        
-    # Set anchor points to center.
-    image.anchor_x = image.width // 2
-    image.anchor_y = image.height // 2
 
     # Interpolate avoiding blur.
     texture = image.get_texture()
@@ -20,26 +16,24 @@ def load_image(path, file = None):
     return image
 
 
-def load_image_grid(path, width_px, height_px = None, file = None):
-    if height_px is None:
-        height_px = width_px
+def load_recording(path, frame_width_px, frame_height_px, file = None):
+# This function generates a different texture for every frame.
+# This would generally impact negatively performance, but drawing when recordings are active is not performance-intensive.
+# Crucially, doing this bypasses the maximum texture size limit which applies to single textures. 
 
-    sheet = pyglet.image.load(path, file)
+    recording = pyglet.image.load(path, file)
 
-    n_rows = sheet.height // height_px
-    n_cols = sheet.width // width_px
+    n_rows = recording.height // frame_height_px
+    n_cols = recording.width  // frame_width_px
 
-    image_grid = pyglet.image.ImageGrid(sheet, rows=n_rows, columns=n_cols)
+    frames_grid = pyglet.image.ImageGrid(recording, rows=n_rows, columns=n_cols)
 
-    # Set anchor points to center and interpolate avoiding blur for every frame of animation.
-    for image in image_grid:
-        image.anchor_x = width_px // 2
-        image.anchor_y = height_px // 2
-
-        texture = image.get_texture()
+    # Interpolate avoiding blur for every frame of animation.
+    for frame in frames_grid:
+        texture = frame.get_texture()
         set_texture_interp_mode(texture)
 
-    return image_grid
+    return frames_grid
 
 
 def set_texture_interp_mode(texture):

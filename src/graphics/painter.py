@@ -25,12 +25,11 @@ from src.constants import (GRAPHICS_ATLAS_PATH,
 class Painter:
 
     def __init__(self):
-        image = utils.load_image(GRAPHICS_ATLAS_PATH)
-        self._texture_width_px  = image.width
-        self._texture_height_px = image.height
+        self._default_atlas = utils.load_image(GRAPHICS_ATLAS_PATH)
 
-        # Store whole texture rather than just ID to avoid deallocation.
-        self._texture = image.get_texture()
+        self._texture = None
+        self._texture_width_px  = None
+        self._texture_height_px = None
 
         self._shader_program = None
         self._vertex_list = None
@@ -38,7 +37,6 @@ class Painter:
         self._attributes_tmp_buffer_idx = None
 
         self._create_shader()
-        self._set_uniforms()
         self._allocate_vertex_list()
         
 
@@ -64,6 +62,19 @@ class Painter:
 
         return pyglet.math.Mat4.orthogonal_projection(0, LAYOUT_N_COLS_TILES, 0, LAYOUT_N_ROWS_TILES, +1, -1)
     
+
+
+    def set_texture(self, image = None):
+        if image is None:
+            image = self._default_atlas
+
+        # Store whole Texture class instance rather than just ID to avoid deallocation from destructor.
+        self._texture = image.get_texture()
+        self._texture_width_px  = image.width
+        self._texture_height_px = image.height
+
+        self._set_uniforms()
+
 
 
     def _set_uniforms(self):

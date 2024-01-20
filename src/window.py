@@ -160,6 +160,8 @@ class Window(pyglet.window.Window):
         if retval is False:
             return
 
+        self._current_activity.notify_destruction()
+
         if isinstance(self._current_activity, Menu):
             # retval is True if we need to change from Menu to Game.
             self._current_activity = Game(self._graphics)
@@ -182,12 +184,6 @@ class Window(pyglet.window.Window):
         self.clear()
         self._current_activity.event_draw_screen()
 
-
-        from src.graphics.painter import Painter
-        self.projection = Painter._get_projection_matrix()
-        for i in range(100):
-            pyglet.shapes.Line(-100, i, 100, i, width=0.1, color = (255, 0, 0, 255)).draw()
-            pyglet.shapes.Line(i, -100, i, 100, width=0.1, color = (255, 0, 0, 255)).draw()
 
         return
         # -------- DEBUG: FPS DISPLAY ----------

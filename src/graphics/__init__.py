@@ -2,7 +2,9 @@
 
 import lzma
 
-from src.constants import DynamicUIElements
+from src.constants import (DynamicUIElements,
+                           LAYOUT_RECORDINS_COORDS,
+                           Z_COORD_RECORDING)
 from src.graphics import utils
 from src.graphics.painter import Painter
 from src.graphics.sprites.ghost_sprite import GhostSprite
@@ -97,15 +99,22 @@ class Graphics:
 
     def recording_load(self, path, width, height):
         with lzma.open(path, 'r') as file:
-            self._active_recording = utils.load_image_grid(path, width, height, file)
+            self._active_recording = utils.load_recording(path, width, height, file)
 
         return len(self._active_recording)
 
     def recording_draw(self, idx, level_to_draw_fruits = None):
-        self._active_recording[idx].blit(0, 0)
+        frame = self._active_recording[idx]
+
+        self._painter.set_texture(frame)
+        self._painter.add_quad(*LAYOUT_RECORDINS_COORDS, 0, 0, frame.width, frame.height, Z_COORD_RECORDING)
+        self._painter.draw()
 
         if level_to_draw_fruits is not None:
-            self._draw_fruits(level_to_draw_fruits)
+            self._painter.set_texture()
+            self._ui_sprite.draw_fruits(level_to_draw_fruits)
+            self._painter.draw()
 
     def recording_free(self):
         self._active_recording = None
+        self._painter.set_texture()

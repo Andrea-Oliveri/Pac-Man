@@ -21,12 +21,15 @@ class Recording(Activity):
 
         self._ended = False
 
-    def __del__(self):
+
+    def notify_destruction(self):
         self._graphics.recording_free()
 
-    def event_draw_screen(self):
+        
+    def event_draw_screen(self, **kwargs):
         """Redraws the activity in the window."""
-        self._graphics.recording_draw(self._frame_idx)
+        self._graphics.recording_draw(self._frame_idx, **kwargs)
+
 
     def event_update_state(self):
         """Updates the state of the activity."""
@@ -37,6 +40,7 @@ class Recording(Activity):
             self._ended = True
 
         return self._ended
+
 
     def event_key_pressed(self, symbol, modifiers):
         """Reacts to key being pressed."""

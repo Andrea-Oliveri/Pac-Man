@@ -9,6 +9,11 @@ class Activity(ABC):
         """Constructor for the class Activity."""
         self._graphics = graphics
     
+    def notify_destruction(self):
+        """Destructor explicitely called in code. Explicit call avoids exceptions being launched
+        due to Python calling desctructors when it has already cleared important interpreter variables."""
+        return
+
     @abstractmethod
     def event_draw_screen(self):
         """Redraws the activity in the window."""
