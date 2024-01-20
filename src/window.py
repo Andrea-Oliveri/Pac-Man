@@ -91,10 +91,14 @@ class Window(pyglet.window.Window):
         from pyglet.window import key
         from src.constants import MazeTiles
 
-        if symbol == key._1:
-            self._current_activity._pellet_eaten(MazeTiles.POWER_PELLET)
-        if symbol == key._2:
-            self._current_activity._level += 1
+        if isinstance(self._current_activity, Game):
+            if symbol == key._1:
+                self._current_activity._pellet_eaten(MazeTiles.POWER_PELLET)
+            if symbol == key._2:
+                self._current_activity._level += 1
+            if symbol == key._3:
+                self._current_activity._maze._n_pellets = 0
+
         # --------------------------------------
 
 
@@ -189,7 +193,7 @@ class Window(pyglet.window.Window):
         # -------- DEBUG: FPS DISPLAY ----------
         if not hasattr(self, 'fps_display'):
             self.fps_display = pyglet.window.FPSDisplay(window=self)
-            self.fps_display.label = pyglet.text.Label('', x=70, y=135, font_size=12, bold=True, color = (255, 0, 0, 255))
+            self.fps_display.label = pyglet.text.Label('', x=185, y=285, font_size=12, bold=True, color = (255, 0, 0, 255))
 
         self.fps_display.draw()
         from src.graphics import utils
