@@ -10,27 +10,27 @@ from src.constants import (SoundEffects,
 class Sounds:
     
     def __init__(self):
-        self._effects = {k: pyglet.media.StaticSource(pyglet.media.load(v)) for k, v in SOUND_EFFECTS_PATHS.items()}
+        self._effects = {k: pyglet.media.load(v, streaming = False) for k, v in SOUND_EFFECTS_PATHS.items()}
         
         self._player_single = pyglet.media.Player()
         self._player_loop   = pyglet.media.Player()
         self._player_loop.loop = True
 
-        self._player_extra_life = pyglet.media.Player()
-
         self._munch_counter = 0
 
     
     def stop_all(self):
-        for player in self._player_single, self._player_loop, self._player_extra_life:
+        for player in self._player_single, self._player_loop:
             player.next_source()
 
 
     def _play_once(self, key):
-        player = self._player_extra_life if key == SoundEffects.EXTRA_LIFE else self._player_single
-
-        player.queue(self._effects[key])
-        player.play()
+        if key is SoundEffects.EXTRA_LIFE:
+            self._effects[key].play()
+            return
+        
+        self._player_single.queue(self._effects[key])
+        self._player_single.play()
 
 
     def _play_repeat(self, key):

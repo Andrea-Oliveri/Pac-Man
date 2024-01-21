@@ -228,12 +228,6 @@ class Game(Activity):
         if pellet_type is not None:
             self._pellet_eaten(pellet_type)
 
-        # Update lives if score high enough.
-        if not self._extra_life_awarded and self._score.score >= EXTRA_LIFE_POINTS_REQUIREMENT:
-            self._lives += 1
-            self._extra_life_awarded = True
-            self._sounds.notify_extra_life()
-
         # End level if completed.
         if self._maze.completed:
             self._set_level_state(LevelStates.PAUSE_BEFORE_COMPLETED)
@@ -248,6 +242,12 @@ class Game(Activity):
             self._sounds  .notify_ghost_eaten()
         if life_lost:
             self._set_level_state(LevelStates.PAUSE_BEFORE_DEATH)
+
+        # Update lives if score high enough.
+        if not self._extra_life_awarded and self._score.score >= EXTRA_LIFE_POINTS_REQUIREMENT:
+            self._lives += 1
+            self._extra_life_awarded = True
+            self._sounds.notify_extra_life()
 
 
     def _pellet_eaten(self, pellet_type):

@@ -743,7 +743,7 @@ SOUND_EFFECTS_PATHS = {SoundEffects.MUNCH_1           : './assets/sounds/munch_1
                        SoundEffects.EXTRA_LIFE        : './assets/sounds/extend.wav',
                        SoundEffects.LIFE_LOST         : './assets/sounds/life_lost.wav',
                        SoundEffects.GAME_START_MUSIC  : './assets/sounds/game_start.wav',
-                       SoundEffects.INTERMISSION_MUSIC: './assets/sounds/intermission.wav',}
+                       SoundEffects.INTERMISSION_MUSIC: './assets/sounds/intermission.wav'}
 
 
 
