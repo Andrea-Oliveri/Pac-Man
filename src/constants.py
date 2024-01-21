@@ -4,6 +4,7 @@ from pyglet.window import Window
 from enum import IntEnum, IntFlag
 from collections import namedtuple
 import os
+from functools import lru_cache
 
 from src.directions import Vector2
 
@@ -562,6 +563,7 @@ def _MAZE_SPRITE_ROW_COL(maze_row, maze_col, tile, flash_blue, flash_white):
 
     return row, col
 
+@lru_cache(len(MAZE_START_TILES) + 200)   # Speeds up on_draw a lot.
 def MAZE_SPRITE_TEX_REGION(*args):
     row, col = _MAZE_SPRITE_ROW_COL(*args)
 

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from functools import lru_cache
+
 from src.directions import Vector2
 from src.constants import (MazeTiles,
                            MAZE_START_TILES,
@@ -37,6 +39,7 @@ class Maze:
         return self._tiles[index]
 
     @staticmethod
+    @lru_cache(len(MAZE_START_TILES) + 200)   # Useful mostly to cache the results when called with index a tuple of 2 ints. Speeds up on_draw a lot.
     def _index_convert(index):
         if isinstance(index, Vector2):
             # If a Vector2 instance, convert to tile coordinates by dividing tile size.

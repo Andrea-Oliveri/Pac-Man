@@ -45,6 +45,10 @@ class Vector2:
         return self * other
 
 
+    def __hash__(self):
+        return hash((self.x, self.y))
+
+
     def round_to_nearest_half(self):
         return Vector2(x = round(self.x * 2) / 2,
                        y = round(self.y * 2) / 2)

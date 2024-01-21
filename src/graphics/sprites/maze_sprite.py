@@ -39,12 +39,15 @@ class MazeSprite(AbstractSprite):
         offset_y = origin.y + 0.5
 
         for row in range(MAZE_TILES_ROWS):
+            y_coord = row + offset_y
+
             for col in range(MAZE_TILES_COLS):
+                x_coord = col + offset_x
+
                 tile = maze[row, col]
 
                 tex_region = MAZE_SPRITE_TEX_REGION(row, col, tile, flash_blue, flash_white)
-
-                self._painter.add_quad(col + offset_x, row + offset_y, *tex_region, Z_COORD_MAZE)
+                self._painter.add_quad(x_coord, y_coord, *tex_region, Z_COORD_MAZE)
  
 
     def notify_level_end(self):
