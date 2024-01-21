@@ -117,13 +117,13 @@ class Painter:
 
 
     def draw(self):
-        # Since we are using both depth testing and transparency, need to sort quads from furthest to closest to avoid artefacts.
-        z_buffer = self._attributes_tmp_buffer['z_coord']
-        sorted_idx = sorted(range(len(z_buffer)), key = z_buffer.__getitem__, reverse = True)
+        # Since we are using both depth testing and transparency, we would need to sort sort quads from furthest to closest to avoid artefacts.
+        # Fortunately, by using only fully transparent or fully opaque objects, this can be avoided and dealth with in fragment shader.
         
+
         # Push buffers into ShaderProgram and reset them.
         for name, data in self._attributes_tmp_buffer.items():
-            getattr(self._vertex_list, name)[:] = [data[i] for i in sorted_idx]
+            getattr(self._vertex_list, name)[:] = data
         self._reset_attributes_tmp_buffer()
 
         # Draw.
