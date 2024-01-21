@@ -107,18 +107,6 @@ class Window(pyglet.window.Window):
     def on_state_update(self, dt):
         if hasattr(self, 'paused') and self.paused:
             return
-
-        # -------- DEBUG: TEMP BENCHMARK CODE ----------
-        self.benchmark_dts = self.benchmark_dts if hasattr(self, 'benchmark_dts') else []
-        self.benchmark_dts.append(dt)
-
-        import time
-        self.time_to_update = self.time_to_update if hasattr(self, 'time_to_update') else []
-        self.time_to_update.append(time.time())
-        # ---------------------------------------
-
-
-
         
         # Force updates to happen with the same frame-rate as in the original game.
         self._residual_update_interval += dt
@@ -127,33 +115,6 @@ class Window(pyglet.window.Window):
             self._residual_update_interval -= GAME_ORIGINAL_UPDATES_INTERVAL
 
             self.on_state_update_step()
-
-
-        # -------- DEBUG: TEMP BENCHMARK CODE ----------
-        self.time_to_update[-1] = time.time() - self.time_to_update[-1]
-
-
-        if len(self.benchmark_dts) == 400:
-            self.benchmark_dts .sort()
-            self.time_to_update.sort()
-
-            print('State updates dt summary:')
-            print('    Min:', self.benchmark_dts[0])
-            print('    25%:', self.benchmark_dts[100])
-            print('    50%:', self.benchmark_dts[200])
-            print('    75%:', self.benchmark_dts[300])
-            print('    Max:', self.benchmark_dts[-1])
-
-            print('Time to run update summary:')
-            print('    Min:', self.time_to_update[0])
-            print('    25%:', self.time_to_update[100])
-            print('    50%:', self.time_to_update[200])
-            print('    75%:', self.time_to_update[300])
-            print('    Max:', self.time_to_update[-1])
-
-            self.benchmark_dts = []
-            self.time_to_update = []
-        # ---------------------------------------
 
 
 
@@ -189,7 +150,7 @@ class Window(pyglet.window.Window):
         self._current_activity.event_draw_screen()
 
 
-        
+        return
         # -------- DEBUG: FPS DISPLAY ----------
         if not hasattr(self, 'fps_display'):
             self.fps_display = pyglet.window.FPSDisplay(window=self)

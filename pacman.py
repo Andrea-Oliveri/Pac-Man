@@ -28,10 +28,11 @@ pr.enable()
 
 
 from src.window import Window
+from src.constants import GAME_TENTATIVE_UPDATES_INTERVAL
 
 window = Window()
 
-pyglet.app.run()
+pyglet.app.run(interval = GAME_TENTATIVE_UPDATES_INTERVAL)
 
 
 
