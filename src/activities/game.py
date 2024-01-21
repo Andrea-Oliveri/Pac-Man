@@ -30,9 +30,9 @@ class Game(Activity):
     """Class Game. Implements screen update, reaction to key presses
     and releases and game engine when the program is showing the game."""
     
-    def __init__(self, graphics):
+    def __init__(self, graphics, sounds):
         """Override of method from Activity class, instancing all game objects."""
-        super().__init__(graphics)
+        super().__init__(graphics, sounds)
 
         self._score = Score()
         
@@ -52,6 +52,7 @@ class Game(Activity):
         self._fruit_visible_counter = 0
 
         self._set_level_state(LevelStates.FIRST_WELCOME)
+        self._sounds.notify_first_welcome()
         self._reset_level(new = True)
 
 
@@ -183,6 +184,7 @@ class Game(Activity):
                     self._set_level_state(LevelStates.DEATH)
                     self._pacman.state_set_death()
                     self._ghosts.notify_life_lost()
+                    self._sounds.notify_life_lost() # Not sure this is the right spot. Seems to be misaligned with animation.
             
             case LevelStates.PAUSE_BEFORE_COMPLETED:
                 if change_state:
@@ -219,9 +221,7 @@ class Game(Activity):
                            ((pacman_old_position.x <= FRUIT_SPAWN_POSITION.x <= pacman_new_position.x) or \
                             (pacman_new_position.x <= FRUIT_SPAWN_POSITION.x <= pacman_old_position.x))
             if was_on_fruit:
-                self._fruit_visible_counter = 0
-                score = self._score.add_to_score(ScoreActions.EAT_FRUIT, self._level)
-                self._graphics.notify_fruit_eaten(score)
+                self._fruit_eaten()
 
         # Check if eaten a pellet.
         pellet_type = self._maze.eat_check_pellet(pacman_new_position)
@@ -232,6 +232,7 @@ class Game(Activity):
         if not self._extra_life_awarded and self._score.score >= EXTRA_LIFE_POINTS_REQUIREMENT:
             self._lives += 1
             self._extra_life_awarded = True
+            self._sounds.notify_extra_life()
 
         # End level if completed.
         if self._maze.completed:
@@ -242,8 +243,9 @@ class Game(Activity):
         life_lost, any_eaten, position = self._ghosts.check_collision(self._maze, self._pacman) 
         if any_eaten:
             score = self._score.add_to_score(ScoreActions.EAT_GHOST)
-            self._graphics.notify_ghost_eaten(score, position)
             self._set_level_state(LevelStates.PAUSE_AFTER_EATING)
+            self._graphics.notify_ghost_eaten(score, position)
+            self._sounds  .notify_ghost_eaten()
         if life_lost:
             self._set_level_state(LevelStates.PAUSE_BEFORE_DEATH)
 
@@ -252,6 +254,7 @@ class Game(Activity):
         self._pacman.add_penalty(pellet_type)
         self._ghosts.notify_pellet_eaten()
         self._score.add_to_score(ScoreActions.EAT_PELLET if pellet_type == MazeTiles.PELLET else ScoreActions.EAT_POWER_PELLET)
+        self._sounds.notify_pellet_eaten()
 
         if pellet_type == MazeTiles.POWER_PELLET:
             fright_duration, fright_flashes = FRIGHT_TIME_AND_FLASHES(self._level)
@@ -263,6 +266,13 @@ class Game(Activity):
 
         if self._maze.n_pellets_remaining in FRUIT_SPAWN_THRESHOLDS:
             self._fruit_visible_counter = randint(*FRUIT_TIME_ACTIVE_RANGE)
+
+
+    def _fruit_eaten(self):
+        self._fruit_visible_counter = 0
+        score = self._score.add_to_score(ScoreActions.EAT_FRUIT, self._level)
+        self._graphics.notify_fruit_eaten(score)
+        self._sounds  .notify_fruit_eaten()
 
 
     def _set_level_state(self, new_state):

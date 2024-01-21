@@ -715,3 +715,36 @@ LAYOUT_LEFT_LIVES_ICON_COORDS   = ( 3.0, 35.0)
 LAYOUT_RECORDINS_COORDS         = (14.0, 18.0)
 
 # --------------------------------------------------------------------
+
+
+
+# --------------------------------------------------------------------
+# Constants related to sound effects.
+# --------------------------------------------------------------------
+
+
+# Enum defining which sound effects are available.
+SoundEffects = IntEnum('SoundEffects', ['MUNCH_1', 'MUNCH_2',
+                                        'EAT_FRUIT',
+                                        'EAT_GHOST',
+                                        'EXTRA_LIFE',
+                                        'LIFE_LOST',
+                                        'GAME_START_MUSIC',
+                                        'INTERMISSION_MUSIC',
+                                        'FRIGHT_ON',
+                                        'GHOST_GOING_TO_HOUSE',
+                                        'SIREN_1', 'SIREN_2', 'SIREN_3', 'SIREN_4', 'SIREN_5'])
+
+# Paths where each sound effect is stored.
+SOUND_EFFECTS_PATHS = {SoundEffects.MUNCH_1           : './assets/sounds/munch_1.wav',
+                       SoundEffects.MUNCH_2           : './assets/sounds/munch_2.wav',
+                       SoundEffects.EAT_FRUIT         : './assets/sounds/eat_fruit.wav',
+                       SoundEffects.EAT_GHOST         : './assets/sounds/eat_ghost.wav',
+                       SoundEffects.EXTRA_LIFE        : './assets/sounds/extend.wav',
+                       SoundEffects.LIFE_LOST         : './assets/sounds/life_lost.wav',
+                       SoundEffects.GAME_START_MUSIC  : './assets/sounds/game_start.wav',
+                       SoundEffects.INTERMISSION_MUSIC: './assets/sounds/intermission.wav',}
+
+
+
+# --------------------------------------------------------------------

@@ -6,6 +6,7 @@ from src.activities.menu import Menu
 from src.activities.game import Game
 from src.activities.intermission import Intermission
 from src.graphics import Graphics
+from src.sounds import Sounds
 from src.constants import (WINDOW_INIT_KWARGS,
                            WINDOW_MINIMUM_SIZE,
                            GAME_TENTATIVE_UPDATES_INTERVAL,
@@ -30,8 +31,9 @@ class Window(pyglet.window.Window):
         pyglet.gl.glClearColor(*BACKGROUND_COLOR, 1)
 
         self._graphics = Graphics()
+        self._sounds   = Sounds()
 
-        self._current_activity = Menu(self._graphics)
+        self._current_activity = Menu(self._graphics, self._sounds)
         self._backup_activity = None # Used only to store Game activity during intermissions.
 
         # FPS locked to screen refresh rate (vsync enabled).
@@ -129,16 +131,16 @@ class Window(pyglet.window.Window):
 
         if isinstance(self._current_activity, Menu):
             # retval is True if we need to change from Menu to Game.
-            self._current_activity = Game(self._graphics)
+            self._current_activity = Game(self._graphics, self._sounds)
 
         elif isinstance(self._current_activity, Game):
             if retval is True:
                 # retval is True if we need to change from Game to Menu.
-                self._current_activity = Menu(self._graphics)
+                self._current_activity = Menu(self._graphics, self._sounds)
             else:
                 # retval is an integer representing the game level if we need to change from Game to Intermission.
                 self._backup_activity  = self._current_activity
-                self._current_activity = Intermission(self._graphics, retval)
+                self._current_activity = Intermission(self._graphics, self._sounds, retval)
 
         elif isinstance(self._current_activity, Intermission):
             self._current_activity = self._backup_activity

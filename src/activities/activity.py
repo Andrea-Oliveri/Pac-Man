@@ -5,10 +5,11 @@ class Activity(ABC):
     """Class Activity. Class representing a program state that can be shown on the window."""
          
     
-    def __init__(self, graphics):
+    def __init__(self, graphics, sounds):
         """Constructor for the class Activity."""
         self._graphics = graphics
-    
+        self._sounds   = sounds
+
     def notify_destruction(self):
         """Destructor explicitely called in code. Explicit call avoids exceptions being launched
         due to Python calling desctructors when it has already cleared important interpreter variables."""

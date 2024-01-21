@@ -8,9 +8,9 @@ from src.constants import RECORDINGS_DETAILS
 class Recording(Activity):
          
     
-    def __init__(self, graphics, which):
+    def __init__(self, graphics, sounds, which):
         """Constructor for the class Recording."""
-        super().__init__(graphics)
+        super().__init__(graphics, sounds)
         
         details = RECORDINGS_DETAILS[which]
         path    = details['path']
