@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import lzma
 
 from src.constants import (DynamicUIElements,
                            LAYOUT_RECORDINS_COORDS,
@@ -98,8 +97,7 @@ class Graphics:
 
 
     def recording_load(self, path, width, height):
-        with lzma.open(path, 'r') as file:
-            self._active_recording = utils.load_recording(path, width, height, file)
+        self._active_recording = utils.load_recording(path, width, height)
 
         return len(self._active_recording)
 

@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 
+import lzma
+
 import pyglet
 
 from src.constants import LAYOUT_MAZE_COORDS
 from src.directions import Vector2
 
 
-def load_image(path, file = None):
-    image = pyglet.image.load(path, file)
+def load_image(path):
+    image = pyglet.image.load(path)
 
     # Interpolate avoiding blur.
     texture = image.get_texture()
@@ -16,12 +18,13 @@ def load_image(path, file = None):
     return image
 
 
-def load_recording(path, frame_width_px, frame_height_px, file = None):
-# This function generates a different texture for every frame.
-# This would generally impact negatively performance, but drawing when recordings are active is not performance-intensive.
-# Crucially, doing this bypasses the maximum texture size limit which applies to single textures. 
+def load_recording(path, frame_width_px, frame_height_px):
+    # This function generates a different texture for every frame.
+    # This would generally impact negatively performance, but drawing when recordings are active is not performance-intensive.
+    # Crucially, doing this bypasses the maximum texture size limit which applies to single textures. 
 
-    recording = pyglet.image.load(path, file)
+    with lzma.open(path, 'r') as file:
+        recording = pyglet.image.load(path, file)
 
     n_rows = recording.height // frame_height_px
     n_cols = recording.width  // frame_width_px
