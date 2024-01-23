@@ -208,6 +208,7 @@ class Game(Activity):
         self._ghosts.update(self._level, fright, self._maze, self._pacman, update_only_transparent = False)
 
         self._graphics.update(self._pacman)
+        self._sounds.queue_correct_siren(self._maze.n_pellets_remaining, fright, self._ghosts.any_ghost_retreating)
 
 
     def _calculate_new_game_state(self):
@@ -232,6 +233,7 @@ class Game(Activity):
         if self._maze.completed:
             self._set_level_state(LevelStates.PAUSE_BEFORE_COMPLETED)
             self._pacman.state_become_round()
+            self._sounds.stop()
 
         # Check if collided with any ghosts.
         life_lost, any_eaten, position = self._ghosts.check_collision(self._maze, self._pacman) 
@@ -242,6 +244,7 @@ class Game(Activity):
             self._sounds  .notify_ghost_eaten()
         if life_lost:
             self._set_level_state(LevelStates.PAUSE_BEFORE_DEATH)
+            self._sounds.stop()
 
         # Update lives if score high enough.
         if not self._extra_life_awarded and self._score.score >= EXTRA_LIFE_POINTS_REQUIREMENT:

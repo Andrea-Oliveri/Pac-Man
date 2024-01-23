@@ -732,7 +732,7 @@ SoundEffects = IntEnum('SoundEffects', ['MUNCH_1', 'MUNCH_2',
                                         'GAME_START_MUSIC',
                                         'INTERMISSION_MUSIC',
                                         'FRIGHT_ON',
-                                        'GHOST_GOING_TO_HOUSE',
+                                        'GHOST_RETREATING',
                                         'SIREN_1', 'SIREN_2', 'SIREN_3', 'SIREN_4', 'SIREN_5'])
 
 # Paths where each sound effect is stored.
@@ -743,8 +743,18 @@ SOUND_EFFECTS_PATHS = {SoundEffects.MUNCH_1           : './assets/sounds/munch_1
                        SoundEffects.EXTRA_LIFE        : './assets/sounds/extend.wav',
                        SoundEffects.LIFE_LOST         : './assets/sounds/life_lost.wav',
                        SoundEffects.GAME_START_MUSIC  : './assets/sounds/game_start.wav',
-                       SoundEffects.INTERMISSION_MUSIC: './assets/sounds/intermission.wav'}
+                       SoundEffects.INTERMISSION_MUSIC: './assets/sounds/intermission.wav',
+                       SoundEffects.FRIGHT_ON         : './assets/sounds/power_pellet.wav',
+                       SoundEffects.GHOST_RETREATING  : './assets/sounds/retreating.wav',
+                       SoundEffects.SIREN_1           : './assets/sounds/siren_1.wav',
+                       SoundEffects.SIREN_2           : './assets/sounds/siren_2.wav',
+                       SoundEffects.SIREN_3           : './assets/sounds/siren_3.wav',
+                       SoundEffects.SIREN_4           : './assets/sounds/siren_4.wav',
+                       SoundEffects.SIREN_5           : './assets/sounds/siren_5.wav'}
 
+
+# Thresholds at whioch the sirens change, in number of pellets remaining.
+THR_PELLETS_SIREN_SOUNDS = ((SoundEffects.SIREN_5, 16), (SoundEffects.SIREN_4, 32), (SoundEffects.SIREN_3, 64), (SoundEffects.SIREN_2, 128), (SoundEffects.SIREN_1, float('inf')))
 
 
 # --------------------------------------------------------------------

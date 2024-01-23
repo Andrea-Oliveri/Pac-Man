@@ -26,6 +26,6 @@ class Intermission(Recording):
         super().event_update_state()
 
         if self._ended:
-            self._sounds.stop_all()
+            self._sounds.stop()
 
         return self._ended

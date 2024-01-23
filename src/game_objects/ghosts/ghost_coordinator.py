@@ -176,3 +176,6 @@ class GhostsCoordinator:
 
             if self._dot_counter_ghosts[name] >= DOT_COUNTER_LIMIT(name, level):
                 ghost.request_behaviour(GhostBehaviour.EXITING_HOUSE)
+
+
+    any_ghost_retreating = property(lambda self: any(g.transparent for g in self._ghosts))
