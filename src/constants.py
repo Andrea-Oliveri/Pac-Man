@@ -744,13 +744,13 @@ SOUND_EFFECTS_PATHS = {SoundEffects.MUNCH_1           : './assets/sounds/munch_1
                        SoundEffects.LIFE_LOST         : './assets/sounds/life_lost.wav',
                        SoundEffects.GAME_START_MUSIC  : './assets/sounds/game_start.wav',
                        SoundEffects.INTERMISSION_MUSIC: './assets/sounds/intermission.wav',
-                       SoundEffects.FRIGHT_ON         : './assets/sounds/power_pellet.wav',
-                       SoundEffects.GHOST_RETREATING  : './assets/sounds/retreating.wav',
-                       SoundEffects.SIREN_1           : './assets/sounds/siren_1.wav',
-                       SoundEffects.SIREN_2           : './assets/sounds/siren_2.wav',
-                       SoundEffects.SIREN_3           : './assets/sounds/siren_3.wav',
-                       SoundEffects.SIREN_4           : './assets/sounds/siren_4.wav',
-                       SoundEffects.SIREN_5           : './assets/sounds/siren_5.wav'}
+                       SoundEffects.FRIGHT_ON         : './assets/sounds/power_pellet.wav.xz',
+                       SoundEffects.GHOST_RETREATING  : './assets/sounds/retreating.wav.xz',
+                       SoundEffects.SIREN_1           : './assets/sounds/siren_1.wav.xz',
+                       SoundEffects.SIREN_2           : './assets/sounds/siren_2.wav.xz',
+                       SoundEffects.SIREN_3           : './assets/sounds/siren_3.wav.xz',
+                       SoundEffects.SIREN_4           : './assets/sounds/siren_4.wav.xz',
+                       SoundEffects.SIREN_5           : './assets/sounds/siren_5.wav.xz'}
 
 
 # Thresholds at whioch the sirens change, in number of pellets remaining.

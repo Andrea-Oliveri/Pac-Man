@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import lzma
+
 import pyglet.media
 
 from src.constants import (SoundEffects,
@@ -11,8 +13,11 @@ from src.constants import (SoundEffects,
 class Sounds:
     
     def __init__(self):
-        self._effects = {k: pyglet.media.load(v, streaming = False) for k, v in SOUND_EFFECTS_PATHS.items()}
-        
+        self._effects = {}
+        for key, path in SOUND_EFFECTS_PATHS.items():
+            file = lzma.open(path, 'r') if path.lower().endswith('.xz') else None
+            self._effects[key] = pyglet.media.load(path, file, streaming = False)
+
         self._player_single = pyglet.media.Player()
         self._player_loop   = pyglet.media.Player()
         self._player_loop.loop = True
