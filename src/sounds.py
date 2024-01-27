@@ -35,7 +35,8 @@ class Sounds:
             # Clear queued sources.
             source = not None
             while source is not None:
-                source = player.next_source()
+                player.next_source()
+                source = player.source
 
 
     def _play_once(self, key):
