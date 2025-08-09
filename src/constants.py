@@ -159,6 +159,7 @@ PACMAN_DEATH_ANIMATION_PERIOD_FRAMES = (30, 7, 8, 7, 8, 7, 8, 7, 8, 7, 15)
 GHOSTS_MOVE_ANIMATION_PERIOD_FRAMES  = 8
 GHOSTS_FRIGHT_FLASH_ANIMATION_PERIOD_FRAMES = 14
 POWER_PELLET_FLASH_ANIMATION_PERIOD_FRAMES = 10
+TEXT_1UP_FLASH_ANIMATION_PERIOD_FRAMES = 10
 
 # --------------------------------------------------------------------
 
@@ -679,11 +680,14 @@ UI_MAX_SCORE_NUM_DIGITS  = 7
 # UI elements which can be optionally drawn during gameplay depending on state.
 DynamicUIElements = IntFlag('DynamicUIElements', ['PACMAN', 'GHOSTS', 'FRUIT', 'READY_TEXT', 'PLAYER_ONE_TEXT', 'GAME_OVER_TEXT', 'ACTION_SCORES'])
 
+# UI elements which can be optionally updated during gameplay depending on state.
+UpdatableUIElements = IntFlag('UpdatableUIElements', ['PACMAN', 'GHOSTS', 'MAZE', 'UI', 'SCORE'])
+
 # Colors of different writable texts.
-UI_DEFAULT_TEXT_COLOR     = FontColors.WHITE
-UI_PLAYER_ONE_TEXT_COLOR  = FontColors.CYAN
-UI_READY_TEXT_COLOR       = FontColors.YELLOW
-UI_GAME_OVER_TEXT_COLOR   = FontColors.RED
+UI_DEFAULT_TEXT_COLOR    = FontColors.WHITE
+UI_PLAYER_ONE_TEXT_COLOR = FontColors.CYAN
+UI_READY_TEXT_COLOR      = FontColors.YELLOW
+UI_GAME_OVER_TEXT_COLOR  = FontColors.RED
 
 # --------------------------------------------------------------------
 

@@ -22,7 +22,8 @@ from src.constants import (LIVES_SPRITE_TEX_REGION,
                            LAYOUT_READY_TEXT_COORDS,
                            LAYOUT_GAME_OVER_TEXT_COORDS,
                            LAYOUT_RIGHT_FRUIT_ICON_COORDS,
-                           LAYOUT_LEFT_LIVES_ICON_COORDS)
+                           LAYOUT_LEFT_LIVES_ICON_COORDS,
+                           TEXT_1UP_FLASH_ANIMATION_PERIOD_FRAMES)
 from src.graphics.utils import convert_maze_coord_to_layout_coord
 
 
@@ -30,11 +31,11 @@ from src.graphics.utils import convert_maze_coord_to_layout_coord
 class UiSprite(AbstractSprite):
 
     def reset(self):
-        return
+        self._flash_counter_1up = 0
 
 
     def update(self):
-        return
+        self._flash_counter_1up += 1
 
 
     def send_vertex_data(self, show_ready_text, show_player_one_text, show_game_over_text, show_fruit_in_maze, score, high_score, lives, level):
@@ -58,7 +59,8 @@ class UiSprite(AbstractSprite):
     def _draw_score_texts(self, score, high_score):
         # Print text on top of screen.
         self._print(*LAYOUT_HIGH_SCORE_TEXT_COORDS, UI_DEFAULT_TEXT_COLOR, 'HIGH SCORE')
-        self._print(*LAYOUT_1UP_TEXT_COORDS       , UI_DEFAULT_TEXT_COLOR, '1UP')
+        if (self._flash_counter_1up // TEXT_1UP_FLASH_ANIMATION_PERIOD_FRAMES) % 2:
+            self._print(*LAYOUT_1UP_TEXT_COORDS, UI_DEFAULT_TEXT_COLOR, '1UP')
         
         # Print score and high score numbers.
         high_score = (''   if high_score == 0 else str(high_score)).rjust(UI_MAX_SCORE_NUM_DIGITS, ' ')[-UI_MAX_SCORE_NUM_DIGITS:]

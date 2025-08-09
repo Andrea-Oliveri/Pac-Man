@@ -2,6 +2,7 @@
 
 
 from src.constants import (DynamicUIElements,
+                           UpdatableUIElements,
                            LAYOUT_RECORDINS_COORDS,
                            Z_COORD_RECORDING)
 from src.graphics import utils
@@ -46,16 +47,19 @@ class Graphics:
         self._ui_sprite    .reset()
 
 
-    def update(self, pacman, update_pacman_and_ghosts = True):
-        self._score_sprite .update()
-        self._maze_sprite  .update()
-        self._ui_sprite    .update()
-
-        if not update_pacman_and_ghosts:
+    def update(self, pacman, ui_elements):
+        if ui_elements is None:
             return
 
-        self._pacman_sprite.update(pacman)
-        self._ghost_sprite .update()
+        if UpdatableUIElements.PACMAN in ui_elements:
+            self._pacman_sprite.update(pacman)
+
+        for sprite, flag in [(self._ghost_sprite , UpdatableUIElements.GHOSTS),
+                             (self._maze_sprite  , UpdatableUIElements.MAZE),
+                             (self._score_sprite , UpdatableUIElements.SCORE),
+                             (self._ui_sprite    , UpdatableUIElements.UI)]:
+            if flag in ui_elements:
+                sprite.update()
 
 
     def draw_game(self, maze, pacman, ghosts, score, lives, level, ui_elements):

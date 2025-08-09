@@ -23,6 +23,7 @@ from src.constants import (MazeTiles,
                            LevelStates,
                            LEVEL_STATES_DURATION,
                            DynamicUIElements,
+                           UpdatableUIElements,
                            LEVEL_WITH_INTERMISSIONS)
 
 
@@ -113,18 +114,29 @@ class Game(Activity):
     def event_update_state(self):
         """Override of method from Activity class, updating the state of the activity."""
         
-        # Update level state.
+        # Update level state, without updating graphics.
         match self._level_state:
             case LevelStates.PLAYING:
-                self._update_game()
-
-            case LevelStates.DEATH | LevelStates.COMPLETED:
-                self._graphics.update(self._pacman)
+                self._update_game_not_graphics()
 
             case LevelStates.PAUSE_AFTER_EATING:
-                self._graphics.update(self._pacman, update_pacman_and_ghosts = False)
-                self._ghosts  .update(self._level, True, self._maze, self._pacman, update_only_transparent = True)
+                self._ghosts.update(self._level, True, self._maze, self._pacman, update_only_transparent = True)
 
+        # Update graphics states.
+        match self._level_state:
+            case LevelStates.FIRST_WELCOME | LevelStates.READY:
+                ui_elements = UpdatableUIElements.UI | UpdatableUIElements.SCORE
+            case LevelStates.PLAYING:
+                ui_elements = UpdatableUIElements.PACMAN | UpdatableUIElements.GHOSTS | UpdatableUIElements.MAZE | UpdatableUIElements.UI | UpdatableUIElements.SCORE
+            case LevelStates.DEATH | LevelStates.COMPLETED | LevelStates.PAUSE_BEFORE_COMPLETED:
+                ui_elements = UpdatableUIElements.PACMAN | UpdatableUIElements.MAZE | UpdatableUIElements.UI | UpdatableUIElements.SCORE
+            case LevelStates.PAUSE_AFTER_EATING | LevelStates.PAUSE_BEFORE_DEATH:
+                ui_elements = UpdatableUIElements.GHOSTS | UpdatableUIElements.MAZE | UpdatableUIElements.UI | UpdatableUIElements.SCORE
+            case LevelStates.GAME_OVER:
+                ui_elements = UpdatableUIElements.UI | UpdatableUIElements.SCORE
+            case LevelStates.INTERMISSION:
+                ui_elements = None
+        self._graphics.update(self._pacman, ui_elements)
         
         # Transition to new level state if needed.      
         change_state = self._level_state_counter <= 0
@@ -195,7 +207,7 @@ class Game(Activity):
         
 
 
-    def _update_game(self):
+    def _update_game_not_graphics(self):
         fright = False
         if self._fright_counter > 0:
             self._fright_counter -= 1
@@ -207,7 +219,6 @@ class Game(Activity):
         self._pacman.update(self._level, fright, self._maze)
         self._ghosts.update(self._level, fright, self._maze, self._pacman, update_only_transparent = False)
 
-        self._graphics.update(self._pacman)
         self._sounds.queue_correct_siren(self._maze.n_pellets_remaining, fright, self._ghosts.any_ghost_retreating)
 
 
