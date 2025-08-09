@@ -17,8 +17,9 @@ from src.directions import Vector2
 WINDOW_MINIMUM_SIZE = (250, 300)
 
 # Pyglet window initialization arguments.
-WINDOW_INIT_KWARGS = {'width' : WINDOW_MINIMUM_SIZE[0],
-                      'height': WINDOW_MINIMUM_SIZE[1],
+_WINDOW_SIZE_INIT_FACTOR = 2
+WINDOW_INIT_KWARGS = {'width' : _WINDOW_SIZE_INIT_FACTOR * WINDOW_MINIMUM_SIZE[0],
+                      'height': _WINDOW_SIZE_INIT_FACTOR * WINDOW_MINIMUM_SIZE[1],
                       'fullscreen': False,
                       'resizable': True,
                       'caption': "Pac-Man",
