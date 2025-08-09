@@ -46,16 +46,16 @@ class Graphics:
         self._ui_sprite    .reset()
 
 
-    def update(self, pacman, update_only_scores = False):
+    def update(self, pacman, update_pacman_and_ghosts = True):
         self._score_sprite .update()
+        self._maze_sprite  .update()
+        self._ui_sprite    .update()
 
-        if update_only_scores:
+        if not update_pacman_and_ghosts:
             return
 
         self._pacman_sprite.update(pacman)
         self._ghost_sprite .update()
-        self._maze_sprite  .update()
-        self._ui_sprite    .update()
 
 
     def draw_game(self, maze, pacman, ghosts, score, lives, level, ui_elements):

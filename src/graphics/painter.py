@@ -117,8 +117,8 @@ class Painter:
 
 
     def draw(self):
-        # Since we are using both depth testing and transparency, we would need to sort sort quads from furthest to closest to avoid artefacts.
-        # Fortunately, by using only fully transparent or fully opaque objects, this can be avoided and dealth with in fragment shader.
+        # Since we are using both depth testing and transparency, we would need to sort quads from furthest to closest to avoid artefacts.
+        # Fortunately, by using only fully transparent or fully opaque pixels, this can be avoided and dealth with in fragment shader.
         
 
         # Push buffers into ShaderProgram and reset them.

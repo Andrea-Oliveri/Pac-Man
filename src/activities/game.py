@@ -122,7 +122,7 @@ class Game(Activity):
                 self._graphics.update(self._pacman)
 
             case LevelStates.PAUSE_AFTER_EATING:
-                self._graphics.update(self._pacman, update_only_scores = True)
+                self._graphics.update(self._pacman, update_pacman_and_ghosts = False)
                 self._ghosts  .update(self._level, True, self._maze, self._pacman, update_only_transparent = True)
 
         
