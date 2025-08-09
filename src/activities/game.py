@@ -130,7 +130,9 @@ class Game(Activity):
                 ui_elements = UpdatableUIElements.PACMAN | UpdatableUIElements.GHOSTS | UpdatableUIElements.MAZE | UpdatableUIElements.UI | UpdatableUIElements.SCORE
             case LevelStates.DEATH | LevelStates.COMPLETED | LevelStates.PAUSE_BEFORE_COMPLETED:
                 ui_elements = UpdatableUIElements.PACMAN | UpdatableUIElements.MAZE | UpdatableUIElements.UI | UpdatableUIElements.SCORE
-            case LevelStates.PAUSE_AFTER_EATING | LevelStates.PAUSE_BEFORE_DEATH:
+            case LevelStates.PAUSE_AFTER_EATING:
+                ui_elements = UpdatableUIElements.MAZE | UpdatableUIElements.UI | UpdatableUIElements.SCORE
+            case LevelStates.PAUSE_BEFORE_DEATH:
                 ui_elements = UpdatableUIElements.GHOSTS | UpdatableUIElements.MAZE | UpdatableUIElements.UI | UpdatableUIElements.SCORE
             case LevelStates.GAME_OVER:
                 ui_elements = UpdatableUIElements.UI | UpdatableUIElements.SCORE
