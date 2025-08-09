@@ -107,9 +107,16 @@ class Window(pyglet.window.Window):
 
 
     def on_state_update(self, dt):
+        # --------------------------------------
+        # DEBUG
+        # --------------------------------------
+
         if hasattr(self, 'paused') and self.paused:
             return
-        
+
+        # --------------------------------------
+
+
         # Force updates to happen with the same frame-rate as in the original game.
         self._residual_update_interval += dt
 

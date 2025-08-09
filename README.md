@@ -26,15 +26,15 @@ The Python enviroment used for this project was kept as simple as possible to pr
 An environment containing the required packages with compatible versions can be created as follows:
 
 ```bash
-conda create -n pacman python=3.11.4
+conda create -n pacman python=3.13.5
 conda activate pacman
-pip install pyglet==2.0.8
+pip install pyglet==2.1.6
 ```
 
 Optionally, to package the game into an executable, Pyinstaller also needs to be installed into the environment:
 
 ```bash
-pip install pyinstaller==5.13.0
+pip install pyinstaller==6.15.0
 ```
 
 ### 1) Run
