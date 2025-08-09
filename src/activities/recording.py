@@ -6,7 +6,6 @@ from src.constants import RECORDINGS_DETAILS
 
 
 class Recording(Activity):
-         
     
     def __init__(self, graphics, sounds, which):
         """Constructor for the class Recording."""

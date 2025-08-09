@@ -415,7 +415,7 @@ RECORDINGS_DETAILS = {RecordingsType.INTRO         : {'path': './assets/images/i
                       RecordingsType.INTERMISSION_2: {'path': './assets/images/intermission2.png.xz', 'frame_shape': (88 , 224)},
                       RecordingsType.INTERMISSION_3: {'path': './assets/images/intermission3.png.xz', 'frame_shape': (88 , 224)}}
 
-# Levels after which intermissions occurr in game.
+# Levels after which intermissions occur in game.
 LEVEL_WITH_INTERMISSIONS = {2 : RecordingsType.INTERMISSION_1,
                             5 : RecordingsType.INTERMISSION_2,
                             9 : RecordingsType.INTERMISSION_3,
@@ -423,6 +423,29 @@ LEVEL_WITH_INTERMISSIONS = {2 : RecordingsType.INTERMISSION_1,
                             17: RecordingsType.INTERMISSION_3}
 
 # --------------------------------------------------------------------
+
+# --------------------------------------------------------------------
+# Constants related to the game completed screen.
+# --------------------------------------------------------------------
+
+GAME_COMPLETED_LEVEL = 256
+GAME_COMPLETED_MESSAGE = ('   CONGRATULATIONS ON   ',
+                          '  COMPLETING PAC-MAN!   ',
+                          '',
+                          '  THE POINTS YOU WOULD  ',
+                          '     HAVE EARNED BY     ',
+                          'FLAWLESSLY CLEARING THE ',
+                          ' SPLIT-SCREEN LEVEL ARE ',
+                          '  BEING ADDED TO YOUR   ',
+                          '         SCORE!         ')
+GAME_COMPLETED_REWARD_INITIAL = 6310
+GAME_COMPLETED_REWARD_EXTRA_LIVES = 90
+GAME_COMPLETED_REWARD_INCREMENT = 10
+GAME_COMPLETED_REWARD_INCREMENT_PERIOD_FRAMES = 1
+
+# --------------------------------------------------------------------
+
+
 
 
 # --------------------------------------------------------------------
@@ -685,10 +708,11 @@ DynamicUIElements = IntFlag('DynamicUIElements', ['PACMAN', 'GHOSTS', 'FRUIT', '
 UpdatableUIElements = IntFlag('UpdatableUIElements', ['PACMAN', 'GHOSTS', 'MAZE', 'UI', 'SCORE'])
 
 # Colors of different writable texts.
-UI_DEFAULT_TEXT_COLOR    = FontColors.WHITE
-UI_PLAYER_ONE_TEXT_COLOR = FontColors.CYAN
-UI_READY_TEXT_COLOR      = FontColors.YELLOW
-UI_GAME_OVER_TEXT_COLOR  = FontColors.RED
+UI_DEFAULT_TEXT_COLOR        = FontColors.WHITE
+UI_PLAYER_ONE_TEXT_COLOR     = FontColors.CYAN
+UI_READY_TEXT_COLOR          = FontColors.YELLOW
+UI_GAME_OVER_TEXT_COLOR      = FontColors.RED
+UI_GAME_COMPLETED_TEXT_COLOR = FontColors.LAVANDER
 
 # --------------------------------------------------------------------
 
@@ -719,6 +743,7 @@ LAYOUT_GAME_OVER_TEXT_COORDS    = ( 9.5, 20.5)
 LAYOUT_RIGHT_FRUIT_ICON_COORDS  = (25.0, 35.0)
 LAYOUT_LEFT_LIVES_ICON_COORDS   = ( 3.0, 35.0)
 LAYOUT_RECORDINS_COORDS         = (14.0, 18.0)
+LAYOUT_GAME_COMPLETED_TEXT      = ( 2.5, 12.0)
 
 # --------------------------------------------------------------------
 
@@ -739,7 +764,12 @@ SoundEffects = IntEnum('SoundEffects', ['MUNCH_1', 'MUNCH_2',
                                         'INTERMISSION_MUSIC',
                                         'FRIGHT_ON',
                                         'GHOST_RETREATING',
-                                        'SIREN_1', 'SIREN_2', 'SIREN_3', 'SIREN_4', 'SIREN_5'])
+                                        'SIREN_1', 
+                                        'SIREN_2', 
+                                        'SIREN_3', 
+                                        'SIREN_4', 
+                                        'SIREN_5',
+                                        'GAME_COMPLETED'])
 
 # Paths where each sound effect is stored.
 SOUND_EFFECTS_PATHS = {SoundEffects.MUNCH_1           : './assets/sounds/munch_1.wav',
@@ -756,7 +786,8 @@ SOUND_EFFECTS_PATHS = {SoundEffects.MUNCH_1           : './assets/sounds/munch_1
                        SoundEffects.SIREN_2           : './assets/sounds/siren_2.wav',
                        SoundEffects.SIREN_3           : './assets/sounds/siren_3.wav',
                        SoundEffects.SIREN_4           : './assets/sounds/siren_4.wav',
-                       SoundEffects.SIREN_5           : './assets/sounds/siren_5.wav'}
+                       SoundEffects.SIREN_5           : './assets/sounds/siren_5.wav',
+                       SoundEffects.GAME_COMPLETED    : './assets/sounds/game_completed.wav'}
 
 
 # Thresholds at whioch the sirens change, in number of pellets remaining.

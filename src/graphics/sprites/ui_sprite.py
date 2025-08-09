@@ -14,6 +14,7 @@ from src.constants import (LIVES_SPRITE_TEX_REGION,
                            UI_PLAYER_ONE_TEXT_COLOR,
                            UI_READY_TEXT_COLOR,
                            UI_GAME_OVER_TEXT_COLOR,
+                           UI_GAME_COMPLETED_TEXT_COLOR,
                            LAYOUT_1UP_TEXT_COORDS,
                            LAYOUT_HIGH_SCORE_TEXT_COORDS,
                            LAYOUT_SCORE_NUMBER_COORDS,
@@ -23,6 +24,8 @@ from src.constants import (LIVES_SPRITE_TEX_REGION,
                            LAYOUT_GAME_OVER_TEXT_COORDS,
                            LAYOUT_RIGHT_FRUIT_ICON_COORDS,
                            LAYOUT_LEFT_LIVES_ICON_COORDS,
+                           LAYOUT_GAME_COMPLETED_TEXT,
+                           GAME_COMPLETED_MESSAGE,
                            TEXT_1UP_FLASH_ANIMATION_PERIOD_FRAMES)
 from src.graphics.utils import convert_maze_coord_to_layout_coord
 
@@ -38,22 +41,25 @@ class UiSprite(AbstractSprite):
         self._flash_counter_1up += 1
 
 
-    def send_vertex_data(self, show_ready_text, show_player_one_text, show_game_over_text, show_fruit_in_maze, score, high_score, lives, level):
+    def send_vertex_data(self, show_ready_text, show_player_one_text, show_game_over_text, show_fruit_in_maze, show_congrats_text, score, high_score, lives, level):
         if show_ready_text:
-            self._print(*LAYOUT_READY_TEXT_COORDS     , UI_READY_TEXT_COLOR     , 'READY!')
+            self._print(*LAYOUT_READY_TEXT_COORDS, UI_READY_TEXT_COLOR, 'READY!')
 
         if show_player_one_text:
             self._print(*LAYOUT_PLAYER_ONE_TEXT_COORDS, UI_PLAYER_ONE_TEXT_COLOR, 'PLAYER ONE')
 
         if show_game_over_text:
-            self._print(*LAYOUT_GAME_OVER_TEXT_COORDS , UI_GAME_OVER_TEXT_COLOR , 'GAME  OVER')
+            self._print(*LAYOUT_GAME_OVER_TEXT_COORDS, UI_GAME_OVER_TEXT_COLOR, 'GAME  OVER')
 
         if show_fruit_in_maze:
             self._draw_fruit_in_maze(level)
 
+        if show_congrats_text:
+            self._print(*LAYOUT_GAME_COMPLETED_TEXT, UI_GAME_COMPLETED_TEXT_COLOR, '\n'.join(GAME_COMPLETED_MESSAGE))
+
         self._draw_score_texts(score, high_score)
-        self._draw_lives      (lives)
-        self. draw_fruits     (level)
+        self._draw_lives(lives)
+        self.draw_fruits(level)
 
 
     def _draw_score_texts(self, score, high_score):

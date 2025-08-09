@@ -4,6 +4,7 @@ import pyglet
 
 from src.activities.menu import Menu
 from src.activities.game import Game
+from src.activities.game_completed import GameCompleted
 from src.activities.intermission import Intermission
 from src.graphics import Graphics
 from src.sounds import Sounds
@@ -15,7 +16,8 @@ from src.constants import (WINDOW_INIT_KWARGS,
                            GAME_ORIGINAL_UPDATES_INTERVAL,
                            LAYOUT_PX_PER_UNIT_LENGHT,
                            LAYOUT_N_ROWS_TILES,
-                           LAYOUT_N_COLS_TILES)
+                           LAYOUT_N_COLS_TILES,
+                           GAME_COMPLETED_LEVEL)
 
 
 class Window(pyglet.window.Window):
@@ -135,7 +137,7 @@ class Window(pyglet.window.Window):
         if retval is False:
             return
 
-        self._current_activity.notify_destruction()
+        retval_destruction = self._current_activity.notify_destruction()
 
         if isinstance(self._current_activity, Menu):
             # retval is True if we need to change from Menu to Game.
@@ -145,14 +147,20 @@ class Window(pyglet.window.Window):
             if retval is True:
                 # retval is True if we need to change from Game to Menu.
                 self._current_activity = Menu(self._graphics, self._sounds)
+            # retval is an integer representing the game level.
+            elif retval == GAME_COMPLETED_LEVEL:
+                self._current_activity = GameCompleted(self._graphics, self._sounds, **retval_destruction)
+            # It must be time for an intermission.
             else:
-                # retval is an integer representing the game level if we need to change from Game to Intermission.
                 self._backup_activity  = self._current_activity
                 self._current_activity = Intermission(self._graphics, self._sounds, retval)
 
         elif isinstance(self._current_activity, Intermission):
             self._current_activity = self._backup_activity
             self._backup_activity  = None
+
+        elif isinstance(self._current_activity, GameCompleted):
+            self._current_activity = Menu(self._graphics, self._sounds)
 
         
     def on_draw(self):
@@ -168,7 +176,7 @@ class Window(pyglet.window.Window):
         # -------- DEBUG: FPS DISPLAY ----------
         if not hasattr(self, 'fps_display'):
             self.fps_display = pyglet.window.FPSDisplay(window=self)
-            self.fps_display.label = pyglet.text.Label('', x=185, y=285, font_size=12, bold=True, color = (255, 0, 0, 255))
+            self.fps_display.label = pyglet.text.Label('', x=185, y=285, font_size=12, weight=True, color = (255, 0, 0, 255))
 
         self.fps_display.draw()
         from src.graphics import utils

@@ -90,6 +90,10 @@ class Sounds:
         self._play_repeat(SoundEffects.INTERMISSION_MUSIC)
 
 
+    def notify_game_completed(self):
+        self._play_once(SoundEffects.GAME_COMPLETED)
+
+
     def queue_correct_siren(self, n_pellets, fright_on, any_ghost_retreating):
         expected_siren = None
 

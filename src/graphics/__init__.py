@@ -65,10 +65,11 @@ class Graphics:
     def draw_game(self, maze, pacman, ghosts, score, lives, level, ui_elements):
 
         self._maze_sprite.send_vertex_data(maze)
-        self._ui_sprite  .send_vertex_data(DynamicUIElements.READY_TEXT      in ui_elements,
-                                           DynamicUIElements.PLAYER_ONE_TEXT in ui_elements,
-                                           DynamicUIElements.GAME_OVER_TEXT  in ui_elements,
-                                           DynamicUIElements.FRUIT           in ui_elements,
+        self._ui_sprite  .send_vertex_data(DynamicUIElements.READY_TEXT          in ui_elements,
+                                           DynamicUIElements.PLAYER_ONE_TEXT     in ui_elements,
+                                           DynamicUIElements.GAME_OVER_TEXT      in ui_elements,
+                                           DynamicUIElements.FRUIT               in ui_elements,
+                                           False,
                                            score.score,
                                            score.high_score,
                                            lives,
@@ -82,6 +83,20 @@ class Graphics:
             
         if DynamicUIElements.PACMAN in ui_elements:
             self._pacman_sprite.send_vertex_data(pacman)
+
+        self._painter.draw()
+
+
+    def draw_game_completed(self, score, lives, level):
+        self._ui_sprite.send_vertex_data(False,
+                                         False,
+                                         False,
+                                         False,
+                                         True,
+                                         score.score,
+                                         score.high_score,
+                                         lives,
+                                         level)
 
         self._painter.draw()
 

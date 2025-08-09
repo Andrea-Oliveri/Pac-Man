@@ -33,7 +33,6 @@ class _ScoreValues:
         return high_score
 
     def _high_score_save(self):
-        print(f"Saving {self.high_score}")
         with open(HIGH_SCORE_FILE, 'wb') as file:
             file.write(self.high_score.to_bytes(length = HIGH_SCORE_FILE_NUM_BYTES, **self._BYTES_INT_CONVERSION_KWARGS))
 

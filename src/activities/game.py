@@ -24,7 +24,8 @@ from src.constants import (MazeTiles,
                            LEVEL_STATES_DURATION,
                            DynamicUIElements,
                            UpdatableUIElements,
-                           LEVEL_WITH_INTERMISSIONS)
+                           LEVEL_WITH_INTERMISSIONS,
+                           GAME_COMPLETED_LEVEL)
 
 
 class Game(Activity):
@@ -44,8 +45,8 @@ class Game(Activity):
         self._level_state = None
         self._level_state_counter = 0
 
-        # Create attributes that will be initialized in _new_level.
-        self._level = 0
+        # Create attributes that will be initialized in _reset_level.
+        self._level  = 0
         self._maze   = None
         self._pacman = None
         self._ghosts = None
@@ -57,6 +58,11 @@ class Game(Activity):
         self._reset_level(new = True)
 
 
+    def notify_destruction(self):
+        """Override of method from Activity class, returning the values needed by GameCompleted to function."""
+        return {'score': self._score, 'lives': self._lives, 'level': self._level}
+
+
     def _reset_level(self, new):
         if new:
             self._level  += 1
@@ -64,13 +70,9 @@ class Game(Activity):
             self._ghosts = GhostsCoordinator()
         
         self._pacman = PacMan()
-        
         self._fright_counter = 0
-
         self._fruit_visible_counter = 0
-
         self._graphics.reset_level()
-
 
 
     def event_draw_screen(self):
@@ -174,6 +176,8 @@ class Game(Activity):
                     else:
                         self._set_level_state(LevelStates.READY)
                         self._reset_level(new = True)
+                        if self._level == GAME_COMPLETED_LEVEL:
+                            return self._level
 
             case LevelStates.INTERMISSION:
                 old_level = self._level
@@ -198,7 +202,7 @@ class Game(Activity):
                     self._set_level_state(LevelStates.DEATH)
                     self._pacman.state_set_death()
                     self._ghosts.notify_life_lost()
-                    self._sounds.notify_life_lost() # Not sure this is the right spot. Seems to be misaligned with animation.
+                    self._sounds.notify_life_lost()
             
             case LevelStates.PAUSE_BEFORE_COMPLETED:
                 if change_state:

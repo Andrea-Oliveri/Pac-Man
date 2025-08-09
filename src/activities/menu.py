@@ -14,16 +14,16 @@ class Menu(Recording):
 
     def __init__(self, graphics, sounds):
         super().__init__(graphics, sounds, RecordingsType.INTRO)
-        self.must_switch_to_game = False
+        self._must_switch_to_game = False
   
     def event_update_state(self):
         """Override of method from Activity class, updating the state of the
         activity."""
         super().event_update_state()
 
-        return self.must_switch_to_game
+        return self._must_switch_to_game
 
     def event_key_pressed(self, symbol, modifiers):
         """Override of method from Activity class, reacting to key presses.
         Returns True if the game should start and False otherwise."""
-        self.must_switch_to_game = symbol in (key.RETURN, key.SPACE)
+        self._must_switch_to_game = symbol in (key.RETURN, key.SPACE)
