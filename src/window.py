@@ -20,8 +20,8 @@ from src.constants import (WINDOW_INIT_KWARGS,
 
 class Window(pyglet.window.Window):
     def __init__(self):
-        super().__init__(**WINDOW_INIT_KWARGS)
-        
+        super().__init__(**WINDOW_INIT_KWARGS, visible = False)
+
         self.set_minimum_size(*WINDOW_MINIMUM_SIZE)
 
         icon = pyglet.image.load(WINDOW_ICON_PATH)
@@ -29,6 +29,7 @@ class Window(pyglet.window.Window):
         
         # Set background color.
         pyglet.gl.glClearColor(*BACKGROUND_COLOR, 1)
+        self._first_time_drawing = True
 
         self._graphics = Graphics()
         self._sounds   = Sounds()
@@ -155,6 +156,10 @@ class Window(pyglet.window.Window):
 
         
     def on_draw(self):
+        if self._first_time_drawing:
+            self.set_visible(True)
+            self._first_time_drawing = False
+        
         self.clear()
         self._current_activity.event_draw_screen()
 
