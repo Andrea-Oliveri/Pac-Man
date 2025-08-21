@@ -1,112 +1,12 @@
 import multiprocessing
 import signal
 import itertools
-from dataclasses import dataclass
 
 import cv2
 from tqdm import tqdm
 import numpy as np
 
-from constants import VIDEOS_PATHS, TEMPLATE_LEVEL_START_PATH, TEMPLATE_LEVEL_END_PATH, PARALLEL_MAX_WORKERS, LEVEL_SEARCH_FRAMES_STEP, LEVEL_START_END_DETECTION_THR
-
-
-@dataclass(slots = True, frozen = True)
-class Position:
-    row: int
-    col: int
-
-    def __add__(self, other):
-        if not isinstance(other, Position):
-            raise ValueError(f"argument 'other' must be of type Position. Got {type(other)}")
-        return Position(row = self.row + other.row, col = self.col + other.col)
-    
-
-@dataclass(slots = True, frozen = True)
-class MatchResults:
-    pos: Position
-    score: float
-
-
-@dataclass(slots = True, frozen = True)
-class Region:
-    start: Position
-    stop: Position
-    height = property(lambda self: self.stop.row - self.start.row)
-    width  = property(lambda self: self.stop.col - self.start.col)
-
-    def __init__(self, start, stop = None, height = None, width = None):
-        if not isinstance(start, Position):
-            raise ValueError(f"argument 'start' must be of type Position. Got {type(start)}")
-        if stop is None:
-            if not isinstance(height, int) or not isinstance(width, int):
-                raise ValueError(f"when argument 'stop' is not provided, both 'width' and 'height' must be provided and must be integers. Got {type(width)} and {type(height)} respectively.")
-            stop = Position(row = start.row + height, col = start.col + width)
-        else:
-            if height is not None or width is not None:
-                raise ValueError(f"when argument 'stop' is provided, both 'width' and 'height' must not be provided")
-        
-        if start.row > stop.row or start.col > stop.col:
-            raise ValueError(f"start must have row and col <= to stop. Got start: {start} and stop {stop}")
-
-        object.__setattr__(self, "start", start)
-        object.__setattr__(self, "stop" , stop)
-
-
-
-
-
-def __make_all_sprites():
-    # ------------------------------------------------------------------------
-    # Coped from game constants.
-    # ------------------------------------------------------------------------
-
-    from collections import namedtuple
-
-    # Path of the atlas image.
-    GRAPHICS_ATLAS_PATH = "./assets/images/atlas.png"
-
-    # Named tuple used to store information on the regions composing the atlas.
-    _AtlasRegion = namedtuple("AtlasRegion", ["reg_x_left", "reg_y_bottom", "reg_width", "reg_height", "elem_width", "elem_height"])
-
-    # Coordinates in pixels of each region composing the atlas.
-    # Regions are zones in the atlas where the sub-elements have uniform sizes and are grouped for easy coordinate calculation.
-    _GRAPHICS_ATLAS_REGION_TEXT   = _AtlasRegion(0  , 0  , 128, 256, 8 , 8 )
-    _GRAPHICS_ATLAS_REGION_MAZE   = _AtlasRegion(128, 0  , 672, 248, 8 , 8 )
-    _GRAPHICS_ATLAS_REGION_SCORES = _AtlasRegion(800, 0  , 96 , 72 , 24, 24)
-    _GRAPHICS_ATLAS_REGION_GHOSTS = _AtlasRegion(0  , 256, 192, 64 , 16, 16)
-    _GRAPHICS_ATLAS_REGION_PACMAN = _AtlasRegion(192, 256, 224, 64 , 16, 16)
-    _GRAPHICS_ATLAS_REGION_FRUITS = _AtlasRegion(416, 256, 144, 16 , 16, 16)
-
-    # ------------------------------------------------------------------------
-
-
-    im = cv2.imread(GRAPHICS_ATLAS_PATH, cv2.IMREAD_UNCHANGED)
-
-    sprites = []
-    for region in GRAPHICS_ATLAS_ALL_REGIONS:
-        left   = region.reg_x_left
-        right  = left + region.reg_width
-        bottom = im.shape[0] - region.reg_y_bottom
-        top    = bottom - region.reg_height
-
-        for row in range(top, bottom, region.elem_height):
-            for col in range(left, right, region.elem_width):
-                sprites.append(im[row:row+region.elem_height, col:col+region.elem_width])
-
-    # Remove repetitions.
-    seen = set()
-    idx_to_remove = []
-    for idx, sprite in enumerate(sprites):
-        hashable = sprite.tobytes()
-        if hashable in seen:
-            idx_to_remove.append(idx)
-        else:
-            seen.add(hashable)
-    sprites = [s for idx, s in enumerate(sprites) if idx not in idx_to_remove]
-
-    return sprites
-
-
+from constants import Position, MatchResults, Region, VIDEOS_PATHS, TEMPLATE_LEVEL_START_PATH, TEMPLATE_LEVEL_END_PATH, PARALLEL_MAX_WORKERS, LEVEL_START_END_DETECTION_THR, TEMPLATE_PACMAN_PATH, TEMPLATE_PACMAN_LABEL_PER_ROW, TEMPLATE_PACMAN_ELEMENT_WIDTH, TEMPLATE_PACMAN_ELEMENT_HEIGHT
 
 
 
@@ -141,6 +41,17 @@ def video_iterator(video_path, frames_start = 0, frames_step = 1, frames_number 
             yield frame
         
     stream.release()
+
+
+def video_get_fps(video_path):
+    stream = cv2.VideoCapture(video_path, cv2.CAP_FFMPEG)
+    fps = float(stream.get(cv2.CAP_PROP_FPS))
+    stream.release()
+
+    if fps == 0.0:
+        raise RuntimeError("unable to detect frames per second of video.")
+
+    return fps
 
 
 def init_worker():
@@ -351,22 +262,110 @@ def find_start_end_levels(video_path, template_level_start_path, template_level_
     return level_frame_ranges
 
 
-        
+def make_pacman_sprites(path, label_per_row, element_width, element_height, scale_width, scale_height):
+    atlas = load_image(path, transparency = True)
+    atlas_height, atlas_width, _ = atlas.shape
+    n_element_rows = atlas_height // element_height
+    n_element_cols = atlas_width  // element_width
+
+    # Sanity check.
+    if atlas_height % element_height:
+        raise RuntimeError(f"loaded image with height not divisible by {element_height}: {atlas_height}")    
+    if atlas_width % element_width:
+        raise RuntimeError(f"loaded image with width not divisible by {element_width}: {atlas_width}")    
+    if len(label_per_row) != n_element_rows:
+        raise RuntimeError(f"expected one label per line in atlas. Instead got {len(label_per_row)} labels and {n_element_rows} rows of elements.")
+
+    # Split atlas into sprites, removing fully-transparent sprites and duplicates per-row.
+    sprites = []
+    sprites_labels = []
+    for idx_element_row in range(n_element_rows):
+        top = idx_element_row * element_height
+        label = label_per_row[idx_element_row]
+
+        seen_in_element_row = set()
+        for idx_element_col in range(n_element_cols):
+            left = idx_element_col * element_width
+            
+            sprite = atlas[top:top + element_height, left:left + element_width]
+            hashable = sprite.tobytes()
+
+            if hashable in seen_in_element_row:
+                continue
+            if (sprite[:, :, -1] == 0).all(axis = None):
+                continue
+            
+            seen_in_element_row.add(hashable)
+            sprites.append(sprite)
+            sprites_labels.append((label, idx_element_col))
+
+    # Scale sprites.
+    sprites = [resize_image(sprite, scale_width = scale_width, scale_height = scale_height) for sprite in sprites]
+
+    return sprites, sprites_labels
+
+
+def search_pacman(video_path, level_frame_ranges, maze_region, template_pacman_path, template_pacman_label_per_row, template_pacman_element_width, template_pacman_element_height, scale_width, scale_height):
+    sprites, sprites_labels = make_pacman_sprites(template_pacman_path, template_pacman_label_per_row, template_pacman_element_width, template_pacman_element_height, scale_width, scale_height)
+
+    level_results = []
+    for level in level_frame_ranges:
+        res = match_template_whole_video(video_path, sprites, viewport = maze_region, frames_start = level["start"], frames_number = level["end"] - level["start"])
+        level_results.append(res)
     
+    return level_results, sprites_labels
 
 
 if __name__ == "__main__":
-    video_path = VIDEOS_PATHS[1]
+    IDX = 1
+    video_path = VIDEOS_PATHS[IDX]
+    cache_path = f"cache_video_{IDX}.pkl"
+    import os, pickle
 
-    print("Finding viewport of video...")
-    viewport = find_viewport(video_path)
+    if os.path.isfile(cache_path):
+        with open(cache_path, "rb") as file:
+            viewport, scale_height, scale_width, maze_region, level_frame_ranges, pacman_search_results, pacman_search_labels = pickle.load(file)
+    else:
 
-    print("Finding scaling factors between video frames and templates...")
-    scale_height, scale_width, maze_region = find_scale_and_maze_region(video_path, TEMPLATE_LEVEL_START_PATH, viewport)
-    
-    print("Detecting level starts scaling factors between video frames and templates...")
-    level_frame_ranges = find_start_end_levels(video_path, TEMPLATE_LEVEL_START_PATH, TEMPLATE_LEVEL_END_PATH, maze_region, scale_height, scale_width)
-    
+
+        # ---------------------------------------------------------
+        # ---------------------------------------------------------
+        # ---------------------------------------------------------
+
+        print("Finding viewport of video...")
+        viewport = find_viewport(video_path)
+
+        print("Finding scaling factors between video frames and templates...")
+        scale_height, scale_width, maze_region = find_scale_and_maze_region(video_path,
+                                                                            TEMPLATE_LEVEL_START_PATH,
+                                                                            viewport)
+        
+        print("Detecting level start and end...")
+        level_frame_ranges = find_start_end_levels(video_path,
+                                                   TEMPLATE_LEVEL_START_PATH,
+                                                   TEMPLATE_LEVEL_END_PATH,
+                                                   maze_region,
+                                                   scale_height,
+                                                   scale_width)
+        
+        print("Searching pacman in maze...")
+        pacman_search_results, pacman_search_labels = search_pacman(video_path,
+                                                                    level_frame_ranges,
+                                                                    maze_region,
+                                                                    TEMPLATE_PACMAN_PATH,
+                                                                    TEMPLATE_PACMAN_LABEL_PER_ROW,
+                                                                    TEMPLATE_PACMAN_ELEMENT_WIDTH,
+                                                                    TEMPLATE_PACMAN_ELEMENT_HEIGHT,
+                                                                    scale_width,
+                                                                    scale_height)
+
+        # ---------------------------------------------------------
+        # ---------------------------------------------------------
+        # ---------------------------------------------------------
+
+
+        with open(cache_path, "wb") as file:
+            pickle.dump((viewport, scale_height, scale_width, maze_region, level_frame_ranges), file)
 
 
 
@@ -376,10 +375,16 @@ if __name__ == "__main__":
     print("Maze region:", maze_region)
     print("Number of levels:", len(level_frame_ranges))
     
-    level = level_frame_ranges[10]
-    template_level_start = load_image(TEMPLATE_LEVEL_START_PATH, transparency = False, resize_kwargs = {"scale_width": scale_width, "scale_height": scale_height})
-    for frame in video_iterator(video_path, frames_start = level["start"], frames_number = level["end"] - level["start"]):
-        offset = maze_region.start
-        frame[offset.row:offset.row+template_level_start.shape[0], offset.col:offset.col+template_level_start.shape[1], :] = frame[offset.row:offset.row+template_level_start.shape[0], offset.col:offset.col+template_level_start.shape[1], :] * 0.5 + template_level_start * 0.5
+    level = 3
+    for result, frame in zip(pacman_search_results[level], 
+                             video_iterator(video_path, frames_start = level_frame_ranges[level]["start"], frames_number = level_frame_ranges[level]["end"] - level_frame_ranges[level]["start"])):
+        best_idx = min(range(len(result)), key = lambda idx: result[idx].score)
+        label = pacman_search_labels[best_idx]
+        position = result[best_idx].pos + maze_region.start + Position(8, 8)
+        
+        frame = cv2.circle(frame, center = (position.col, position.row), radius = 2, color = (0, 0, 255), thickness = -1)
+        cv2.putText(frame, str(label), (position.col + 5, position.row - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+        
+        
         cv2.imshow("", frame)
         cv2.waitKey()
