@@ -18,6 +18,8 @@ class MatchResults:
     pos: Position
     score: float
 
+MatchResults.NO_MATCH = MatchResults(pos = None, score = None)
+
 
 @dataclass(slots = True, frozen = True)
 class Region:
@@ -63,3 +65,5 @@ LEVEL_START_END_DETECTION_THR = 50
 TEMPLATE_PACMAN_LABEL_PER_ROW = ["RIGHT", "LEFT", "UP", "DOWN", "FULL_CIRCLE", "DEATH"]
 TEMPLATE_PACMAN_ELEMENT_WIDTH = 16
 TEMPLATE_PACMAN_ELEMENT_HEIGHT = 16
+
+PACMAN_COLOR_RANGE_HSV = [(25, 200, 200), (35, 255, 255)]

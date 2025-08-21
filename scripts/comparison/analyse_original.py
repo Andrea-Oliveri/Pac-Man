@@ -1,12 +1,13 @@
 import multiprocessing
 import signal
 import itertools
+from functools import partial
 
 import cv2
 from tqdm import tqdm
 import numpy as np
 
-from constants import Position, MatchResults, Region, VIDEOS_PATHS, TEMPLATE_LEVEL_START_PATH, TEMPLATE_LEVEL_END_PATH, PARALLEL_MAX_WORKERS, LEVEL_START_END_DETECTION_THR, TEMPLATE_PACMAN_PATH, TEMPLATE_PACMAN_LABEL_PER_ROW, TEMPLATE_PACMAN_ELEMENT_WIDTH, TEMPLATE_PACMAN_ELEMENT_HEIGHT
+from constants import Position, MatchResults, Region, VIDEOS_PATHS, TEMPLATE_LEVEL_START_PATH, TEMPLATE_LEVEL_END_PATH, PARALLEL_MAX_WORKERS, LEVEL_START_END_DETECTION_THR, TEMPLATE_PACMAN_PATH, TEMPLATE_PACMAN_LABEL_PER_ROW, TEMPLATE_PACMAN_ELEMENT_WIDTH, TEMPLATE_PACMAN_ELEMENT_HEIGHT, PACMAN_COLOR_RANGE_HSV
 
 
 
@@ -81,7 +82,7 @@ def check_image_shape(image, n_channels, n_dims = 3):
 
 
 
-def match_template_whole_video(video_path, sprites, **video_iterator_kwargs):
+def match_template_whole_video(video_path, sprites, crop_frame_callback = None, **video_iterator_kwargs):
     if not isinstance(sprites, (tuple, list)):
         raise RuntimeError(f"Expected sprites argument to be a list or tuple of images. Got {type(sprites)}")
     
@@ -97,7 +98,8 @@ def match_template_whole_video(video_path, sprites, **video_iterator_kwargs):
     try:
         iterator = zip(video_iterator(video_path, **video_iterator_kwargs), 
                        itertools.repeat(sprites), 
-                       itertools.repeat(masks))
+                       itertools.repeat(masks),
+                       itertools.repeat(crop_frame_callback))
 
         with multiprocessing.Pool(PARALLEL_MAX_WORKERS, init_worker) as pool:
             results = list(pool.imap(analyse_frame, iterator))
@@ -111,7 +113,19 @@ def match_template_whole_video(video_path, sprites, **video_iterator_kwargs):
 
 
 def analyse_frame(args):
-    frame, sprites, masks = args
+    frame, sprites, masks, crop_frame_callback = args
+
+    crop_position = Position(row = 0, col = 0)
+    if crop_frame_callback is not None:
+        if not callable(crop_frame_callback):
+            raise RuntimeError("argument 'crop_frame_callback' must be callable.")
+
+        frame, crop_position = crop_frame_callback(frame)
+        if frame is None:
+            return MatchResults.NO_MATCH
+
+        if not isinstance(crop_position, Position):
+            raise RuntimeError("argument 'crop_frame_callback' needs to return cropped frame and an instance of class Position.")
 
     check_image_shape(frame, n_channels = 3)
     if not isinstance(sprites, (list, tuple)) or not isinstance(masks, (list, tuple)):
@@ -131,7 +145,7 @@ def analyse_frame(args):
         denominator = np.sum(mask != 0, axis = None) if mask is not None else sprite.shape[0] * sprite.shape[1]
         min_val = np.sqrt(min_val / denominator)
 
-        results.append(MatchResults(Position(row, col), min_val))
+        results.append(MatchResults(Position(row, col) + crop_position, min_val))
 
     return results
 
@@ -305,15 +319,46 @@ def make_pacman_sprites(path, label_per_row, element_width, element_height, scal
     return sprites, sprites_labels
 
 
-def search_pacman(video_path, level_frame_ranges, maze_region, template_pacman_path, template_pacman_label_per_row, template_pacman_element_width, template_pacman_element_height, scale_width, scale_height):
+def search_pacman(video_path, level_frame_ranges, maze_region, template_pacman_path, template_pacman_label_per_row, template_pacman_element_width, template_pacman_element_height, pacman_color_range_hsv, scale_width, scale_height):
     sprites, sprites_labels = make_pacman_sprites(template_pacman_path, template_pacman_label_per_row, template_pacman_element_width, template_pacman_element_height, scale_width, scale_height)
+
+    callback = partial(search_pacman_callback_crop_frame, pacman_color_range_hsv = pacman_color_range_hsv, template_pacman_element_width = template_pacman_element_width, template_pacman_element_height = template_pacman_element_height)
 
     level_results = []
     for level in level_frame_ranges:
-        res = match_template_whole_video(video_path, sprites, viewport = maze_region, frames_start = level["start"], frames_number = level["end"] - level["start"])
+        res = match_template_whole_video(video_path, sprites, crop_frame_callback = callback, viewport = maze_region, frames_start = level["start"], frames_number = level["end"] - level["start"])
+
+        # Handle: 
+        # - Deaths are only valid if there is the full sequence afterwards with high enough accuracy. Otherwise put scores to infinity.
+        # - Sometimes pacman disappears completely. In which case, assume position didn't change. 100 seems to be a good value for the thresholding of what is a reasonably accurate detection and what isn't. Additionally, some items are MatchResult.NO_MATCH.
+        # - I see position jumping around sometimes.
+        for sprite_idx, (label, _) in enumerate(sprites_labels):
+            if label == "DEATH":
+                for idx, r in enumerate(res):
+                    if r == MatchResults.NO_MATCH:
+                        continue
+                    res[idx][sprite_idx] = MatchResults(res[idx][sprite_idx], score = float("inf"))
+
         level_results.append(res)
-    
+
+
     return level_results, sprites_labels
+
+
+def search_pacman_callback_crop_frame(frame, pacman_color_range_hsv, template_pacman_element_width, template_pacman_element_height):
+    frame_height, frame_width, _ = frame.shape
+    converted = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(converted, *pacman_color_range_hsv)
+    rows, cols = mask.nonzero()
+    if rows.size == 0:
+        return None, None
+    row_start = max(min(rows) - template_pacman_element_height    , 0)
+    row_end   = min(max(rows) + template_pacman_element_height + 1, frame_height)
+    col_start = max(min(cols) - template_pacman_element_width     , 0)
+    col_end   = min(max(cols) + template_pacman_element_width  + 1, frame_width)
+    return frame[row_start:row_end, col_start:col_end, :], Position(row = row_start, col = col_start)
+
+
 
 
 if __name__ == "__main__":
@@ -348,24 +393,26 @@ if __name__ == "__main__":
                                                    scale_height,
                                                    scale_width)
         
-        print("Searching pacman in maze...")
-        pacman_search_results, pacman_search_labels = search_pacman(video_path,
-                                                                    level_frame_ranges,
-                                                                    maze_region,
-                                                                    TEMPLATE_PACMAN_PATH,
-                                                                    TEMPLATE_PACMAN_LABEL_PER_ROW,
-                                                                    TEMPLATE_PACMAN_ELEMENT_WIDTH,
-                                                                    TEMPLATE_PACMAN_ELEMENT_HEIGHT,
-                                                                    scale_width,
-                                                                    scale_height)
+        
 
         # ---------------------------------------------------------
         # ---------------------------------------------------------
         # ---------------------------------------------------------
 
+    print("Searching pacman in maze...")
+    pacman_search_results, pacman_search_labels = search_pacman(video_path,
+                                                                level_frame_ranges[:5],
+                                                                maze_region,
+                                                                TEMPLATE_PACMAN_PATH,
+                                                                TEMPLATE_PACMAN_LABEL_PER_ROW,
+                                                                TEMPLATE_PACMAN_ELEMENT_WIDTH,
+                                                                TEMPLATE_PACMAN_ELEMENT_HEIGHT,
+                                                                PACMAN_COLOR_RANGE_HSV,
+                                                                scale_width,
+                                                                scale_height)
 
-        with open(cache_path, "wb") as file:
-            pickle.dump((viewport, scale_height, scale_width, maze_region, level_frame_ranges), file)
+    with open(cache_path, "wb") as file:
+        pickle.dump((viewport, scale_height, scale_width, maze_region, level_frame_ranges, pacman_search_results, pacman_search_labels), file)
 
 
 
@@ -374,17 +421,26 @@ if __name__ == "__main__":
     print("Scale width:", scale_width)
     print("Maze region:", maze_region)
     print("Number of levels:", len(level_frame_ranges))
-    
+
+
     level = 3
     for result, frame in zip(pacman_search_results[level], 
                              video_iterator(video_path, frames_start = level_frame_ranges[level]["start"], frames_number = level_frame_ranges[level]["end"] - level_frame_ranges[level]["start"])):
-        best_idx = min(range(len(result)), key = lambda idx: result[idx].score)
-        label = pacman_search_labels[best_idx]
-        position = result[best_idx].pos + maze_region.start + Position(8, 8)
-        
-        frame = cv2.circle(frame, center = (position.col, position.row), radius = 2, color = (0, 0, 255), thickness = -1)
-        cv2.putText(frame, str(label), (position.col + 5, position.row - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
-        
-        
+        if result != MatchResults.NO_MATCH:
+            sorted_idx = sorted(range(len(result)), key = lambda idx: result[idx].score)
+            
+            best_idx = sorted_idx[0]
+            label = pacman_search_labels[best_idx]
+            position = result[best_idx].pos + maze_region.start + Position(8, 8)        
+            frame = cv2.circle(frame, center = (position.col, position.row), radius = 4, color = (0, 0, 255), thickness = -1)
+            cv2.putText(frame, str(list(label) + [f"{result[best_idx].score:.2f}"]), (position.col + 5, position.row - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+
+            best_idx = sorted_idx[1]
+            label = pacman_search_labels[best_idx]
+            position = result[best_idx].pos + maze_region.start + Position(8, 8)
+            frame = cv2.circle(frame, center = (position.col, position.row), radius = 2, color = (0, 255, 0), thickness = -1)
+            cv2.putText(frame, str(list(label) + [f"{result[best_idx].score:.2f}"]), (position.col + 5, position.row + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+
+
         cv2.imshow("", frame)
         cv2.waitKey()
