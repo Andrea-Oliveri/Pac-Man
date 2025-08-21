@@ -7,7 +7,7 @@ import cv2
 from tqdm import tqdm
 import numpy as np
 
-from constants import VIDEOS_PATHS, TEMPLATE_LEVEL_START_PATH, PARALLEL_MAX_WORKERS, LEVEL_SEARCH_FRAMES_STEP
+from constants import VIDEOS_PATHS, TEMPLATE_LEVEL_START_PATH, TEMPLATE_LEVEL_END_PATH, PARALLEL_MAX_WORKERS, LEVEL_SEARCH_FRAMES_STEP
 
 
 @dataclass(slots = True, frozen = True)
@@ -15,10 +15,17 @@ class Position:
     row: int
     col: int
 
+    def __add__(self, other):
+        if not isinstance(other, Position):
+            raise ValueError(f"argument 'other' must be of type Position. Got {type(other)}")
+        return Position(row = self.row + other.row, col = self.col + other.col)
+    
+
 @dataclass(slots = True, frozen = True)
 class MatchResults:
     pos: Position
     score: float
+
 
 @dataclass(slots = True, frozen = True)
 class Region:
@@ -37,6 +44,10 @@ class Region:
         else:
             if height is not None or width is not None:
                 raise ValueError(f"when argument 'stop' is provided, both 'width' and 'height' must not be provided")
+        
+        if start.row > stop.row or start.col > stop.col:
+            raise ValueError(f"start must have row and col <= to stop. Got start: {start} and stop {stop}")
+
         object.__setattr__(self, "start", start)
         object.__setattr__(self, "stop" , stop)
 
@@ -216,9 +227,9 @@ def analyse_frame(args):
 
 def find_viewport(video_path, frames_to_search = 200, frames_step = 30, black_value_thr = 5):
     # Estimate the drawable screen portion from the video.
-    viewport = Region(start = Position(row = +float("inf"), col = +float("inf")),
-                      stop  = Position(row = -float("inf"), col = -float("inf")))
-
+    viewport_start = Position(row = +float("inf"), col = +float("inf"))
+    viewport_stop  = Position(row = -float("inf"), col = -float("inf"))
+    
     for frame in video_iterator(video_path, frames_step = frames_step, frames_number = frames_to_search):
         # Get the non-black pixels and use them to calculate drawable height and width.
         mask = ~cv2.inRange(frame, (0, 0, 0), (black_value_thr, black_value_thr, black_value_thr))
@@ -226,21 +237,19 @@ def find_viewport(video_path, frames_to_search = 200, frames_step = 30, black_va
         if rows.size == 0:
             continue
 
-        viewport = Region(start = Position(row = min(viewport.start.row, min(rows)),
-                                           col = min(viewport.start.col, min(cols))),
-                          stop  = Position(row = max(viewport.stop.row , max(rows) + 1),
-                                           col = max(viewport.stop.col , max(cols) + 1)))
-    return viewport
+        viewport_start = Position(row = min(viewport_start.row, min(rows)),
+                                  col = min(viewport_start.col, min(cols)))
+        viewport_stop  = Position(row = max(viewport_stop.row , max(rows) + 1),
+                                  col = max(viewport_stop.col , max(cols) + 1))
+        
+    return Region(start = viewport_start, stop = viewport_stop)
 
 
-def find_scale_and_maze_region(video_path, template_level_start, viewport, frames_to_search = 75, frames_step = 15, scale_pixels_trial_range = 20, successful_match_thr = 45):
-    template_height, template_width, template_channels = template_level_start.shape
+def find_scale_and_maze_region(video_path, template_level_start_path, viewport, frames_to_search = 75, frames_step = 15, scale_pixels_trial_range = 20, successful_match_thr = 50):
+    # Load template_level_start. Must not have any alpha channel because if it does template match considers transparency in match. 
+    template_level_start = load_image(template_level_start_path, transparency = False)
+    template_height, template_width, _ = template_level_start.shape
     
-    # Sanity check.
-    if template_channels != 3:
-        raise RuntimeError(f"Expected template_level_start to be a BGR image. Got {template_channels} channels instead.")
-    del template_channels
-
     # In theory, the image in template_level_start should span the whole width of the drawable screen.
     theoretical_template_width  = viewport.width
     theoretical_template_height = int((theoretical_template_width / template_width) * template_height)
@@ -251,9 +260,7 @@ def find_scale_and_maze_region(video_path, template_level_start, viewport, frame
                        min(theoretical_template_width + scale_pixels_trial_range, viewport.width + 1)):
         for height in range(max(theoretical_template_height - scale_pixels_trial_range, 1),
                             min(theoretical_template_height + scale_pixels_trial_range, viewport.height + 1)):
-            scaled_templates.append(cv2.resize(template_level_start,
-                                               (width, height),
-                                               interpolation = cv2.INTER_AREA if width <= template_width else cv2.INTER_CUBIC))
+            scaled_templates.append(resize_image(template_level_start, width = width, height = height))
     results = match_template_whole_video(video_path, scaled_templates, viewport = viewport, frames_step = frames_step, frames_number = frames_to_search)
     del theoretical_template_width, theoretical_template_height, width, height
     
@@ -264,8 +271,8 @@ def find_scale_and_maze_region(video_path, template_level_start, viewport, frame
     scale_height = best_scaled_height / template_height
     scale_width  = best_scaled_width  / template_width
     
-    # As a bonus, we also get the position of the maze inside our viewport. Store it for later.
-    maze_region = Region(start  = best_result["position"],
+    # As a bonus, we also get the position of the maze inside our viewport. Convert it into frame position and store it for later.
+    maze_region = Region(start  = best_result["position"] + viewport.start,
                          height = best_scaled_height,
                          width  = best_scaled_width)
 
@@ -275,32 +282,89 @@ def find_scale_and_maze_region(video_path, template_level_start, viewport, frame
 
     return scale_height, scale_width, maze_region
 
+
+def load_image(path, transparency, resize_kwargs = None):
+    image = cv2.imread(path, cv2.IMREAD_UNCHANGED if transparency else cv2.IMREAD_COLOR)
+    _, _, n_channels = image.shape
+
+    if transparency and n_channels != 4:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
+        _, _, n_channels = image.shape
+
+    if resize_kwargs is not None:
+        image = resize_image(image, **resize_kwargs)
+
+    # Sanity check.
+    expected_n_channels = 4 if transparency else 3
+    if n_channels != expected_n_channels:
+        raise RuntimeError(f"Programming error caused image to be loaded with {n_channels} instead of {expected_n_channels} with transparency={transparency}")
+    
+    return image
+
+
+def resize_image(image, height = None, width = None, scale_width = None, scale_height = None):
+    shrinking = None
+    use_scale = None
+    if height is None and width is None and scale_width is not None and scale_height is not None:
+        shrinking = scale_width <= 1
+        use_scale = True
+    elif height is not None and width is not None and scale_width is None and scale_height is None:
+        shrinking = width <= image.shape[1]
+        use_scale = False
+    else:
+        raise ValueError("this function expects either 'width' and 'height' or 'scale_width' and 'scale_height' to be provided at the same time")
+    
+    return cv2.resize(image,
+                      None if use_scale else (width, height),
+                      fx = scale_width,
+                      fy = scale_height,
+                      interpolation = cv2.INTER_AREA if shrinking else cv2.INTER_CUBIC)
+
+
+def find_start_end_levels(video_path, template_level_start_path, template_level_end_path, maze_region, scale_height, scale_width):
+    # Load templates for level start and level end. Must not have any alpha channel because if it does template match considers transparency in match. 
+    template_level_start = load_image(template_level_start_path, transparency = False, resize_kwargs = {"scale_width": scale_width, "scale_height": scale_height})
+    template_level_end   = load_image(template_level_end_path  , transparency = False, resize_kwargs = {"scale_width": scale_width, "scale_height": scale_height})
+
+    # Search level start and end in each frame of the video.
+    results = match_template_whole_video(video_path, [template_level_start, template_level_end], viewport = maze_region)
+
+    import pickle
+    pickle.dump(results, open(f"results_level_start_end.pkl", "wb"))
+
+    import matplotlib.pyplot as plt
+    plt.plot([r[0].score for r in results], label = 'start')
+    plt.plot([r[1].score for r in results], label = 'end')
+    plt.legend()
+    plt.show()
+
+
+
         
     
 
 
 if __name__ == "__main__":
     video_path = VIDEOS_PATHS[1]
-    template_level_start = cv2.imread(TEMPLATE_LEVEL_START_PATH, cv2.IMREAD_COLOR)
-
 
     print("Finding viewport of video...")
     viewport = find_viewport(video_path)
 
     print("Finding scaling factors between video frames and templates...")
-    scale_height, scale_width, maze_region = find_scale_and_maze_region(video_path, template_level_start, viewport)
+    scale_height, scale_width, maze_region = find_scale_and_maze_region(video_path, TEMPLATE_LEVEL_START_PATH, viewport)
+    
+    print("Detecting level starts scaling factors between video frames and templates...")
+    find_start_end_levels(video_path, TEMPLATE_LEVEL_START_PATH, TEMPLATE_LEVEL_END_PATH, maze_region, scale_height, scale_width)
     
 
 
-    print(scale_height, scale_width, maze_region)
-    
-    template_level_start = cv2.resize(template_level_start,
-                                      None,
-                                      fx = scale_width,
-                                      fy = scale_height,
-                                      interpolation = cv2.INTER_CUBIC)
+
+
+    print(viewport, scale_height, scale_width, maze_region)
+
+    template_level_start = load_image(TEMPLATE_LEVEL_START_PATH, transparency = False, resize_kwargs = {"scale_width": scale_width, "scale_height": scale_height})
     for frame in video_iterator(video_path, frames_number = 500, frames_step = 10):
-        offset = Position(row = viewport.start.row + maze_region.start.row, col = viewport.start.col + maze_region.start.col)
+        offset = maze_region.start
         frame[offset.row:offset.row+template_level_start.shape[0], offset.col:offset.col+template_level_start.shape[1], :] = frame[offset.row:offset.row+template_level_start.shape[0], offset.col:offset.col+template_level_start.shape[1], :] * 0.5 + template_level_start * 0.5
         cv2.imshow("", frame)
         cv2.waitKey()
