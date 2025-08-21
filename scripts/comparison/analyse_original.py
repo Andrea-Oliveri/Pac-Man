@@ -7,7 +7,7 @@ import cv2
 from tqdm import tqdm
 import numpy as np
 
-from constants import VIDEOS_PATHS, TEMPLATE_LEVEL_START_PATH, TEMPLATE_LEVEL_END_PATH, PARALLEL_MAX_WORKERS, LEVEL_SEARCH_FRAMES_STEP
+from constants import VIDEOS_PATHS, TEMPLATE_LEVEL_START_PATH, TEMPLATE_LEVEL_END_PATH, PARALLEL_MAX_WORKERS, LEVEL_SEARCH_FRAMES_STEP, LEVEL_START_END_DETECTION_THR
 
 
 @dataclass(slots = True, frozen = True)
@@ -245,7 +245,7 @@ def find_viewport(video_path, frames_to_search = 200, frames_step = 30, black_va
     return Region(start = viewport_start, stop = viewport_stop)
 
 
-def find_scale_and_maze_region(video_path, template_level_start_path, viewport, frames_to_search = 75, frames_step = 15, scale_pixels_trial_range = 20, successful_match_thr = 50):
+def find_scale_and_maze_region(video_path, template_level_start_path, viewport, frames_to_search = 75, frames_step = 15, scale_pixels_trial_range = 20, successful_match_thr = LEVEL_START_END_DETECTION_THR):
     # Load template_level_start. Must not have any alpha channel because if it does template match considers transparency in match. 
     template_level_start = load_image(template_level_start_path, transparency = False)
     template_height, template_width, _ = template_level_start.shape
@@ -321,7 +321,7 @@ def resize_image(image, height = None, width = None, scale_width = None, scale_h
                       interpolation = cv2.INTER_AREA if shrinking else cv2.INTER_CUBIC)
 
 
-def find_start_end_levels(video_path, template_level_start_path, template_level_end_path, maze_region, scale_height, scale_width):
+def find_start_end_levels(video_path, template_level_start_path, template_level_end_path, maze_region, scale_height, scale_width, level_start_end_detection_thr = LEVEL_START_END_DETECTION_THR):
     # Load templates for level start and level end. Must not have any alpha channel because if it does template match considers transparency in match. 
     template_level_start = load_image(template_level_start_path, transparency = False, resize_kwargs = {"scale_width": scale_width, "scale_height": scale_height})
     template_level_end   = load_image(template_level_end_path  , transparency = False, resize_kwargs = {"scale_width": scale_width, "scale_height": scale_height})
@@ -329,15 +329,26 @@ def find_start_end_levels(video_path, template_level_start_path, template_level_
     # Search level start and end in each frame of the video.
     results = match_template_whole_video(video_path, [template_level_start, template_level_end], viewport = maze_region)
 
-    import pickle
-    pickle.dump(results, open(f"results_level_start_end.pkl", "wb"))
+    # Find detection edges to identify when level starts and ends.
+    level_frame_ranges = []
+    current_start = None
+    previous_start_detected = False
+    previous_end_detected = False
 
-    import matplotlib.pyplot as plt
-    plt.plot([r[0].score for r in results], label = 'start')
-    plt.plot([r[1].score for r in results], label = 'end')
-    plt.legend()
-    plt.show()
+    for idx, (res_level_start, res_level_end) in enumerate(results):
+        start_detected = res_level_start.score <= level_start_end_detection_thr
+        end_detected   = res_level_end  .score <= level_start_end_detection_thr
 
+        if current_start is None and previous_start_detected and not start_detected:
+            current_start = idx
+        elif current_start is not None and not previous_end_detected and end_detected:
+            level_frame_ranges.append({"start": current_start, "end": idx})
+            current_start = None
+
+        previous_start_detected = start_detected
+        previous_end_detected   = end_detected
+
+    return level_frame_ranges
 
 
         
@@ -354,28 +365,21 @@ if __name__ == "__main__":
     scale_height, scale_width, maze_region = find_scale_and_maze_region(video_path, TEMPLATE_LEVEL_START_PATH, viewport)
     
     print("Detecting level starts scaling factors between video frames and templates...")
-    find_start_end_levels(video_path, TEMPLATE_LEVEL_START_PATH, TEMPLATE_LEVEL_END_PATH, maze_region, scale_height, scale_width)
+    level_frame_ranges = find_start_end_levels(video_path, TEMPLATE_LEVEL_START_PATH, TEMPLATE_LEVEL_END_PATH, maze_region, scale_height, scale_width)
     
 
 
 
-
-    print(viewport, scale_height, scale_width, maze_region)
-
+    print("Viewport:", viewport)
+    print("Scale height:", scale_height)
+    print("Scale width:", scale_width)
+    print("Maze region:", maze_region)
+    print("Number of levels:", len(level_frame_ranges))
+    
+    level = level_frame_ranges[10]
     template_level_start = load_image(TEMPLATE_LEVEL_START_PATH, transparency = False, resize_kwargs = {"scale_width": scale_width, "scale_height": scale_height})
-    for frame in video_iterator(video_path, frames_number = 500, frames_step = 10):
+    for frame in video_iterator(video_path, frames_start = level["start"], frames_number = level["end"] - level["start"]):
         offset = maze_region.start
         frame[offset.row:offset.row+template_level_start.shape[0], offset.col:offset.col+template_level_start.shape[1], :] = frame[offset.row:offset.row+template_level_start.shape[0], offset.col:offset.col+template_level_start.shape[1], :] * 0.5 + template_level_start * 0.5
         cv2.imshow("", frame)
         cv2.waitKey()
-
-    quit()
-
-    results = match_template_whole_video(video_path, [template_level_start], frames_step = LEVEL_SEARCH_FRAMES_STEP)
-    
-    import pickle
-    pickle.dump(results, open(f"results_every_{LEVEL_SEARCH_FRAMES_STEP}.pkl", "wb"))
-
-    import matplotlib.pyplot as plt
-    plt.plot([r[0].SCORE for r in results])
-    plt.show()
