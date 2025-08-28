@@ -1,5 +1,6 @@
 import pathlib
 from dataclasses import dataclass
+from enum import IntEnum
 
 
 @dataclass(slots = True, frozen = True)
@@ -18,7 +19,7 @@ class MatchResults:
     pos: Position
     score: float
 
-MatchResults.NO_MATCH = MatchResults(pos = None, score = None)
+MatchResults.NO_MATCH = MatchResults(pos = None, score = float('inf'))
 
 
 @dataclass(slots = True, frozen = True)
@@ -46,12 +47,13 @@ class Region:
         object.__setattr__(self, "stop" , stop)
 
 
+PacmanStates = IntEnum("PacmanStates", ["RIGHT", "LEFT", "UP", "DOWN", "FULL_CIRCLE", "DEATH"])
 
 
 
 _ASSETS_FOLDER = pathlib.Path(__file__).parent / "assets"
 
-VIDEOS_PATHS = list((_ASSETS_FOLDER / "videos").glob("*.mp4"))
+VIDEOS_PATHS = [e for e in (_ASSETS_FOLDER / "videos").iterdir() if e.stem != ".gitkeep"]
 
 _TEMPLATES_FOLDER = _ASSETS_FOLDER / "templates"
 TEMPLATE_LEVEL_START_PATH = _TEMPLATES_FOLDER / "level_start.png"
@@ -62,8 +64,10 @@ PARALLEL_MAX_WORKERS = 12
 
 LEVEL_START_END_DETECTION_THR = 50
 
-TEMPLATE_PACMAN_LABEL_PER_ROW = ["RIGHT", "LEFT", "UP", "DOWN", "FULL_CIRCLE", "DEATH"]
+TEMPLATE_PACMAN_LABEL_PER_ROW = [PacmanStates.RIGHT, PacmanStates.LEFT, PacmanStates.UP, PacmanStates.DOWN, PacmanStates.FULL_CIRCLE, PacmanStates.DEATH]
 TEMPLATE_PACMAN_ELEMENT_WIDTH = 16
 TEMPLATE_PACMAN_ELEMENT_HEIGHT = 16
 
 PACMAN_COLOR_RANGE_HSV = [(25, 200, 200), (35, 255, 255)]
+
+PACMAN_DETECTION_THR = 90
