@@ -46,6 +46,12 @@ class Region:
         object.__setattr__(self, "start", start)
         object.__setattr__(self, "stop" , stop)
 
+    def __contains__(self, position):
+        if not isinstance(position, Position):
+            raise ValueError(f"argument 'position' must be of type Position. Got {type(position)}")
+        return (self.start.row <= position.row < self.stop.row) and (self.start.col <= position.col < self.stop.col)
+        
+
 
 PacmanStates = IntEnum("PacmanStates", ["RIGHT", "LEFT", "UP", "DOWN", "FULL_CIRCLE", "DEATH"])
 
@@ -71,3 +77,13 @@ TEMPLATE_PACMAN_ELEMENT_HEIGHT = 16
 PACMAN_COLOR_RANGE_HSV = [(25, 200, 200), (35, 255, 255)]
 
 PACMAN_DETECTION_THR = 90
+
+# In maze tile coordinates, pacman's center is at column 14 and row 23.5
+# Each tile of the maze is 8x8 pixels.
+# Additionally, we need to adjust the offset because we want the top left of the Pacman sprite, not the center.
+# Pacman sprites are 16x16 pixels.
+PACMAN_START_POSITION = Position(row = 23.5 * 8 - 8, col = 14 * 8 - 8)
+
+# Pacman's speed depends on the level, but never exceeds (75.75757625 / 8) maze tiles per second.
+# Each tile of the maze is 8x8 pixels.
+PACMAN_MAX_SPEED_PIXELS_PER_SEC = 75.75757625

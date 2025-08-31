@@ -7,7 +7,7 @@ import cv2
 from tqdm import tqdm
 import numpy as np
 
-from constants import Position, MatchResults, Region, VIDEOS_PATHS, TEMPLATE_LEVEL_START_PATH, TEMPLATE_LEVEL_END_PATH, PARALLEL_MAX_WORKERS, LEVEL_START_END_DETECTION_THR, TEMPLATE_PACMAN_PATH, TEMPLATE_PACMAN_LABEL_PER_ROW, TEMPLATE_PACMAN_ELEMENT_WIDTH, TEMPLATE_PACMAN_ELEMENT_HEIGHT, PACMAN_COLOR_RANGE_HSV, PACMAN_DETECTION_THR, PacmanStates
+from constants import Position, MatchResults, Region, VIDEOS_PATHS, TEMPLATE_LEVEL_START_PATH, TEMPLATE_LEVEL_END_PATH, PARALLEL_MAX_WORKERS, LEVEL_START_END_DETECTION_THR, TEMPLATE_PACMAN_PATH, TEMPLATE_PACMAN_LABEL_PER_ROW, TEMPLATE_PACMAN_ELEMENT_WIDTH, TEMPLATE_PACMAN_ELEMENT_HEIGHT, PACMAN_COLOR_RANGE_HSV, PACMAN_DETECTION_THR, PacmanStates, PACMAN_START_POSITION, PACMAN_MAX_SPEED_PIXELS_PER_SEC
 
 
 
@@ -273,7 +273,7 @@ def find_start_end_levels(video_path, template_level_start_path, template_level_
 
 
 def make_pacman_sprites(path, label_per_row, element_width, element_height, scale_width, scale_height):
-    atlas = load_image(path, transparency = True)
+    atlas = load_image(path, transparency = False)
     atlas_height, atlas_width, _ = atlas.shape
     n_element_rows = atlas_height // element_height
     n_element_cols = atlas_width  // element_width
@@ -390,94 +390,186 @@ def track_pacman_deaths(level_results, sprite_idx_of_label, detection_thr):
     return level_results, death_sequences_detected
 
 
+def track_pacman_motion(level_results, sprites_labels, detection_thr, scale_height, scale_width, fps, maze_width_px, neighbourhood_multiplier = 1.1):
+    
+    # To perform accurate detection, we leverage known info about the game.
+    # We need, however, to convert scales and timings from the original game to video.
+    neighbourghood_per_frame = PACMAN_MAX_SPEED_PIXELS_PER_SEC * max(scale_height, scale_width) * neighbourhood_multiplier / fps
+    last_known_position = Position(row = PACMAN_START_POSITION.row * scale_height, 
+                                   col = PACMAN_START_POSITION.col * scale_width)
+    last_known_state = None
+    del scale_height, scale_width, fps, neighbourhood_multiplier
 
 
-def track_pacman(pacman_search_results, sprites_labels, detection_thr):
+    # DEBUG
+    vid = video_iterator(video_path, frames_start = level_frame_ranges[0]["start"], frames_number = level_frame_ranges[0]["end"] - level_frame_ranges[0]["start"])
+    iround = lambda val: int(round(val))
+    import warnings
+    # --------------------
+
+
+    position_and_state = []
+
+    detected_once = False
+    misses = 0
+    for frame_results in level_results:
+        # We allow searching further and further from last known location to avoid Pacman slipping past on accident.
+        neighbourghood = neighbourghood_per_frame * (misses + 1)
+
+
+        # Visuals to help debug the tracking.
+        # frame = next(vid)
+        # for position in frame_results:
+        #     position = position.pos
+        #     if position is None:
+        #         continue
+        #     position = position + maze_region.start
+        #     frame = cv2.circle(frame, center = (iround(position.col), iround(position.row)), radius = 1, color = (0, 0, 255), thickness = -1)
+        # position = last_known_position + maze_region.start
+        # frame = cv2.rectangle(frame,
+        #                       pt1 = (iround(position.col - neighbourghood), iround(position.row - neighbourghood)),
+        #                       pt2 = (iround(position.col + neighbourghood), iround(position.row + neighbourghood)),
+        #                       color = (0, 255, 0), 
+        #                       thickness = 1)
+        # cv2.imshow("", frame)
+        # if cv2.waitKey() == ord("q"):
+        #     cv2.destroyAllWindows()
+        #     break
+
+
+        # Remove all results outside of neighbourghood.
+        idx_to_keep = [idx for idx, res in enumerate(frame_results)
+                       if (res != MatchResults.NO_MATCH
+                           and abs(res.pos.row - last_known_position.row) <= neighbourghood
+                           and (abs(res.pos.col - last_known_position.col) <= neighbourghood or
+                                res.pos.col > maze_width_px + last_known_position.col - neighbourghood or
+                                res.pos.col < last_known_position.col + neighbourghood - maze_width_px))]
+        frame_results = [frame_results [idx] for idx in idx_to_keep]
+        frame_sprites_labels = [sprites_labels[idx] for idx in idx_to_keep]
+        del idx_to_keep
+
+        # If there is no detection it may be because Pacman completely disappeared, such as when ghosts are eaten, or was occluded.
+        if frame_results:
+            misses = 0
+            detected_once = True
+
+            # Simplest strategy to choose best option: take the one with lowest score.
+            best_idx = min(range(len(frame_results)), key = lambda idx: frame_results[idx].score)
+            last_known_position = frame_results[best_idx].pos
+            last_known_state, _ = frame_sprites_labels[best_idx]
+
+            warnings.warn("You may want to implement something smarter")
+            
+
+        else:
+            last_known_state = None
+            if detected_once:
+                misses += 1
+
+        position_and_state.append((last_known_position, last_known_state))
+
+
+    from collections import Counter
+    print(Counter([p.row for p, _ in position_and_state]))
+    print(Counter([p.col for p, _ in position_and_state]))
+
+
+    # DEBUG
+    # Visuals to help debug the smoothing of Pacman's path.
+    iround = lambda val: int(round(val))
+    for idx, frame in enumerate(video_iterator(video_path, frames_start = level_frame_ranges[0]["start"], frames_number = level_frame_ranges[0]["end"] - level_frame_ranges[0]["start"])):
+
+        for position, state in position_and_state[max(0, idx - 100):idx+1]:
+            position = position + maze_region.start
+            if state is None:
+                continue
+            color = [(0, 0, 255), (0, 255, 0), (0, 255, 255), (255, 0, 255), (255, 255, 255), (255, 255, 0)][state]
+            frame = cv2.circle(frame, center = (iround(position.col), iround(position.row)), radius = 1, color = color, thickness = -1)
+        cv2.imshow("", frame)
+        if cv2.waitKey() == ord("q"):
+            cv2.destroyAllWindows()
+            break
+
+
+
+    return level_results
+
+
+
+def track_pacman(pacman_search_results, sprites_labels, detection_thr, scale_height, scale_width, fps, maze_width_px):
 
     # Useful pre-processing: get labels-to-sprite index dictionary (reverse of sprites_labels).
     sprite_idx_of_label = {label: idx for idx, label in enumerate(sprites_labels)}
 
     for idx, level_results in enumerate(pacman_search_results):
 
-        # Identifies frames between which a death occurred. Sets scores of death sprites to invalid if they are not part
-        # of a detected sequence. This is done in-place.
+        # Identifies frames between which a death occurred. Sets scores of death sprites to invalid if they are not part of a detected sequence.
+        # This is done in-place for performance reasons.
         level_results, death_sequences_detected = track_pacman_deaths(level_results, sprite_idx_of_label, detection_thr)
         pacman_search_results[idx] = level_results
         if death_sequences_detected:
             raise NotImplementedError(f"Full death sequences have been detected between frames {death_sequences_detected}. This is not handled yet.")
 
 
-        continue
-    
-    return level_results
-
-    for _ in []:
-
         res_sorted = [
-            MatchResults.NO_MATCH if frame_res == MatchResults.NO_MATCH else
             sorted(frame_res, key = lambda match: match.score)
             for frame_res in level_results
         ]
 
-        print([np.nan if e == MatchResults.NO_MATCH else float(e[0].score) for e in res_sorted[:100]])
-        print([np.nan if e == MatchResults.NO_MATCH else float(e[1].score) for e in res_sorted[:100]])
-
+        print([float(e[0].score) for e in res_sorted[:100]])
+        print([float(e[1].score) for e in res_sorted[:100]])
 
         import matplotlib.pyplot as plt
+        import numpy as np
+
         fig, axes = plt.subplots(4, 1)
-        axes[0].plot([np.nan if e == MatchResults.NO_MATCH else e[0].score for e in res_sorted], label = "Score of 1st")
-        axes[0].plot([np.nan if e == MatchResults.NO_MATCH else e[1].score for e in res_sorted], label = "Score of 2nd")
-        axes[0].plot([np.nan if e == MatchResults.NO_MATCH else e[2].score for e in res_sorted], label = "Score of 3rd")
+        axes[0].plot([e[0].score for e in res_sorted], label = "Score of 1st")
+        axes[0].plot([e[1].score for e in res_sorted], label = "Score of 2nd")
+        axes[0].plot([e[2].score for e in res_sorted], label = "Score of 3rd")
         axes[0].legend()
 
-        axes[1].plot([np.nan if e == MatchResults.NO_MATCH else e[1].score / e[0].score for e in res_sorted], label = "Ratio Score 2nd / 1st")
+        axes[1].plot([e[1].score / e[0].score for e in res_sorted], label = "Ratio Score 2nd / 1st")
         axes[1].legend()
         
-        axes[2].plot([np.nan if e == MatchResults.NO_MATCH else e[1].score / e[0].score for e in res_sorted], label = "Ratio Score 3rd / 1st")
+        axes[2].plot([e[1].score / e[0].score for e in res_sorted], label = "Ratio Score 3rd / 1st")
         axes[2].legend()
         
-        axes[3].plot([np.nan if e == MatchResults.NO_MATCH else e[2].score / e[1].score for e in res_sorted], label = "Ratio Score 3rd / 2nd")
+        axes[3].plot([e[2].score / e[1].score for e in res_sorted], label = "Ratio Score 3rd / 2nd")
         axes[3].legend()
         plt.show()
 
         fig, axes = plt.subplots(4, 1)
-        axes[0].hist([np.nan if e == MatchResults.NO_MATCH else e[0].score for e in res_sorted], bins = 30, alpha = 0.5, label = "Score of 1st")
-        axes[0].hist([np.nan if e == MatchResults.NO_MATCH else e[1].score for e in res_sorted], bins = 30, alpha = 0.5, label = "Score of 2nd")
-        axes[0].hist([np.nan if e == MatchResults.NO_MATCH else e[2].score for e in res_sorted], bins = 30, alpha = 0.5, label = "Score of 3rd")
+        axes[0].hist([e[0].score for e in res_sorted], bins = np.arange(150), alpha = 0.5, label = "Score of 1st")
+        axes[0].hist([e[1].score for e in res_sorted], bins = np.arange(150), alpha = 0.5, label = "Score of 2nd")
+        axes[0].hist([e[2].score for e in res_sorted], bins = np.arange(150), alpha = 0.5, label = "Score of 3rd")
         axes[0].legend()
 
-        axes[1].hist([np.nan if e == MatchResults.NO_MATCH else e[1].score / e[0].score for e in res_sorted], bins = 30, label = "Ratio Score 2nd / 1st")
+        axes[1].hist([e[1].score / e[0].score for e in res_sorted], bins = np.arange(150), label = "Ratio Score 2nd / 1st")
         axes[1].legend()
         
-        axes[2].hist([np.nan if e == MatchResults.NO_MATCH else e[1].score / e[0].score for e in res_sorted], bins = 30, label = "Ratio Score 3rd / 1st")
+        axes[2].hist([e[1].score / e[0].score for e in res_sorted], bins = np.arange(150), label = "Ratio Score 3rd / 1st")
         axes[2].legend()
         
-        axes[3].hist([np.nan if e == MatchResults.NO_MATCH else e[2].score / e[1].score for e in res_sorted], bins = 30, label = "Ratio Score 3rd / 2nd")
+        axes[3].hist([e[2].score / e[1].score for e in res_sorted], bins = np.arange(150), label = "Ratio Score 3rd / 2nd")
         axes[3].legend()
         plt.show()
 
 
+        # We use the fact we know where pacman will spawn and approximately how much he moves between frames to track it with accuracy.
+        # We set to invalid detections which are outside of realistic range of movement between a frame and another.
+        # This is done in-place for performance reasons.
+        level_results = track_pacman_motion(level_results, sprites_labels, detection_thr, scale_height, scale_width, fps, maze_width_px)
+        pacman_search_results[idx] = level_results
+
+        
+
+        # Step 3: detect changes: if position moved and likely sprite too, we commanded it to change direction.
 
 
-
-        analysed = []
-
-        for res in [level_results]:
-            
-        # Handle: 
-        # - Deaths are only valid if there is the full sequence afterwards with high enough accuracy. Otherwise put scores to infinity.
-        # - Sometimes pacman disappears completely. In which case, assume position didn't change. 100 seems to be a good value for the thresholding of what is a reasonably accurate detection and what isn't. Additionally, some items are MatchResult.NO_MATCH.
-        # - I see position jumping around sometimes.
-            for sprite_idx, (label, _) in enumerate(sprites_labels):
-                if label == "DEATH":
-                    for idx, r in enumerate(res):
-                        if r == MatchResults.NO_MATCH:
-                            continue
-                        res[idx][sprite_idx] = MatchResults(res[idx][sprite_idx], score = float("inf"))
-            analysed.append(res)
+        continue
     
-    return analysed
-    
+    return pacman_search_results
+
         
 
 
@@ -486,7 +578,7 @@ def track_pacman(pacman_search_results, sprites_labels, detection_thr):
 
 
 if __name__ == "__main__":
-    IDX = 2
+    IDX = 1
     video_path = VIDEOS_PATHS[IDX]
     print(video_path)
 
@@ -521,17 +613,7 @@ if __name__ == "__main__":
                                                    LEVEL_START_END_DETECTION_THR)
         print(f"Found {len(level_frame_ranges)} levels.")
 
-        print("Searching pacman in maze...")
-        pacman_search_results, pacman_search_labels = search_pacman(video_path,
-                                                                    level_frame_ranges[:1],
-                                                                    maze_region,
-                                                                    TEMPLATE_PACMAN_PATH,
-                                                                    TEMPLATE_PACMAN_LABEL_PER_ROW,
-                                                                    TEMPLATE_PACMAN_ELEMENT_WIDTH,
-                                                                    TEMPLATE_PACMAN_ELEMENT_HEIGHT,
-                                                                    PACMAN_COLOR_RANGE_HSV,
-                                                                    scale_width,
-                                                                    scale_height)
+        
         
 
         # ---------------------------------------------------------
@@ -550,6 +632,21 @@ if __name__ == "__main__":
     #         cv2.destroyAllWindows()
     #         break
     
+    
+
+    print("Searching pacman in maze...")
+    pacman_search_results, pacman_search_labels = search_pacman(video_path,
+                                                                level_frame_ranges[:1],
+                                                                maze_region,
+                                                                TEMPLATE_PACMAN_PATH,
+                                                                TEMPLATE_PACMAN_LABEL_PER_ROW,
+                                                                TEMPLATE_PACMAN_ELEMENT_WIDTH,
+                                                                TEMPLATE_PACMAN_ELEMENT_HEIGHT,
+                                                                PACMAN_COLOR_RANGE_HSV,
+                                                                scale_width,
+                                                                scale_height)
+
+
     with open(cache_path, "wb") as file:
         pickle.dump((viewport, scale_height, scale_width, maze_region, level_frame_ranges, pacman_search_results, pacman_search_labels), file)
 
@@ -557,11 +654,14 @@ if __name__ == "__main__":
     print("Analysing search results to track pacman...")
     pacman_search_results = track_pacman(pacman_search_results,
                                          pacman_search_labels,
-                                         PACMAN_DETECTION_THR)
+                                         PACMAN_DETECTION_THR,
+                                         scale_height,
+                                         scale_width, 
+                                         video_get_fps(video_path),
+                                         maze_region.width)
 
 
     
-    quit()
 
     print("Viewport:", viewport)
     print("Scale height:", scale_height)
@@ -572,28 +672,18 @@ if __name__ == "__main__":
 
     level = 0
     for result, frame in zip(pacman_search_results[level], 
-                             video_iterator(video_path, frames_start = level_frame_ranges[level]["start"], frames_number = level_frame_ranges[level]["end"] - level_frame_ranges[level]["start"])):
-        if result != MatchResults.NO_MATCH:
-            sorted_idx = sorted(range(len(result)), key = lambda idx: result[idx].score)
-            
-            best_idx = sorted_idx[0]
-            label = pacman_search_labels[best_idx]
-            position = result[best_idx].pos + maze_region.start + Position(8, 8)        
-            frame = cv2.circle(frame, center = (position.col, position.row), radius = 6, color = (0, 0, 255), thickness = -1)
-            cv2.putText(frame, str(list(label) + [f"{result[best_idx].score:.2f}"]), (position.col + 5, position.row - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
-
-            best_idx = sorted_idx[1]
-            label = pacman_search_labels[best_idx]
-            position = result[best_idx].pos + maze_region.start + Position(8, 8)
-            frame = cv2.circle(frame, center = (position.col, position.row), radius = 4, color = (0, 255, 0), thickness = -1)
-            cv2.putText(frame, str(list(label) + [f"{result[best_idx].score:.2f}"]), (position.col + 5, position.row + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
-
-            best_idx = sorted_idx[2]
-            label = pacman_search_labels[best_idx]
-            position = result[best_idx].pos + maze_region.start + Position(8, 8)
-            frame = cv2.circle(frame, center = (position.col, position.row), radius = 2, color = (255, 128, 0), thickness = -1)
-            cv2.putText(frame, str(list(label) + [f"{result[best_idx].score:.2f}"]), (position.col + 5, position.row + 25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 128, 0), 1)
-
+                             video_iterator(video_path, frames_start = level_frame_ranges[level]["start"], frames_number = level_frame_ranges[level]["end"] - level_frame_ranges[level]["start"])):        
+        sorted_idx = sorted(range(len(result)), key = lambda idx: result[idx].score)
+        
+        for i, best_idx in enumerate(sorted_idx[:2]):
+            if result[best_idx].pos is None:
+                continue
+            label = list(pacman_search_labels[best_idx])
+            label[0] = label[0].name
+            position = result[best_idx].pos + maze_region.start + Position(int(8*scale_height), int(8*scale_width))
+            color = [(0, 0, 255), (0, 255, 0), (255, 128, 0)][i]
+            frame = cv2.circle(frame, center = (position.col, position.row), radius = 6 - 2*i, color = color, thickness = -1)
+            cv2.putText(frame, str(list(label) + [f"{result[best_idx].score:.2f}"]), (position.col + 5, position.row + 5 + i*10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
 
         cv2.imshow("", frame)
         if cv2.waitKey() == ord("q"):
