@@ -7,7 +7,7 @@ import cv2
 from tqdm import tqdm
 import numpy as np
 
-from constants import Position, MatchResults, Region, VIDEOS_PATHS, TEMPLATE_LEVEL_START_PATH, TEMPLATE_LEVEL_END_PATH, PARALLEL_MAX_WORKERS, LEVEL_START_END_DETECTION_THR, TEMPLATE_PACMAN_PATH, TEMPLATE_PACMAN_LABEL_PER_ROW, TEMPLATE_PACMAN_ELEMENT_WIDTH, TEMPLATE_PACMAN_ELEMENT_HEIGHT, PACMAN_COLOR_RANGE_HSV, PACMAN_DETECTION_THR, PacmanStates, PACMAN_START_POSITION, PACMAN_MAX_SPEED_PIXELS_PER_SEC
+from constants import Position, MatchResults, Region, VIDEOS_PATHS, TEMPLATE_LEVEL_START_PATH, TEMPLATE_LEVEL_END_PATH, PARALLEL_MAX_WORKERS, LEVEL_START_END_DETECTION_THR, TEMPLATE_PACMAN_PATH, TEMPLATE_PACMAN_LABEL_PER_ROW, TEMPLATE_PACMAN_ELEMENT_WIDTH, TEMPLATE_PACMAN_ELEMENT_HEIGHT, PACMAN_COLOR_RANGE_HSV, PacmanStates, PACMAN_START_POSITION, PACMAN_MAX_SPEED_PIXELS_PER_SEC, PACMAN_DEATH_DETECTION_THR, PACMAN_TRACKING_NEIGHBOURHOOD_MULTIPLIER, PACMAN_TRACKING_DISTANCE_WEIGHT
 
 
 
@@ -93,7 +93,7 @@ def match_template_whole_video(video_path, sprites, crop_frame_callback = None, 
         if s.shape[-1] == 4:
             sprites[idx] = s[:, :, :-1]
             masks  [idx] = s[:, :, -1]
-    del s
+    del idx, s
 
     try:
         iterator = zip(video_iterator(video_path, **video_iterator_kwargs), 
@@ -204,7 +204,7 @@ def find_scale_and_maze_region(video_path, template_level_start_path, viewport, 
 
     # Sanity check.
     if best_result["score"] > successful_match_thr:
-        raise RuntimeError(f"Could not find scale of video using template provided. Best score was {best_result["score"]}")
+        raise RuntimeError(f"Could not find scale of video using template provided. Best score was {best_result["score"]} which is lower than required {successful_match_thr}.")
 
     return scale_height, scale_width, maze_region
 
@@ -390,23 +390,27 @@ def track_pacman_deaths(level_results, sprite_idx_of_label, detection_thr):
     return level_results, death_sequences_detected
 
 
-def track_pacman_motion(level_results, sprites_labels, detection_thr, scale_height, scale_width, fps, maze_width_px, neighbourhood_multiplier = 1.1):
+def track_pacman_motion(level_results, sprites_labels, scale_height, scale_width, fps, maze_width_px, neighbourhood_multiplier, distance_weight_ratio):
     
     # To perform accurate detection, we leverage known info about the game.
     # We need, however, to convert scales and timings from the original game to video.
-    neighbourghood_per_frame = PACMAN_MAX_SPEED_PIXELS_PER_SEC * max(scale_height, scale_width) * neighbourhood_multiplier / fps
+    velocity_pixels_per_frame = PACMAN_MAX_SPEED_PIXELS_PER_SEC * max(scale_height, scale_width) / fps
+    neighbourghood_per_frame = velocity_pixels_per_frame * neighbourhood_multiplier
     last_known_position = Position(row = PACMAN_START_POSITION.row * scale_height, 
                                    col = PACMAN_START_POSITION.col * scale_width)
     last_known_state = None
+    last_known_velocity = None
     del scale_height, scale_width, fps, neighbourhood_multiplier
 
 
-    # DEBUG
-    vid = video_iterator(video_path, frames_start = level_frame_ranges[0]["start"], frames_number = level_frame_ranges[0]["end"] - level_frame_ranges[0]["start"])
-    iround = lambda val: int(round(val))
-    import warnings
     # --------------------
-
+    # DEBUG: needed for visuals.
+    # --------------------
+    debug_results = {"last_known_position": [],
+                     "neighbourghood": [], 
+                     "predicted_position": [],
+                     "detections": []}
+    # --------------------
 
     position_and_state = []
 
@@ -415,27 +419,8 @@ def track_pacman_motion(level_results, sprites_labels, detection_thr, scale_heig
     for frame_results in level_results:
         # We allow searching further and further from last known location to avoid Pacman slipping past on accident.
         neighbourghood = neighbourghood_per_frame * (misses + 1)
-
-
-        # Visuals to help debug the tracking.
-        # frame = next(vid)
-        # for position in frame_results:
-        #     position = position.pos
-        #     if position is None:
-        #         continue
-        #     position = position + maze_region.start
-        #     frame = cv2.circle(frame, center = (iround(position.col), iround(position.row)), radius = 1, color = (0, 0, 255), thickness = -1)
-        # position = last_known_position + maze_region.start
-        # frame = cv2.rectangle(frame,
-        #                       pt1 = (iround(position.col - neighbourghood), iround(position.row - neighbourghood)),
-        #                       pt2 = (iround(position.col + neighbourghood), iround(position.row + neighbourghood)),
-        #                       color = (0, 255, 0), 
-        #                       thickness = 1)
-        # cv2.imshow("", frame)
-        # if cv2.waitKey() == ord("q"):
-        #     cv2.destroyAllWindows()
-        #     break
-
+        debug_results["last_known_position"].append(last_known_position)
+        debug_results["neighbourghood"].append(neighbourghood)
 
         # Remove all results outside of neighbourghood.
         idx_to_keep = [idx for idx, res in enumerate(frame_results)
@@ -444,7 +429,8 @@ def track_pacman_motion(level_results, sprites_labels, detection_thr, scale_heig
                            and (abs(res.pos.col - last_known_position.col) <= neighbourghood or
                                 res.pos.col > maze_width_px + last_known_position.col - neighbourghood or
                                 res.pos.col < last_known_position.col + neighbourghood - maze_width_px))]
-        frame_results = [frame_results [idx] for idx in idx_to_keep]
+        debug_results["detections"].append([(res, idx in idx_to_keep) for idx, res in enumerate(frame_results)])
+        frame_results = [frame_results[idx] for idx in idx_to_keep]
         frame_sprites_labels = [sprites_labels[idx] for idx in idx_to_keep]
         del idx_to_keep
 
@@ -453,13 +439,24 @@ def track_pacman_motion(level_results, sprites_labels, detection_thr, scale_heig
             misses = 0
             detected_once = True
 
-            # Simplest strategy to choose best option: take the one with lowest score.
-            best_idx = min(range(len(frame_results)), key = lambda idx: frame_results[idx].score)
+            # Predict where Pacman should be and prioritize detections with better match (low squared difference score) and close to expected position.
+            last_known_velocity = (
+                Position(row = +velocity_pixels_per_frame, col = 0) if last_known_state == PacmanStates.DOWN else
+                Position(row = -velocity_pixels_per_frame, col = 0) if last_known_state == PacmanStates.UP else
+                Position(row = 0, col = -velocity_pixels_per_frame) if last_known_state == PacmanStates.LEFT else
+                Position(row = 0, col = +velocity_pixels_per_frame) if last_known_state == PacmanStates.RIGHT else
+                last_known_velocity if last_known_state == PacmanStates.FULL_CIRCLE and last_known_velocity is not None else
+                Position(row = 0, col = 0)
+            )
+            predicted_position = last_known_position + last_known_velocity
+            debug_results["predicted_position"].append(predicted_position)
+            def _cost(idx):
+                res = frame_results[idx]
+                dist = np.hypot(res.pos.row - predicted_position.row, res.pos.col - predicted_position.col)                
+                return res.score + distance_weight_ratio * dist / velocity_pixels_per_frame
+            best_idx = min(range(len(frame_results)), key = _cost)
             last_known_position = frame_results[best_idx].pos
             last_known_state, _ = frame_sprites_labels[best_idx]
-
-            warnings.warn("You may want to implement something smarter")
-            
 
         else:
             last_known_state = None
@@ -469,22 +466,49 @@ def track_pacman_motion(level_results, sprites_labels, detection_thr, scale_heig
         position_and_state.append((last_known_position, last_known_state))
 
 
-    from collections import Counter
-    print(Counter([p.row for p, _ in position_and_state]))
-    print(Counter([p.col for p, _ in position_and_state]))
 
+    # TODO: 
+    # 1) understand why sometimes loses track and does a mess (also in old algo)
+    # 2) try playing with distance_weight_ratio to see if improves this situation
+    # 3) consider merging search and tracking so that we can search around smaller neighbourghood and avoid irrelevantly far predictions. When there are errors, is it because the search appeared too far or does the color filter help attenuate this already?
+    # 4) consider implementing more advanced tracking logic (such as Kalman filter)
+    # 5) calculate pixel ranges which are not possible for pacman position and do not accept search to return positions in those ranges in np.where
 
     # DEBUG
     # Visuals to help debug the smoothing of Pacman's path.
     iround = lambda val: int(round(val))
     for idx, frame in enumerate(video_iterator(video_path, frames_start = level_frame_ranges[0]["start"], frames_number = level_frame_ranges[0]["end"] - level_frame_ranges[0]["start"])):
+        
+        # Show the debug info for search.
+        frame_debug = frame.copy()
+        for detection, kept in debug_results["detections"][idx]:
+            if detection.pos is None:
+                continue
+            position = detection.pos + maze_region.start
+            color = (0, 0, 255) if not kept else \
+                    (0, 255, 255 - min(255, int(detection.score * 2.5)))
+            frame_debug = cv2.circle(frame_debug, center = (iround(position.col), iround(position.row)), radius = 1, color = color, thickness = -1)
+        predicted_position = debug_results["predicted_position"][idx] + maze_region.start
+        frame_debug = cv2.circle(frame_debug, center = (iround(predicted_position.col), iround(predicted_position.row)), radius = 1, color = (255, 255, 255), thickness = -1)
+        position = debug_results["last_known_position"][idx] + maze_region.start
+        neighbourghood = debug_results["neighbourghood"][idx]
+        frame_debug = cv2.rectangle(frame_debug,
+                                    pt1 = (iround(position.col - neighbourghood), iround(position.row - neighbourghood)),
+                                    pt2 = (iround(position.col + neighbourghood), iround(position.row + neighbourghood)),
+                                    color = (0, 255, 0), 
+                                    thickness = 1)
 
+        # Show the last 100 tracked positions.
+        frame_tracking = frame.copy()
         for position, state in position_and_state[max(0, idx - 100):idx+1]:
             position = position + maze_region.start
             if state is None:
-                continue
-            color = [(0, 0, 255), (0, 255, 0), (0, 255, 255), (255, 0, 255), (255, 255, 255), (255, 255, 0)][state]
-            frame = cv2.circle(frame, center = (iround(position.col), iround(position.row)), radius = 1, color = color, thickness = -1)
+                color = (120, 120, 120)
+            else:
+                color = [(0, 0, 255), (0, 255, 0), (0, 255, 255), (255, 0, 255), (255, 255, 255), (255, 255, 0)][state]
+            frame_tracking = cv2.circle(frame_tracking, center = (iround(position.col), iround(position.row)), radius = 1, color = color, thickness = -1)
+
+        frame = np.hstack([frame_debug, frame_tracking])
         cv2.imshow("", frame)
         if cv2.waitKey() == ord("q"):
             cv2.destroyAllWindows()
@@ -492,11 +516,11 @@ def track_pacman_motion(level_results, sprites_labels, detection_thr, scale_heig
 
 
 
-    return level_results
+    return position_and_state
 
 
 
-def track_pacman(pacman_search_results, sprites_labels, detection_thr, scale_height, scale_width, fps, maze_width_px):
+def track_pacman(pacman_search_results, sprites_labels, death_detection_thr, scale_height, scale_width, fps, maze_width_px, neighbourhood_multiplier, distance_weight_ratio):
 
     # Useful pre-processing: get labels-to-sprite index dictionary (reverse of sprites_labels).
     sprite_idx_of_label = {label: idx for idx, label in enumerate(sprites_labels)}
@@ -505,7 +529,7 @@ def track_pacman(pacman_search_results, sprites_labels, detection_thr, scale_hei
 
         # Identifies frames between which a death occurred. Sets scores of death sprites to invalid if they are not part of a detected sequence.
         # This is done in-place for performance reasons.
-        level_results, death_sequences_detected = track_pacman_deaths(level_results, sprite_idx_of_label, detection_thr)
+        level_results, death_sequences_detected = track_pacman_deaths(level_results, sprite_idx_of_label, death_detection_thr)
         pacman_search_results[idx] = level_results
         if death_sequences_detected:
             raise NotImplementedError(f"Full death sequences have been detected between frames {death_sequences_detected}. This is not handled yet.")
@@ -556,9 +580,7 @@ def track_pacman(pacman_search_results, sprites_labels, detection_thr, scale_hei
 
 
         # We use the fact we know where pacman will spawn and approximately how much he moves between frames to track it with accuracy.
-        # We set to invalid detections which are outside of realistic range of movement between a frame and another.
-        # This is done in-place for performance reasons.
-        level_results = track_pacman_motion(level_results, sprites_labels, detection_thr, scale_height, scale_width, fps, maze_width_px)
+        level_results = track_pacman_motion(level_results, sprites_labels, scale_height, scale_width, fps, maze_width_px, neighbourhood_multiplier, distance_weight_ratio)
         pacman_search_results[idx] = level_results
 
         
@@ -634,31 +656,32 @@ if __name__ == "__main__":
     
     
 
-    print("Searching pacman in maze...")
-    pacman_search_results, pacman_search_labels = search_pacman(video_path,
-                                                                level_frame_ranges[:1],
-                                                                maze_region,
-                                                                TEMPLATE_PACMAN_PATH,
-                                                                TEMPLATE_PACMAN_LABEL_PER_ROW,
-                                                                TEMPLATE_PACMAN_ELEMENT_WIDTH,
-                                                                TEMPLATE_PACMAN_ELEMENT_HEIGHT,
-                                                                PACMAN_COLOR_RANGE_HSV,
-                                                                scale_width,
-                                                                scale_height)
+        print("Searching pacman in maze...")
+        pacman_search_results, pacman_search_labels = search_pacman(video_path,
+                                                                    level_frame_ranges[:20],  # limit number of levels analysed to speed up and because later levels repeat themselves.
+                                                                    maze_region,
+                                                                    TEMPLATE_PACMAN_PATH,
+                                                                    TEMPLATE_PACMAN_LABEL_PER_ROW,
+                                                                    TEMPLATE_PACMAN_ELEMENT_WIDTH,
+                                                                    TEMPLATE_PACMAN_ELEMENT_HEIGHT,
+                                                                    PACMAN_COLOR_RANGE_HSV,
+                                                                    scale_width,
+                                                                    scale_height)
 
 
-    with open(cache_path, "wb") as file:
-        pickle.dump((viewport, scale_height, scale_width, maze_region, level_frame_ranges, pacman_search_results, pacman_search_labels), file)
-
+        with open(cache_path, "wb") as file:
+            pickle.dump((viewport, scale_height, scale_width, maze_region, level_frame_ranges, pacman_search_results, pacman_search_labels), file)
 
     print("Analysing search results to track pacman...")
     pacman_search_results = track_pacman(pacman_search_results,
                                          pacman_search_labels,
-                                         PACMAN_DETECTION_THR,
+                                         PACMAN_DEATH_DETECTION_THR,
                                          scale_height,
                                          scale_width, 
                                          video_get_fps(video_path),
-                                         maze_region.width)
+                                         maze_region.width,
+                                         PACMAN_TRACKING_NEIGHBOURHOOD_MULTIPLIER,
+                                         PACMAN_TRACKING_DISTANCE_WEIGHT)
 
 
     
@@ -668,7 +691,6 @@ if __name__ == "__main__":
     print("Scale width:", scale_width)
     print("Maze region:", maze_region)
     print("Number of levels:", len(level_frame_ranges))
-
 
     level = 0
     for result, frame in zip(pacman_search_results[level], 
