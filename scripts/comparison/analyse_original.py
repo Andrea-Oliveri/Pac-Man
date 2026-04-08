@@ -400,8 +400,6 @@ def track_pacman_motion(level_results, sprites_labels, scale_height, scale_width
                                    col = PACMAN_START_POSITION.col * scale_width)
     last_known_state = None
     last_known_velocity = None
-    del scale_height, scale_width, fps, neighbourhood_multiplier
-
 
     # --------------------
     # DEBUG: needed for visuals.
@@ -432,7 +430,6 @@ def track_pacman_motion(level_results, sprites_labels, scale_height, scale_width
         debug_results["detections"].append([(res, idx in idx_to_keep) for idx, res in enumerate(frame_results)])
         frame_results = [frame_results[idx] for idx in idx_to_keep]
         frame_sprites_labels = [sprites_labels[idx] for idx in idx_to_keep]
-        del idx_to_keep
 
         # If there is no detection it may be because Pacman completely disappeared, such as when ghosts are eaten, or was occluded.
         if frame_results:
@@ -452,7 +449,7 @@ def track_pacman_motion(level_results, sprites_labels, scale_height, scale_width
             debug_results["predicted_position"].append(predicted_position)
             def _cost(idx):
                 res = frame_results[idx]
-                dist = np.hypot(res.pos.row - predicted_position.row, res.pos.col - predicted_position.col)                
+                dist = np.hypot(res.pos.row - predicted_position.row, res.pos.col - predicted_position.col)
                 return res.score + distance_weight_ratio * dist / velocity_pixels_per_frame
             best_idx = min(range(len(frame_results)), key = _cost)
             last_known_position = frame_results[best_idx].pos
@@ -462,9 +459,9 @@ def track_pacman_motion(level_results, sprites_labels, scale_height, scale_width
             last_known_state = None
             if detected_once:
                 misses += 1
+            debug_results["predicted_position"].append(last_known_position)
 
         position_and_state.append((last_known_position, last_known_state))
-
 
 
     # TODO: 
@@ -474,11 +471,20 @@ def track_pacman_motion(level_results, sprites_labels, scale_height, scale_width
     # 4) consider implementing more advanced tracking logic (such as Kalman filter)
     # 5) calculate pixel ranges which are not possible for pacman position and do not accept search to return positions in those ranges in np.where
 
-    # DEBUG
-    # Visuals to help debug the smoothing of Pacman's path.
+    # --------------------
+    # DEBUG: visuals to help debug.
+    # --------------------
+
     iround = lambda val: int(round(val))
+    tmp_pacman_sprites, tmp_pacman_sprite_labels = make_pacman_sprites(TEMPLATE_PACMAN_PATH, TEMPLATE_PACMAN_LABEL_PER_ROW, TEMPLATE_PACMAN_ELEMENT_WIDTH, TEMPLATE_PACMAN_ELEMENT_HEIGHT, scale_width, scale_height)
+    pacman_sprites = {}
+    for sprite, (label, _) in zip(tmp_pacman_sprites, tmp_pacman_sprite_labels):
+        if label in pacman_sprites:
+            continue
+        pacman_sprites[label] = sprite
+
     for idx, frame in enumerate(video_iterator(video_path, frames_start = level_frame_ranges[0]["start"], frames_number = level_frame_ranges[0]["end"] - level_frame_ranges[0]["start"])):
-        
+
         # Show the debug info for search.
         frame_debug = frame.copy()
         for detection, kept in debug_results["detections"][idx]:
@@ -508,13 +514,30 @@ def track_pacman_motion(level_results, sprites_labels, scale_height, scale_width
                 color = [(0, 0, 255), (0, 255, 0), (0, 255, 255), (255, 0, 255), (255, 255, 255), (255, 255, 0)][state]
             frame_tracking = cv2.circle(frame_tracking, center = (iround(position.col), iround(position.row)), radius = 1, color = color, thickness = -1)
 
-        frame = np.hstack([frame_debug, frame_tracking])
+        # Show the game seen by the tracker.
+        frame_seen = frame.copy()
+        mask = cv2.inRange(cv2.cvtColor(frame_seen, cv2.COLOR_BGR2HSV), (110, 200, 50), (130, 255, 150))
+        frame_seen[mask == 0] = (0, 0, 0)
+        position, state = position_and_state[idx]
+        position = position + maze_region.start
+        if state is None:
+            sprite = list(pacman_sprites.values())[0]
+            sprite[:, :] = (0, 0, 255)
+        else:
+            sprite = pacman_sprites[state]
+        frame_seen[position.row:position.row+sprite.shape[0], position.col:position.col+sprite.shape[1], :] = sprite
+
+        frame = np.hstack([e[maze_region.start.row:maze_region.stop.row, maze_region.start.col:maze_region.stop.col] for e in [frame_debug, frame_tracking, frame_seen]])
         cv2.imshow("", frame)
-        if cv2.waitKey() == ord("q"):
+        key = cv2.waitKey()
+        if key == ord("q"):
             cv2.destroyAllWindows()
             break
-
-
+        elif key == ord("e"):
+            cv2.destroyAllWindows()
+            quit()
+    cv2.destroyAllWindows()
+    # --------------------
 
     return position_and_state
 
@@ -535,6 +558,7 @@ def track_pacman(pacman_search_results, sprites_labels, death_detection_thr, sca
             raise NotImplementedError(f"Full death sequences have been detected between frames {death_sequences_detected}. This is not handled yet.")
 
 
+        """        
         res_sorted = [
             sorted(frame_res, key = lambda match: match.score)
             for frame_res in level_results
@@ -577,7 +601,8 @@ def track_pacman(pacman_search_results, sprites_labels, death_detection_thr, sca
         axes[3].hist([e[2].score / e[1].score for e in res_sorted], bins = np.arange(150), label = "Ratio Score 3rd / 2nd")
         axes[3].legend()
         plt.show()
-
+        """
+        
 
         # We use the fact we know where pacman will spawn and approximately how much he moves between frames to track it with accuracy.
         level_results = track_pacman_motion(level_results, sprites_labels, scale_height, scale_width, fps, maze_width_px, neighbourhood_multiplier, distance_weight_ratio)
