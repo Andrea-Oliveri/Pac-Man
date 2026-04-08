@@ -38,6 +38,7 @@ class Painter:
 
         self._create_shader()
         self._allocate_vertex_list()
+        self.set_texture()
         
 
     def _create_shader(self):
