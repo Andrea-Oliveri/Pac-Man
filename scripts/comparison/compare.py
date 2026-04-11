@@ -4,12 +4,12 @@ os.chdir(os.path.relpath(os.path.join(os.path.dirname(__file__), '../..')))
 sys.path.append(".")
 
 import inspect
-from threading import Thread
 
 import pyglet
 pyglet.options.shadow_window = False
 
 import numpy as np
+import cv2
 
 from src.activities.game import Game
 from src.constants import *
@@ -33,32 +33,29 @@ def _print_fps():
         print(1 / mean)
 
 
-width = WINDOW_MINIMUM_SIZE[0]
-height = WINDOW_MINIMUM_SIZE[1]
-buffer = (pyglet.gl.GLubyte * (width * height * 3))()
 
 
 class Window(pyglet.window.Window):
-    def __init__(self):
+    def __init__(self, width, height, background):
         super().__init__(
             width = width,
             height = height,
             fullscreen = False,
             resizable = False,
-            visible = False
+            visible = False,
         )
-        pyglet.gl.glClearColor(*BACKGROUND_COLOR, 1)
+        pyglet.gl.glClearColor(*background, 1)
         self._game = Game(Graphics(), Sounds())
+        self._buffer = (pyglet.gl.GLubyte * (width * height * 3))()
 
     def on_draw(self):
         _print_fps()
         self.clear()
         self._game.event_draw_screen()
-        
-        
-        import cv2        
+        return
+
+
         frame = self.grab_frame()
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         frame = cv2.resize(
             frame,
             None,
@@ -72,23 +69,25 @@ class Window(pyglet.window.Window):
 
 
     def grab_frame(self):
-        global buffer
         pyglet.gl.glPixelStorei(pyglet.gl.GL_PACK_ALIGNMENT, 1)
 
         pyglet.gl.glReadPixels(
             0, 0,
-            width, height,
+            self.width, self.height,
             pyglet.gl.GL_RGB,
             pyglet.gl.GL_UNSIGNED_BYTE,
-            buffer
+            self._buffer
         )
 
         # Convert to numpy without copying.
-        frame = np.frombuffer(buffer, dtype=np.uint8)
-        frame = frame.reshape((height, width, 3))
+        frame = np.frombuffer(self._buffer, dtype=np.uint8)
+        frame = frame.reshape((self.height, self.width, 3))
 
         # Flip vertically (OpenGL origin is bottom-left).
         frame = np.flipud(frame)
+
+        # Convert colorspaces.
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
         return frame
 
@@ -98,11 +97,12 @@ class Window(pyglet.window.Window):
 
 
 
-window = Window()
+window = Window(*WINDOW_MINIMUM_SIZE, BACKGROUND_COLOR)
 
 while True:
     if window.update(0) is True:
         break
     window.on_draw()
+    frame = window.grab_frame()
 
 print("Game Over")
