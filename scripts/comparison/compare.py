@@ -12,7 +12,7 @@ import numpy as np
 import cv2
 
 from src.activities.game import Game
-from src.constants import *
+from src.constants import WINDOW_MINIMUM_SIZE, BACKGROUND_COLOR
 from src.graphics import Graphics
 from src.sounds import Sounds
 from src.window import Window
@@ -45,30 +45,18 @@ class Window(pyglet.window.Window):
             visible = False,
         )
         pyglet.gl.glClearColor(*background, 1)
-        self._game = Game(Graphics(), Sounds())
         self._buffer = (pyglet.gl.GLubyte * (width * height * 3))()
 
-    def on_draw(self):
+    def draw_frame(self, game):
+        if not isinstance(game, Game):
+            raise RuntimeError(f"Parameter 'game' must be an instance of class 'Game'. Got {type(game)}")
+        
         _print_fps()
         self.clear()
-        self._game.event_draw_screen()
-        return
+        game.event_draw_screen()
+        return self._grab_frame()
 
-
-        frame = self.grab_frame()
-        frame = cv2.resize(
-            frame,
-            None,
-            fx=2,
-            fy=2,
-            interpolation=cv2.INTER_NEAREST
-        )
-        cv2.imshow("", frame)
-        if cv2.waitKey(1) == ord("q"):
-            quit()
-
-
-    def grab_frame(self):
+    def _grab_frame(self):
         pyglet.gl.glPixelStorei(pyglet.gl.GL_PACK_ALIGNMENT, 1)
 
         pyglet.gl.glReadPixels(
@@ -92,17 +80,26 @@ class Window(pyglet.window.Window):
         return frame
 
 
-    def update(self, _):
-        return self._game.event_update_state()
-
 
 
 window = Window(*WINDOW_MINIMUM_SIZE, BACKGROUND_COLOR)
+game = Game(Graphics(), Sounds())
 
 while True:
-    if window.update(0) is True:
+    if game.event_update_state() is True:
         break
-    window.on_draw()
-    frame = window.grab_frame()
+    frame = window.draw_frame(game)
+
+    continue
+    frame = cv2.resize(
+        frame,
+        None,
+        fx=2,
+        fy=2,
+        interpolation=cv2.INTER_NEAREST
+    )
+    cv2.imshow("", frame)
+    if cv2.waitKey(1) == ord("q"):
+        quit()
 
 print("Game Over")

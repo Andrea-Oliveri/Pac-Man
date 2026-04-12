@@ -7,8 +7,7 @@ import cv2
 from tqdm import tqdm
 import numpy as np
 
-from constants import Position, MatchResults, Region, VIDEOS_PATHS, TEMPLATE_LEVEL_START_PATH, TEMPLATE_LEVEL_END_PATH, PARALLEL_MAX_WORKERS, LEVEL_START_END_DETECTION_THR, TEMPLATE_PACMAN_PATH, TEMPLATE_PACMAN_LABEL_PER_ROW, TEMPLATE_PACMAN_ELEMENT_WIDTH, TEMPLATE_PACMAN_ELEMENT_HEIGHT, PACMAN_COLOR_RANGE_HSV, PacmanStates, PACMAN_START_POSITION, PACMAN_MAX_SPEED_PIXELS_PER_SEC, PACMAN_DEATH_DETECTION_THR, PACMAN_TRACKING_NEIGHBOURHOOD_MULTIPLIER, PACMAN_TRACKING_DISTANCE_WEIGHT
-
+from constants import Position, MatchResults, Region, VIDEOS_PATHS, TEMPLATE_LEVEL_START_PATH, TEMPLATE_LEVEL_END_PATH, PARALLEL_MAX_WORKERS, LEVEL_START_END_DETECTION_THR, TEMPLATE_PACMAN_PATH, TEMPLATE_PACMAN_LABEL_PER_ROW, TEMPLATE_PACMAN_ELEMENT_WIDTH, TEMPLATE_PACMAN_ELEMENT_HEIGHT, PACMAN_COLOR_RANGE_HSV, PacmanStates, PACMAN_START_POSITION, PACMAN_MAX_SPEED_PIXELS_PER_SEC, PACMAN_DEATH_DETECTION_THR, PACMAN_TRACKING_NEIGHBOURHOOD_MULTIPLIER, PACMAN_TRACKING_DISTANCE_WEIGHT, IMAGE_VALID_PACMAN_POSITIONS_PATH, MAX_LEVELS_TO_ANALYSE
 
 
 def video_iterator(video_path, frames_start = 0, frames_step = 1, frames_number = None, viewport = None):
@@ -466,7 +465,6 @@ def track_pacman_motion(level_results, sprites_labels, scale_height, scale_width
 
     # TODO: 
     # 1) understand why sometimes loses track and does a mess (also in old algo)
-    # 2) try playing with distance_weight_ratio to see if improves this situation
     # 3) consider merging search and tracking so that we can search around smaller neighbourghood and avoid irrelevantly far predictions. When there are errors, is it because the search appeared too far or does the color filter help attenuate this already?
     # 4) consider implementing more advanced tracking logic (such as Kalman filter)
     # 5) calculate pixel ranges which are not possible for pacman position and do not accept search to return positions in those ranges in np.where
@@ -526,6 +524,10 @@ def track_pacman_motion(level_results, sprites_labels, scale_height, scale_width
         else:
             sprite = pacman_sprites[state]
         frame_seen[position.row:position.row+sprite.shape[0], position.col:position.col+sprite.shape[1], :] = sprite
+        pacman_video = frame.copy()
+        pacman_video_mask = cv2.inRange(cv2.cvtColor(pacman_video, cv2.COLOR_BGR2HSV), *PACMAN_COLOR_RANGE_HSV)
+        pacman_video[pacman_video_mask == 0] = (0, 0, 0)
+        frame_seen = (frame_seen * 0.8 + pacman_video * 0.2).astype("uint8")
 
         frame = np.hstack([e[maze_region.start.row:maze_region.stop.row, maze_region.start.col:maze_region.stop.col] for e in [frame_debug, frame_tracking, frame_seen]])
         cv2.imshow("", frame)
@@ -540,6 +542,35 @@ def track_pacman_motion(level_results, sprites_labels, scale_height, scale_width
     # --------------------
 
     return position_and_state
+
+
+
+"""
+
+def _f(mask_valid, template, ksize, sigma = 0.7):
+    map_valid = mask_valid.astype("float")
+
+    kernel = np.zeros(shape = (ksize, ksize))
+    center = ksize // 2
+    for i in range(ksize):
+        val = sigma ** abs(center - i)
+        kernel[i, center] = val
+        kernel[center, i] = val
+
+    map_valid = cv2.filter2D(map_valid, -1, kernel = kernel)
+    map_valid /= map_valid.max()
+
+    return template
+
+frames = [_f(mask_valid, template, ksize) for ksize in [3, 4, 5, 10]]
+cv2.imshow("", np.hstack(frames))
+cv2.waitKey()
+cv2.destroyAllWindows()
+quit()
+
+"""
+
+
 
 
 
@@ -617,10 +648,7 @@ def track_pacman(pacman_search_results, sprites_labels, death_detection_thr, sca
     
     return pacman_search_results
 
-        
-
-
-
+    
 
 
 
@@ -636,12 +664,6 @@ if __name__ == "__main__":
         with open(cache_path, "rb") as file:
             viewport, scale_height, scale_width, maze_region, level_frame_ranges, pacman_search_results, pacman_search_labels = pickle.load(file)
     else:
-
-
-        # ---------------------------------------------------------
-        # ---------------------------------------------------------
-        # ---------------------------------------------------------
-
         print("Finding viewport of video...")
         viewport = find_viewport(video_path)
 
@@ -658,32 +680,13 @@ if __name__ == "__main__":
                                                    scale_height,
                                                    scale_width,
                                                    LEVEL_START_END_DETECTION_THR)
-        print(f"Found {len(level_frame_ranges)} levels.")
-
-        
-        
-
-        # ---------------------------------------------------------
-        # ---------------------------------------------------------
-        # ---------------------------------------------------------
-
-    # for frame in video_iterator(video_path, frames_start = level_frame_ranges[0]["start"], frames_number = level_frame_ranges[0]["end"] - level_frame_ranges[0]["start"]):
-    #     converted = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    #     mask = cv2.inRange(converted, *PACMAN_COLOR_RANGE_HSV)
-
-    #     converted = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    #     converted = np.hstack([converted, mask])
-
-    #     cv2.imshow("", converted)
-    #     if cv2.waitKey() == ord("q"):
-    #         cv2.destroyAllWindows()
-    #         break
-    
-    
+        print(f"Found {len(level_frame_ranges)} levels.", end = " ", flush = False)
+        level_frame_ranges = level_frame_ranges[:MAX_LEVELS_TO_ANALYSE]
+        print(f"Keeping {len(level_frame_ranges)}.")
 
         print("Searching pacman in maze...")
         pacman_search_results, pacman_search_labels = search_pacman(video_path,
-                                                                    level_frame_ranges[:20],  # limit number of levels analysed to speed up and because later levels repeat themselves.
+                                                                    level_frame_ranges,
                                                                     maze_region,
                                                                     TEMPLATE_PACMAN_PATH,
                                                                     TEMPLATE_PACMAN_LABEL_PER_ROW,
@@ -696,6 +699,8 @@ if __name__ == "__main__":
 
         with open(cache_path, "wb") as file:
             pickle.dump((viewport, scale_height, scale_width, maze_region, level_frame_ranges, pacman_search_results, pacman_search_labels), file)
+
+
 
     print("Analysing search results to track pacman...")
     pacman_search_results = track_pacman(pacman_search_results,

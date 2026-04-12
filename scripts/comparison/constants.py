@@ -61,14 +61,16 @@ _ASSETS_FOLDER = pathlib.Path(__file__).parent / "assets"
 
 VIDEOS_PATHS = [e for e in (_ASSETS_FOLDER / "videos").iterdir() if e.stem != ".gitkeep"]
 
-_TEMPLATES_FOLDER = _ASSETS_FOLDER / "templates"
-TEMPLATE_LEVEL_START_PATH = _TEMPLATES_FOLDER / "level_start.png"
-TEMPLATE_LEVEL_END_PATH = _TEMPLATES_FOLDER / "level_end.png"
-TEMPLATE_PACMAN_PATH = _TEMPLATES_FOLDER / "pacman.png"
+_IMAGES_FOLDER = _ASSETS_FOLDER / "images"
+TEMPLATE_LEVEL_START_PATH = _IMAGES_FOLDER / "level_start.png"
+TEMPLATE_LEVEL_END_PATH = _IMAGES_FOLDER / "level_end.png"
+TEMPLATE_PACMAN_PATH = _IMAGES_FOLDER / "pacman.png"
+IMAGE_VALID_PACMAN_POSITIONS_PATH = _IMAGES_FOLDER / "valid_pacman_positions.png"
 
 PARALLEL_MAX_WORKERS = 12
 
 LEVEL_START_END_DETECTION_THR = 50
+MAX_LEVELS_TO_ANALYSE = 30  # Limit number of levels analysed to speed up and because later levels repeat themselves.
 
 TEMPLATE_PACMAN_LABEL_PER_ROW = [PacmanStates.RIGHT, PacmanStates.LEFT, PacmanStates.UP, PacmanStates.DOWN, PacmanStates.FULL_CIRCLE, PacmanStates.DEATH]
 TEMPLATE_PACMAN_ELEMENT_WIDTH = 16
