@@ -1,10 +1,10 @@
 import cv2
 
-from src.analyse_mine import make_initial_game
+from src.wrap_game_engine import make_initial_game
+from src.wrap_videos import make_video_scrubber
+
 
 game = make_initial_game()
-
-
 
 for _ in range(400): # 400
     game = game.deepcopy()
