@@ -10,6 +10,18 @@ from src.directions import Vector2
 
 
 # --------------------------------------------------------------------
+# Constant describing the paths of the game's asset directories.
+# --------------------------------------------------------------------
+
+_ROOT_PATH = os.path.relpath(os.path.join(os.path.dirname(__file__), '..'))
+_IMAGES_DIR_PATH = os.path.join(_ROOT_PATH, "assets/images")
+_SOUNDS_DIR_PATH = os.path.join(_ROOT_PATH, "assets/sounds")
+_SHADERS_DIR_PATH = os.path.join(_ROOT_PATH, "src/graphics/shaders")
+
+# --------------------------------------------------------------------
+
+
+# --------------------------------------------------------------------
 # Constants related to the pyglet window.
 # --------------------------------------------------------------------
 
@@ -32,7 +44,7 @@ GAME_ORIGINAL_UPDATES_INTERVAL = 1 / GAME_ORIGINAL_FPS
 GAME_TENTATIVE_UPDATES_INTERVAL = 1 / 100
 
 # Constant defining where the image are stored.
-WINDOW_ICON_PATH = "./assets/images/icon.ico"
+WINDOW_ICON_PATH = os.path.join(_IMAGES_DIR_PATH, "icon.ico")
 
 # Color of background.
 BACKGROUND_COLOR = (0, 0, 0)
@@ -96,10 +108,10 @@ def CRUISE_ELROY_PELLETS_THR(level):
         raise ValueError(f'invalid level value passed to constants.CRUISE_ELROY_DOTS_THR: {level}')
     elif level >= 19:
         return 120, 60
-    
+
     first_thr  = (20, 30, 40, 40, 40, 50, 50, 50, 60, 60, 60, 80, 80, 80, 100, 100, 100, 100)
     second_thr = (10, 15, 20, 20, 20, 25, 25, 25, 30, 30, 30, 40, 40, 40, 50 , 50 , 50 , 50 )
-    
+
     return first_thr[level - 1], second_thr[level - 1]
 
 # --------------------------------------------------------------------
@@ -143,7 +155,7 @@ def GHOSTS_SPEED(level, fright, in_warp_tunnel, going_to_house, in_or_exiting_ho
         multiplier = 0.45 if in_warp_tunnel else 0.55 if fright else 0.90 if cruise_elroy == CruiseElroyLevel.FIRST else 0.95 if cruise_elroy == CruiseElroyLevel.SECOND else 0.85
     else:
         multiplier = 0.50 if in_warp_tunnel else 0.60 if fright else 1.00 if cruise_elroy == CruiseElroyLevel.FIRST else 1.05 if cruise_elroy == CruiseElroyLevel.SECOND else 0.95
-    
+
     return multiplier * REFERENCE_SPEED
 
 
@@ -170,7 +182,7 @@ TEXT_1UP_FLASH_ANIMATION_PERIOD_FRAMES = 10
 # --------------------------------------------------------------------
 
 # Possible states for the level.
-LevelStates = IntEnum('LevelStates', ['FIRST_WELCOME', 'READY', 'PLAYING', 
+LevelStates = IntEnum('LevelStates', ['FIRST_WELCOME', 'READY', 'PLAYING',
                                       'DEATH', 'COMPLETED', 'INTERMISSION', 'GAME_OVER',
                                       'PAUSE_AFTER_EATING', 'PAUSE_BEFORE_DEATH', 'PAUSE_BEFORE_COMPLETED'])
 
@@ -209,7 +221,7 @@ SCORE_POINTS_EAT_GHOST_BASE = 200
 
 def SCORE_POINTS_EAT_FRUIT(level):
     points_per_fruit = {Fruits.CHERRY: 100, Fruits.STRAWBERRY: 300, Fruits.PEACH: 500, Fruits.APPLE: 700, Fruits.GRAPES: 1000, Fruits.GALAXIAN: 2000, Fruits.BELL: 3000, Fruits.KEY: 5000}
-    
+
     return points_per_fruit[FRUIT_OF_LEVEL(level)]
 
 # Path of file where to store high score.
@@ -244,10 +256,10 @@ def FRIGHT_TIME_AND_FLASHES(level):
         raise ValueError(f'invalid level value passed to constants.FRIGHT_TIME_SECS: {level}')
     elif level >= 19:
         return 0, 0
-    
+
     times_secs  = (6, 5, 4, 3, 2, 5, 2, 2, 1, 5, 2, 1, 1, 3, 1, 1, 0, 1)
     flashes_num = (5, 5, 5, 5, 5, 5, 5, 5, 3, 5, 5, 3, 3, 5, 3, 3, 0, 3)
-    
+
     return times_secs[level - 1] * GAME_ORIGINAL_FPS, flashes_num[level - 1]
 
 # Possible fruits in the game.
@@ -324,7 +336,7 @@ GHOSTS_EATEN_TARGET_Y_IN_HOUSE = GHOSTS_START_POSITIONS[Ghost.PINKY].y + 0.5
 def SCATTER_CHASE_ALTERNATIONS(level):
     if level <= 0:
         raise ValueError(f'invalid level value passed to constants.SCATTER_CHASE_ALTERNATIONS: {level}')
-    
+
     elif level == 1:
         mode_durations = ((GhostBehaviour.SCATTER, 7    * GAME_ORIGINAL_FPS),
                           (GhostBehaviour.CHASE  , 20   * GAME_ORIGINAL_FPS),
@@ -352,7 +364,7 @@ def SCATTER_CHASE_ALTERNATIONS(level):
                           (GhostBehaviour.CHASE  , 1037 * GAME_ORIGINAL_FPS),
                           (GhostBehaviour.SCATTER, 1),
                           (GhostBehaviour.CHASE  , float('inf')))
-    
+
     return mode_durations
 
 
@@ -364,7 +376,7 @@ def DOT_COUNTER_LIMIT(ghost, level):
     elif ghost == Ghost.INKY:
         if level == 1:
             return 30
-        
+
         return 0
 
     elif ghost == Ghost.CLYDE:
@@ -410,10 +422,10 @@ PRNG_BITS_TO_DIRECTION = [Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT, Vector2.UP]
 RecordingsType = IntEnum('RecordingsType', ['INTRO', 'INTERMISSION_1', 'INTERMISSION_2', 'INTERMISSION_3'])
 
 # Variables describing the path and frame shape for each image containing recordings.
-RECORDINGS_DETAILS = {RecordingsType.INTRO         : {'path': './assets/images/intro.png.xz'        , 'frame_shape': (208, 224)},
-                      RecordingsType.INTERMISSION_1: {'path': './assets/images/intermission1.png.xz', 'frame_shape': (88 , 224)},
-                      RecordingsType.INTERMISSION_2: {'path': './assets/images/intermission2.png.xz', 'frame_shape': (88 , 224)},
-                      RecordingsType.INTERMISSION_3: {'path': './assets/images/intermission3.png.xz', 'frame_shape': (88 , 224)}}
+RECORDINGS_DETAILS = {RecordingsType.INTRO         : {'path': os.path.join(_IMAGES_DIR_PATH, 'intro.png.xz')        , 'frame_shape': (208, 224)},
+                      RecordingsType.INTERMISSION_1: {'path': os.path.join(_IMAGES_DIR_PATH, 'intermission1.png.xz'), 'frame_shape': (88 , 224)},
+                      RecordingsType.INTERMISSION_2: {'path': os.path.join(_IMAGES_DIR_PATH, 'intermission2.png.xz'), 'frame_shape': (88 , 224)},
+                      RecordingsType.INTERMISSION_3: {'path': os.path.join(_IMAGES_DIR_PATH, 'intermission3.png.xz'), 'frame_shape': (88 , 224)}}
 
 # Levels after which intermissions occur in game.
 LEVEL_WITH_INTERMISSIONS = {2 : RecordingsType.INTERMISSION_1,
@@ -466,7 +478,7 @@ SCORE_GHOST_EATEN_DURATION_FRAMES   = LEVEL_STATES_DURATION[LevelStates.PAUSE_AF
 # --------------------------------------------------------------------
 
 # Path of the atlas image.
-GRAPHICS_ATLAS_PATH = './assets/images/atlas.png'
+GRAPHICS_ATLAS_PATH = os.path.join(_IMAGES_DIR_PATH, 'atlas.png')
 
 # Named tuple used to store information on the regions composing the atlas.
 _AtlasRegion = namedtuple('AtlasRegion', ['reg_x_left', 'reg_y_bottom', 'reg_width', 'reg_height', 'elem_width', 'elem_height'])
@@ -528,7 +540,7 @@ def _GHOST_SPRITE_ROW_COL(name, frightened_blue, frightened_white, transparent, 
             col = 4
         case Vector2.DOWN:
             col = 6
-        
+
     return row, col + frame_idx
 
 def GHOST_SPRITE_TEX_REGION(*args):
@@ -573,7 +585,7 @@ def PACMAN_SPRITE_TEX_REGION(*args):
 
     row_spawn, col_spawn = _PACMAN_SPAWNING_ROW_COL
     valid_stuck_frame = (row != row_spawn) or (col != col_spawn)
-    
+
     return _CONVERT_ROW_COL_TO_TEX_COORD(_GRAPHICS_ATLAS_REGION_PACMAN, row, col), valid_stuck_frame
 
 def _MAZE_SPRITE_ROW_COL(maze_row, maze_col, tile, flash_blue, flash_white):
@@ -621,7 +633,7 @@ def _SCORE_SPRITE_ROW_COL(value):
             return 2, 2
         case 1600:
             return 2, 3
-        
+
 def SCORE_SPRITE_TEX_REGION(*args):
     row, col = _SCORE_SPRITE_ROW_COL(*args)
     return _CONVERT_ROW_COL_TO_TEX_COORD(_GRAPHICS_ATLAS_REGION_SCORES, row, col)
@@ -656,7 +668,7 @@ def TEXT_SPRITE_TEX_REGION(*args):
     return _CONVERT_ROW_COL_TO_TEX_COORD(_GRAPHICS_ATLAS_REGION_TEXT, row, col)
 
 
-# z-coord of different drawables. This determines which elements are drawn on top of which others. 
+# z-coord of different drawables. This determines which elements are drawn on top of which others.
 # z-coords must be in range ]-1, +1[ to not be clipped, with more negative values meaning they will be drawn on top.
 Z_COORD_MAZE            = 0.9
 Z_COORD_UI_AND_TEXT     = 0.8  # Score, lives, level fruits, texts
@@ -676,9 +688,9 @@ Z_COORD_RECORDING       = -0.1
 # --------------------------------------------------------------------
 
 # Path of the source files.
-SHADERS_VERT_PATH = './src/graphics/shaders/quad_renderer.vert'
-SHADERS_GEOM_PATH = './src/graphics/shaders/quad_renderer.geom'
-SHADERS_FRAG_PATH = './src/graphics/shaders/quad_renderer.frag'
+SHADERS_VERT_PATH = os.path.join(_SHADERS_DIR_PATH, 'quad_renderer.vert')
+SHADERS_GEOM_PATH = os.path.join(_SHADERS_DIR_PATH, 'quad_renderer.geom')
+SHADERS_FRAG_PATH = os.path.join(_SHADERS_DIR_PATH, 'quad_renderer.frag')
 
 # Padding to use when calculating texture coordinates to mitigate the lines-between tiles bug which is caused by the lack of tile margins in the texture atlas.
 SHADERS_TEX_PADDING = 1 / 4096
@@ -764,30 +776,30 @@ SoundEffects = IntEnum('SoundEffects', ['MUNCH_1', 'MUNCH_2',
                                         'INTERMISSION_MUSIC',
                                         'FRIGHT_ON',
                                         'GHOST_RETREATING',
-                                        'SIREN_1', 
-                                        'SIREN_2', 
-                                        'SIREN_3', 
-                                        'SIREN_4', 
+                                        'SIREN_1',
+                                        'SIREN_2',
+                                        'SIREN_3',
+                                        'SIREN_4',
                                         'SIREN_5',
                                         'GAME_COMPLETED'])
 
 # Paths where each sound effect is stored.
-SOUND_EFFECTS_PATHS = {SoundEffects.MUNCH_1           : './assets/sounds/munch_1.wav',
-                       SoundEffects.MUNCH_2           : './assets/sounds/munch_2.wav',
-                       SoundEffects.EAT_FRUIT         : './assets/sounds/eat_fruit.wav',
-                       SoundEffects.EAT_GHOST         : './assets/sounds/eat_ghost.wav',
-                       SoundEffects.EXTRA_LIFE        : './assets/sounds/extend.wav',
-                       SoundEffects.LIFE_LOST         : './assets/sounds/life_lost.wav',
-                       SoundEffects.GAME_START_MUSIC  : './assets/sounds/game_start.wav',
-                       SoundEffects.INTERMISSION_MUSIC: './assets/sounds/intermission.wav',
-                       SoundEffects.FRIGHT_ON         : './assets/sounds/power_pellet.wav',
-                       SoundEffects.GHOST_RETREATING  : './assets/sounds/retreating.wav',
-                       SoundEffects.SIREN_1           : './assets/sounds/siren_1.wav',
-                       SoundEffects.SIREN_2           : './assets/sounds/siren_2.wav',
-                       SoundEffects.SIREN_3           : './assets/sounds/siren_3.wav',
-                       SoundEffects.SIREN_4           : './assets/sounds/siren_4.wav',
-                       SoundEffects.SIREN_5           : './assets/sounds/siren_5.wav',
-                       SoundEffects.GAME_COMPLETED    : './assets/sounds/game_completed.wav'}
+SOUND_EFFECTS_PATHS = {SoundEffects.MUNCH_1           : os.path.join(_SOUNDS_DIR_PATH, 'munch_1.wav'),
+                       SoundEffects.MUNCH_2           : os.path.join(_SOUNDS_DIR_PATH, 'munch_2.wav'),
+                       SoundEffects.EAT_FRUIT         : os.path.join(_SOUNDS_DIR_PATH, 'eat_fruit.wav'),
+                       SoundEffects.EAT_GHOST         : os.path.join(_SOUNDS_DIR_PATH, 'eat_ghost.wav'),
+                       SoundEffects.EXTRA_LIFE        : os.path.join(_SOUNDS_DIR_PATH, 'extend.wav'),
+                       SoundEffects.LIFE_LOST         : os.path.join(_SOUNDS_DIR_PATH, 'life_lost.wav'),
+                       SoundEffects.GAME_START_MUSIC  : os.path.join(_SOUNDS_DIR_PATH, 'game_start.wav'),
+                       SoundEffects.INTERMISSION_MUSIC: os.path.join(_SOUNDS_DIR_PATH, 'intermission.wav'),
+                       SoundEffects.FRIGHT_ON         : os.path.join(_SOUNDS_DIR_PATH, 'power_pellet.wav'),
+                       SoundEffects.GHOST_RETREATING  : os.path.join(_SOUNDS_DIR_PATH, 'retreating.wav'),
+                       SoundEffects.SIREN_1           : os.path.join(_SOUNDS_DIR_PATH, 'siren_1.wav'),
+                       SoundEffects.SIREN_2           : os.path.join(_SOUNDS_DIR_PATH, 'siren_2.wav'),
+                       SoundEffects.SIREN_3           : os.path.join(_SOUNDS_DIR_PATH, 'siren_3.wav'),
+                       SoundEffects.SIREN_4           : os.path.join(_SOUNDS_DIR_PATH, 'siren_4.wav'),
+                       SoundEffects.SIREN_5           : os.path.join(_SOUNDS_DIR_PATH, 'siren_5.wav'),
+                       SoundEffects.GAME_COMPLETED    : os.path.join(_SOUNDS_DIR_PATH, 'game_completed.wav')}
 
 
 # Thresholds at whioch the sirens change, in number of pellets remaining.
