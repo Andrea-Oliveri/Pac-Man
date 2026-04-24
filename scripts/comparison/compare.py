@@ -1,18 +1,11 @@
 import cv2
 
 from src.wrap_game_engine import make_initial_game
-from src.wrap_videos import make_video_scrubber
+from src.wrap_videos import Video
 
 
-game = make_initial_game()
 
-for _ in range(400): # 400
-    game = game.deepcopy()
-
-    if game.event_update_state() is True:
-        break
-    frame = game.draw()
-
+def _draw_frame(frame):
     frame = cv2.resize(
         frame,
         None,
@@ -24,4 +17,29 @@ for _ in range(400): # 400
     if cv2.waitKey(1) == ord("q"):
         quit()
 
-print("Game Over")
+
+
+
+game = make_initial_game()
+
+for _ in range(400): # 400
+    game = game.deepcopy()
+
+    if game.event_update_state() is True:
+        break
+    frame = game.draw()
+
+    _draw_frame(frame)
+
+cv2.destroyAllWindows()
+
+
+
+
+video = Video(R".\assets\videos\recording2.avi")
+
+for frame in video:
+    _draw_frame(frame)
+
+cv2.destroyAllWindows()
+

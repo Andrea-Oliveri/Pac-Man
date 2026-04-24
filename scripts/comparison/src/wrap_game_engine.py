@@ -1,15 +1,4 @@
 # -----------------------------------------------------------------
-# Change directory to avoid relative imports in project breaking.
-# -----------------------------------------------------------------
-import os
-import sys
-
-GAME_ROOT_DIR = os.path.relpath(os.path.join(os.path.dirname(__file__), '../../..'))
-os.chdir(GAME_ROOT_DIR)
-sys.path.append(".")
-# -----------------------------------------------------------------
-
-# -----------------------------------------------------------------
 # Import standard library and installed packages.
 # -----------------------------------------------------------------
 import inspect
@@ -25,11 +14,21 @@ import cv2
 # -----------------------------------------------------------------
 # Import game objects.
 # -----------------------------------------------------------------
+import os
+import sys
+
+_GAME_ROOT_DIR = os.path.relpath(os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, _GAME_ROOT_DIR)
+
 from src.constants import BACKGROUND_COLOR, LAYOUT_N_COLS_TILES, LAYOUT_N_ROWS_TILES, LAYOUT_PX_PER_UNIT_LENGHT
 from src.activities.game import Game
 from src.graphics import Graphics
 from src.sounds import Sounds
 from src.graphics.painter import Painter
+
+sys.path.pop(0)
+del _GAME_ROOT_DIR
+
 # -----------------------------------------------------------------
 
 # -----------------------------------------------------------------
