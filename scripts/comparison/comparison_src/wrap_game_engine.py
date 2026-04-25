@@ -17,7 +17,7 @@ import cv2
 import os
 import sys
 
-_GAME_ROOT_DIR = os.path.relpath(os.path.join(os.path.dirname(__file__), '../../..'))
+_GAME_ROOT_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), '../../..'))
 sys.path.insert(0, _GAME_ROOT_DIR)
 
 from src.constants import BACKGROUND_COLOR, LAYOUT_N_COLS_TILES, LAYOUT_N_ROWS_TILES, LAYOUT_PX_PER_UNIT_LENGHT
@@ -107,8 +107,10 @@ _WINDOW = Window(LAYOUT_N_COLS_TILES*LAYOUT_PX_PER_UNIT_LENGHT,
 # -----------------------------------------------------------------
 # Module's public interface.
 # -----------------------------------------------------------------
-def make_initial_game():
-    return Game(Graphics(), Sounds())
+def make_initial_game(level = 1):
+    game = Game(Graphics(), Sounds())
+    game._level = level
+    return game
 
 __all__ = ["make_initial_game"]
 # -----------------------------------------------------------------

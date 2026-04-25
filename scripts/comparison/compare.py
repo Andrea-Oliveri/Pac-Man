@@ -1,7 +1,8 @@
 import cv2
 
-from src.wrap_game_engine import make_initial_game
-from src.wrap_videos import Video
+from comparison_src.wrap_game_engine import make_initial_game
+from comparison_src.wrap_videos import Video
+from comparison_src import analyse
 
 
 
@@ -18,6 +19,29 @@ def _draw_frame(frame):
         quit()
 
 
+def _find_video_viewport_scales_maze_region(video_path, frames_to_search = 200, frames_step = 30):
+    video = Video(video_path, frames_step = frames_step, frames_number = frames_to_search)
+    viewport = analyse.find_viewport(video)
+
+    for frame in video:
+        cv2.rectangle(frame, viewport.start, viewport.stop, (0,255,0), 2)
+    _draw_frame(frame)
+    print(viewport)
+
+
+
+
+video_path = R".\assets\videos\recording2.avi"
+_find_video_viewport_scales_maze_region(video_path)
+quit()
+
+
+
+for frame in video:
+    _draw_frame(frame)
+
+cv2.destroyAllWindows()
+
 
 
 game = make_initial_game()
@@ -32,14 +56,3 @@ for _ in range(400): # 400
     _draw_frame(frame)
 
 cv2.destroyAllWindows()
-
-
-
-
-video = Video(R".\assets\videos\recording2.avi")
-
-for frame in video:
-    _draw_frame(frame)
-
-cv2.destroyAllWindows()
-
