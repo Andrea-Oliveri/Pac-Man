@@ -46,10 +46,13 @@ class Region:
         object.__setattr__(self, "start", start)
         object.__setattr__(self, "stop" , stop)
 
-    def __contains__(self, position):
-        if not isinstance(position, Position):
-            raise ValueError(f"argument 'position' must be of type Position. Got {type(position)}")
-        return (self.start.row <= position.row < self.stop.row) and (self.start.col <= position.col < self.stop.col)
+    def __contains__(self, other):
+        if isinstance(other, Position):
+            return (self.start.row <= other.row < self.stop.row) and (self.start.col <= other.col < self.stop.col)
+        elif isinstance(other, Region):
+            other_bottom_right_position = other.stop + Position(-1, -1)
+            return other.start in self and other_bottom_right_position in self
+        raise TypeError(f"argument 'other' must be of type Position or Region. Got {type(other)}")
 
 
 
@@ -59,3 +62,7 @@ PacmanStates = IntEnum("PacmanStates", ["RIGHT", "LEFT", "UP", "DOWN", "FULL_CIR
 PARALLEL_MAX_WORKERS = 12
 
 LEVEL_START_END_DETECTION_THR = 50
+
+_ASSETS_FOLDER = pathlib.Path(__file__).resolve().parent.parent / "assets"
+_IMAGES_FOLDER = _ASSETS_FOLDER / "images"
+TEMPLATE_LEVEL_START_PATH = _IMAGES_FOLDER / "level_start.png"

@@ -19,40 +19,45 @@ def _draw_frame(frame):
         quit()
 
 
-def _find_video_viewport_scales_maze_region(video_path, frames_to_search = 200, frames_step = 30):
-    video = Video(video_path, frames_step = frames_step, frames_number = frames_to_search)
+def _find_video_viewport_and_scales(video_path, frames_to_search = 200, frames_step = 15):
+    video = Video(video_path, frames_step = frames_step, frames_number = frames_to_search, progress_bar=True)
     viewport = analyse.find_viewport(video)
 
+    video.viewport = viewport
+    scale_height, scale_width, mz = analyse.find_scale_and_maze_region(video)
+
     for frame in video:
-        cv2.rectangle(frame, viewport.start, viewport.stop, (0,255,0), 2)
-    _draw_frame(frame)
+        frame = cv2.rectangle(frame, (viewport.start.col, viewport.start.row), (viewport.stop.col, viewport.stop.row), (0,255,0), 2)
+        frame = cv2.rectangle(frame, (mz.start.col, mz.start.row), (mz.stop.col, mz.stop.row), (0,0,255), 1)
+        _draw_frame(frame)
+
     print(viewport)
+    print(scale_height, scale_width)
+
+
+if __name__ == "__main__":
+    video_path = R".\assets\videos\recording2.avi"
+    _find_video_viewport_and_scales(video_path)
+    quit()
 
 
 
+    for frame in video:
+        _draw_frame(frame)
 
-video_path = R".\assets\videos\recording2.avi"
-_find_video_viewport_scales_maze_region(video_path)
-quit()
-
-
-
-for frame in video:
-    _draw_frame(frame)
-
-cv2.destroyAllWindows()
+    cv2.destroyAllWindows()
 
 
 
-game = make_initial_game()
+    game = make_initial_game()
 
-for _ in range(400): # 400
-    game = game.deepcopy()
+    for _ in range(400): # 400
+        game = game.deepcopy()
 
-    if game.event_update_state() is True:
-        break
-    frame = game.draw()
+        if game.event_update_state() is True:
+            break
+        frame = game.draw()
 
-    _draw_frame(frame)
+        _draw_frame(frame)
 
-cv2.destroyAllWindows()
+    cv2.destroyAllWindows()

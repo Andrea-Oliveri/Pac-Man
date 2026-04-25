@@ -3,6 +3,8 @@ from contextlib import contextmanager
 import cv2
 from tqdm import tqdm
 
+from .constants import Region, Position
+
 
 class Video:
 
@@ -11,9 +13,9 @@ class Video:
         self._frames_start = frames_start
         self._frames_step = frames_step
         self._frames_number = frames_number
-        self._viewport = viewport
         self._progress_bar = progress_bar
-        self._height, self._width = self._get_height_width()
+        self._viewport = None
+        self._set_viewport(viewport)
 
     def __iter__(self):
         with self._make_video_capture() as stream:
@@ -62,14 +64,20 @@ class Video:
         finally:
             stream.release()
 
-    def _get_height_width(self):
-        for frame in self:
-            return frame.shape[0], frame.shape[1]
+    def _set_viewport(self, viewport):
+        if viewport is None:
+            self._viewport = None
+            return
 
-    @property
-    def height(self):
-        return self._height
+        if not isinstance(viewport, Region):
+            raise TypeError(f"viewport argument must be of type Region. Got {type(viewport)} instead.")
+        with self._make_video_capture() as stream:
+            video_height = int(stream.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            video_width = int(stream.get(cv2.CAP_PROP_FRAME_WIDTH))
+        frame_region = Region(start = Position(row = 0, col = 0), height = video_height, width = video_width)
+        if viewport not in frame_region:
+            raise RuntimeError(f"viewport falls outside of frame: viewport={viewport} and frame={frame_region}")
+        self._viewport = viewport
 
-    @property
-    def width(self):
-        return self._width
+
+    viewport = property(lambda self: self._viewport, _set_viewport)

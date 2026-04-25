@@ -5,7 +5,7 @@ import itertools
 import cv2
 import numpy as np
 
-from .constants import Position, MatchResults, Region, PARALLEL_MAX_WORKERS, LEVEL_START_END_DETECTION_THR
+from .constants import Position, MatchResults, Region, PARALLEL_MAX_WORKERS, LEVEL_START_END_DETECTION_THR, TEMPLATE_LEVEL_START_PATH
 
 
 def find_viewport(frames_generator, black_value_thr = 5):
@@ -28,21 +28,26 @@ def find_viewport(frames_generator, black_value_thr = 5):
     return Region(start = viewport_start, stop = viewport_stop)
 
 
-def find_scale_and_maze_region(frames_generator, template_level_start_path, viewport, scale_pixels_trial_range = 20, successful_match_thr = LEVEL_START_END_DETECTION_THR):
+def find_scale_and_maze_region(frames_generator, scale_pixels_trial_range = 20, successful_match_thr = LEVEL_START_END_DETECTION_THR):
     # Load template_level_start. Must not have any alpha channel because if it does template match considers transparency in match.
-    template_level_start = load_image(template_level_start_path, transparency = False)
+    template_level_start = load_image(TEMPLATE_LEVEL_START_PATH, transparency = False)
     template_height, template_width, _ = template_level_start.shape
 
+    # Confirm frames_generator has an active viewport, since otherwise we can't easily know the size of the approximate size of the template in the frames.
+    viewport = frames_generator.viewport
+    if viewport is None:
+        raise RuntimeError(f"Provided frames_generator does not have an active viewport.")
+
     # In theory, the image in template_level_start should span the whole width of the drawable screen.
-    theoretical_template_width  = frames_generator.width
+    theoretical_template_width  = viewport.width
     theoretical_template_height = int((theoretical_template_width / template_width) * template_height)
 
     # Due to video compression artefacts, our estimate may not be precise enough. Hence we instead try a few values around it.
     scaled_templates = []
     for width in range(max(theoretical_template_width - scale_pixels_trial_range, 1),
-                       min(theoretical_template_width + scale_pixels_trial_range, frames_generator.width + 1)):
+                       min(theoretical_template_width + scale_pixels_trial_range, viewport.width + 1)):
         for height in range(max(theoretical_template_height - scale_pixels_trial_range, 1),
-                            min(theoretical_template_height + scale_pixels_trial_range, frames_generator.height + 1)):
+                            min(theoretical_template_height + scale_pixels_trial_range, viewport.height + 1)):
             scaled_templates.append(resize_image(template_level_start, width = width, height = height))
     results = match_template_whole_video(frames_generator, scaled_templates)
     del theoretical_template_width, theoretical_template_height, width, height
