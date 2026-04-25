@@ -19,7 +19,7 @@ class Video:
         with self._make_video_capture() as stream:
             n_frames_video = int(stream.get(cv2.CAP_PROP_FRAME_COUNT))
 
-            frames_end = n_frames_video if self._frames_number is None else self._frames_start + self._frames_step * self._frames_number
+            frames_end = n_frames_video if self._frames_number is None else min(n_frames_video, self._frames_start + self._frames_step * self._frames_number)
             frames_to_yield = range(self._frames_start, frames_end, self._frames_step)
 
             current_frame = -1
