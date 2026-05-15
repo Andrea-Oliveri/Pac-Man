@@ -57,7 +57,7 @@ PacmanStates = IntEnum("PacmanStates", ["RIGHT", "LEFT", "UP", "DOWN", "FULL_CIR
 
 
 
-_ASSETS_FOLDER = pathlib.Path(__file__).parent / "assets"
+_ASSETS_FOLDER = pathlib.Path(__file__).parent.parent / "assets"
 
 VIDEOS_PATHS = [e for e in (_ASSETS_FOLDER / "videos").iterdir() if e.stem != ".gitkeep"]
 
