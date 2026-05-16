@@ -77,25 +77,37 @@ class AbstractFrameGenerator(abc.ABC):
 
 
 class _FramesToGrab:
-    def __init__(self, start, step, number, end):
-        if not isinstance(start, int) or start < 0:
-            raise ValueError("parameter 'start' must be a non-negative integer.")
-        if not isinstance(step, int) or step <= 0:
-            raise ValueError("parameter 'step' must be a strictly positive integer.")
-        if number is not None and (not isinstance(number, int) or number < 0):
-            raise ValueError("parameter 'frames_number' must be a non-negative integer.")
-        if end is not None and (not isinstance(end, int) or end < 0):
-            raise ValueError("parameter 'end' must be a non-negative integer.")
+    def __init__(self, start, step, number, stop):
+        self._check_int_with_range(start, "start", "non-negative")
+        self._check_int_with_range(step, "step", "strictly positive")
+        self._check_int_with_range(number, "number", "non-negative", none_allowed = True)
+        self._check_int_with_range(stop, "stop", "non-negative", none_allowed = True)
 
         self._start = start
         self._step = step
-        self._end, self._number = self._calculate_last_and_len(start, step, number, end)
+        self._last, self._len = self._calculate_last_and_len(start, step, number, stop)
 
     @staticmethod
-    def _calculate_last_and_len(start, step, number, end):
+    def _check_int_with_range(val, name, range, none_allowed = False):
+        def _check_range(val, range):
+            if range == "non-negative":
+                return val >= 0
+            elif range == "strictly positive":
+                return val > 0
+            else:
+                raise ValueError(f"unsupported range: {range}")
+
+        if none_allowed and val is None:
+            return
+
+        if isinstance(val, bool) or not isinstance(val, int) or not _check_range(val, range):
+            raise ValueError(f"parameter '{name}' must be a {range} integer. Got: {val}.")
+
+    @staticmethod
+    def _calculate_last_and_len(start, step, number, stop):
 
         # Unbounded sequence.
-        if number is None and end is None:
+        if number is None and stop is None:
             return None, None
 
         # Empty sequence.
@@ -103,13 +115,13 @@ class _FramesToGrab:
             return None, 0
 
         # End before start.
-        if end is not None and end < start:
+        if stop is not None and stop <= start:
             return None, 0
 
         # Normal path from now on.
         max_count = (
-            None if end is None else
-            (end - start) // step + 1
+            None if stop is None else
+            (stop - 1 - start) // step + 1
         )
 
         count = (
@@ -124,19 +136,16 @@ class _FramesToGrab:
         )
 
     def len(self):
-        return self._number
+        return self._len
 
     def after_last(self, n):
-        if not isinstance(n, int) or n < 0:
-            raise ValueError("parameter 'n' must be a non-negative integer.")
-
-        return self._end is None or n > self._end
+        self._check_int_with_range(n, "n", "non-negative")
+        return self._last is not None and n > self._last
 
     def __contains__(self, n):
-        if not isinstance(n, int) or n < 0:
-            raise ValueError("parameter 'n' must be a non-negative integer.")
+        self._check_int_with_range(n, "n", "non-negative")
 
-        if self._number == 0 or n < self._start or self.after_last(n):
+        if self._len == 0 or n < self._start or self.after_last(n):
             return False
 
         return (n - self._start) % self._step == 0
