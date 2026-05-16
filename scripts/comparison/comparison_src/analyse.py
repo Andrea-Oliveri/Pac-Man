@@ -33,7 +33,7 @@ def find_scale_and_maze_region(frames_generator, scale_pixels_trial_range = 20, 
     template_level_start = load_image(TEMPLATE_LEVEL_START_PATH, transparency = False)
     template_height, template_width, _ = template_level_start.shape
 
-    # Confirm frames_generator has an active viewport, since otherwise we can't easily know the size of the approximate size of the template in the frames.
+    # Confirm frames_generator has an active viewport, since otherwise we can't easily know the approximate size of the template in the frames.
     viewport = frames_generator.viewport
     if viewport is None:
         raise RuntimeError(f"Provided frames_generator does not have an active viewport.")
@@ -71,7 +71,12 @@ def find_scale_and_maze_region(frames_generator, scale_pixels_trial_range = 20, 
     return scale_height, scale_width, maze_region
 
 
-def match_template_whole_video(frames_generator, sprites, crop_frame_callback = None, **video_iterator_kwargs):
+def match_template_whole_video(frames_generator, sprites, batch_max_bytes = 1024**3):
+    def _get_batch_size(frame, sprites, masks, batch_max_bytes):
+        arrays_iter = [frame, *sprites, *masks]
+        bytes_per_iter = sum(e.nbytes for e in arrays_iter if e is not None)
+        return max(batch_max_bytes // bytes_per_iter, 1)
+
     if not isinstance(sprites, (tuple, list)):
         raise RuntimeError(f"Expected sprites argument to be a list or tuple of images. Got {type(sprites)}")
 
@@ -84,19 +89,16 @@ def match_template_whole_video(frames_generator, sprites, crop_frame_callback = 
             masks  [idx] = s[:, :, -1]
     del idx, s
 
-    try:
-        iterator = zip(frames_generator,
-                       itertools.repeat(sprites),
-                       itertools.repeat(masks),
-                       itertools.repeat(crop_frame_callback))
+    iterator = zip(frames_generator, itertools.repeat(sprites), itertools.repeat(masks))
+    first_iter_args = next(iterator)
+    batch_size = _get_batch_size(*first_iter_args, batch_max_bytes)
+    iterator = itertools.chain([first_iter_args], iterator)
+    del first_iter_args
 
-        with multiprocessing.Pool(PARALLEL_MAX_WORKERS, init_worker) as pool:
-            results = list(pool.imap(analyse_frame, iterator))
-
-    except KeyboardInterrupt:
-        pool.terminate()
-        pool.join()
-        raise
+    results = []
+    with multiprocessing.Pool(PARALLEL_MAX_WORKERS, init_worker) as pool:
+        for batch in itertools.batched(iterator, batch_size):
+            results.extend(pool.map(analyse_frame, batch))
 
     return results
 
@@ -114,7 +116,7 @@ def check_image_shape(image, n_channels, n_dims = 3):
 
 
 def analyse_frame(args):
-    frame, sprites, masks, crop_frame_callback = args
+    frame, sprites, masks = args
 
     if not isinstance(sprites, (list, tuple)) or not isinstance(masks, (list, tuple)):
         raise RuntimeError(f"Arguments sprites and masks should both be either list or tuple. Got {type(sprites)} and {type(masks)} respectively.")
@@ -122,17 +124,6 @@ def analyse_frame(args):
         raise RuntimeError(f"The number of sprites and masks do not match. Got {len(sprites)} and {len(masks)} respectively.")
 
     crop_position = Position(row = 0, col = 0)
-    if crop_frame_callback is not None:
-        if not callable(crop_frame_callback):
-            raise RuntimeError("argument 'crop_frame_callback' must be callable.")
-
-        frame, crop_position = crop_frame_callback(frame)
-        if frame is None:
-            return [MatchResults.NO_MATCH for _ in zip(sprites, masks)]
-
-        if not isinstance(crop_position, Position):
-            raise RuntimeError("argument 'crop_frame_callback' needs to return cropped frame and an instance of class Position.")
-
     check_image_shape(frame, n_channels = 3)
 
     results = []

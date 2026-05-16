@@ -21,22 +21,37 @@ def _draw_frame(frame):
         quit()
 
 
-def _find_viewport_and_scales(frame_generator_constructor, frames_to_search = 200, frames_step = 15):
-    frames_generator = frame_generator_constructor(frames_step = frames_step, frames_number = frames_to_search, progress_bar = True)
-    viewport = analyse.find_viewport(frames_generator)
+def _find_viewport_and_scales(frame_generator_constructor, frames_to_search = 100, frames_step = 30):
+    frame_generator_constructor = partial(
+        frame_generator_constructor,
+        frames_step = frames_step,
+        frames_number = frames_to_search,
+        progress_bar = True
+    )
 
-    frames_generator.viewport = viewport
-    scale_height, scale_width, _ = analyse.find_scale_and_maze_region(frames_generator)
+    viewport = analyse.find_viewport(
+        frame_generator_constructor()
+    )
+
+    scale_height, scale_width, _ = analyse.find_scale_and_maze_region(
+        frame_generator_constructor(
+            viewport = viewport
+        )
+    )
 
 #    return viewport, scale_height, scale_width
 
-    for frame in frames_generator:
+    print()
+    print(viewport)
+    print(f"{scale_height:.10f}, {scale_width:.10f}")
+    print(_)
+    print(_.height, _.width)
+
+    for frame in frame_generator_constructor(frames_step = 10, frames_number = 10000):
         frame = cv2.rectangle(frame, (viewport.start.col, viewport.start.row), (viewport.stop.col, viewport.stop.row), (0,255,0), 2)
         frame = cv2.rectangle(frame, (_.start.col, _.start.row), (_.stop.col, _.stop.row), (0,0,255), 1)
         _draw_frame(frame)
-
-    print(viewport)
-    print(scale_height, scale_width)
+    cv2.destroyAllWindows()
 
     return viewport, scale_height, scale_width
 
@@ -44,7 +59,7 @@ def _find_viewport_and_scales(frame_generator_constructor, frames_to_search = 20
 
 if __name__ == "__main__":
     video_path = R".\assets\videos\recording2.avi"
-    #video_viewport, video_scale_height, video_scale_width = _find_viewport_and_scales(partial(Video, video_path = video_path))
+    video_viewport, video_scale_height, video_scale_width = _find_viewport_and_scales(partial(Video, video_path = video_path))
     game_viewport, game_scale_height, game_scale_width = _find_viewport_and_scales(GameFrames)
 
     quit()

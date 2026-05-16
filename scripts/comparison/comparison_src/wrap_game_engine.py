@@ -116,20 +116,24 @@ class Game(_Game):
 # -----------------------------------------------------------------
 
 # -----------------------------------------------------------------
+# Module's private attributes.
+# -----------------------------------------------------------------
+_WINDOW = Window(LAYOUT_N_COLS_TILES*LAYOUT_PX_PER_UNIT_LENGHT,
+                 LAYOUT_N_ROWS_TILES*LAYOUT_PX_PER_UNIT_LENGHT,
+                 BACKGROUND_COLOR)
+
+# -----------------------------------------------------------------
+
+# -----------------------------------------------------------------
 # Module's public interface.
 # -----------------------------------------------------------------
 
 class GameFrames(AbstractFrameGenerator):
     def __init__(self, game = None, **kwargs):
-        # Private attributes.
-        self._frame_width = LAYOUT_N_COLS_TILES*LAYOUT_PX_PER_UNIT_LENGHT
-        self._frame_height = LAYOUT_N_ROWS_TILES*LAYOUT_PX_PER_UNIT_LENGHT
-        self._window = Window(self._frame_width, self._frame_height, BACKGROUND_COLOR)
+        super().__init__(**kwargs)
 
         # Public attribute: game can be accessed and modified from the exterior.
         self.game = game if game is not None else Game()
-
-        super().__init__(**kwargs)
 
     @contextmanager
     def _make_stream(self):
@@ -137,7 +141,7 @@ class GameFrames(AbstractFrameGenerator):
         yield
 
     def _get_height_width(self):
-        return self._frame_height, self._frame_width
+        return _WINDOW.height, _WINDOW.width
 
     def _get_fps(self):
         return GAME_ORIGINAL_FPS
@@ -147,7 +151,7 @@ class GameFrames(AbstractFrameGenerator):
 
     def _read_frame(self):
         success = self._grab_frame()
-        return success, self._window.draw_frame(self.game)
+        return success, _WINDOW.draw_frame(self.game)
 
     def _grab_frame(self):
         self._check_game_attribute()
