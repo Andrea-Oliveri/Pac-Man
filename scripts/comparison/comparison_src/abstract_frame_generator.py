@@ -54,6 +54,10 @@ class AbstractFrameGenerator(abc.ABC):
         self._viewport = viewport
 
     @abc.abstractmethod
+    def _make_stream(self):
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def _get_height_width(self):
         raise NotImplementedError
 
