@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 
 from .constants import Position, MatchResults, Region, PARALLEL_MAX_WORKERS, LEVEL_START_END_DETECTION_THR, TEMPLATE_LEVEL_START_PATH
+from . import utils
 
 
 def find_viewport(frames_generator, black_value_thr = 5):
@@ -30,7 +31,7 @@ def find_viewport(frames_generator, black_value_thr = 5):
 
 def find_scale_and_maze_region(frames_generator, scale_pixels_trial_range = 20, successful_match_thr = LEVEL_START_END_DETECTION_THR):
     # Load template_level_start. Must not have any alpha channel because if it does template match considers transparency in match.
-    template_level_start = load_image(TEMPLATE_LEVEL_START_PATH, transparency = False)
+    template_level_start = _load_image(TEMPLATE_LEVEL_START_PATH, transparency = False)
     template_height, template_width, _ = template_level_start.shape
 
     # Confirm frames_generator has an active viewport, since otherwise we can't easily know the approximate size of the template in the frames.
@@ -48,8 +49,8 @@ def find_scale_and_maze_region(frames_generator, scale_pixels_trial_range = 20, 
                        min(theoretical_template_width + scale_pixels_trial_range, viewport.width + 1)):
         for height in range(max(theoretical_template_height - scale_pixels_trial_range, 1),
                             min(theoretical_template_height + scale_pixels_trial_range, viewport.height + 1)):
-            scaled_templates.append(resize_image(template_level_start, width = width, height = height))
-    results = match_template_whole_video(frames_generator, scaled_templates)
+            scaled_templates.append(_resize_image(template_level_start, width = width, height = height))
+    results = _match_template_whole_video(frames_generator, scaled_templates)
     del theoretical_template_width, theoretical_template_height, width, height
 
     # Find the best results and calculate the scaling along each axis to achieve it.
@@ -66,12 +67,12 @@ def find_scale_and_maze_region(frames_generator, scale_pixels_trial_range = 20, 
 
     # Sanity check.
     if best_result["score"] > successful_match_thr:
-        raise RuntimeError(f"Could not find scale of frames_generator using template provided. Best score was {best_result["score"]} which is lower than required {successful_match_thr}.")
+        raise RuntimeError(f"Could not find scale of frames_generator using template provided. Best score was {best_result["score"]} which is worse than required {successful_match_thr}.")
 
     return scale_height, scale_width, maze_region
 
 
-def match_template_whole_video(frames_generator, sprites, batch_max_bytes = 1024**3):
+def _match_template_whole_video(frames_generator, sprites, batch_max_bytes = 1024**3):
     def _get_batch_size(frame, sprites, masks, batch_max_bytes):
         arrays_iter = [frame, *sprites, *masks]
         bytes_per_iter = sum(e.nbytes for e in arrays_iter if e is not None)
@@ -83,7 +84,7 @@ def match_template_whole_video(frames_generator, sprites, batch_max_bytes = 1024
     sprites = [s    for s in sprites]
     masks   = [None for _ in sprites]
     for idx, s in enumerate(sprites):
-        check_image_shape(s, n_channels = (3, 4))
+        _check_image_shape(s, n_channels = (3, 4))
         if s.shape[-1] == 4:
             sprites[idx] = s[:, :, :-1]
             masks  [idx] = s[:, :, -1]
@@ -96,18 +97,18 @@ def match_template_whole_video(frames_generator, sprites, batch_max_bytes = 1024
     del first_iter_args
 
     results = []
-    with multiprocessing.Pool(PARALLEL_MAX_WORKERS, init_worker) as pool:
+    with multiprocessing.Pool(PARALLEL_MAX_WORKERS, _init_worker) as pool:
         for batch in itertools.batched(iterator, batch_size):
-            results.extend(pool.map(analyse_frame, batch))
+            results.extend(pool.map(_analyse_frame, batch))
 
     return results
 
 
-def init_worker():
+def _init_worker():
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
-def check_image_shape(image, n_channels, n_dims = 3):
+def _check_image_shape(image, n_channels, n_dims = 3):
     if not isinstance(n_channels, (tuple, list)):
         n_channels = [n_channels]
 
@@ -115,7 +116,7 @@ def check_image_shape(image, n_channels, n_dims = 3):
         raise RuntimeError(f"Expected image with {n_dims} dimentions, with last one encoding one of {n_channels} channels. Instead got shape: {image.shape}")
 
 
-def analyse_frame(args):
+def _analyse_frame(args):
     frame, sprites, masks = args
 
     if not isinstance(sprites, (list, tuple)) or not isinstance(masks, (list, tuple)):
@@ -124,7 +125,7 @@ def analyse_frame(args):
         raise RuntimeError(f"The number of sprites and masks do not match. Got {len(sprites)} and {len(masks)} respectively.")
 
     crop_position = Position(row = 0, col = 0)
-    check_image_shape(frame, n_channels = 3)
+    _check_image_shape(frame, n_channels = 3)
 
     results = []
     for sprite, mask in zip(sprites, masks):
@@ -143,7 +144,7 @@ def analyse_frame(args):
     return results
 
 
-def load_image(path, transparency, resize_kwargs = None):
+def _load_image(path, transparency, resize_kwargs = None):
     image = cv2.imread(path, cv2.IMREAD_UNCHANGED if transparency else cv2.IMREAD_COLOR)
     _, _, n_channels = image.shape
 
@@ -152,7 +153,7 @@ def load_image(path, transparency, resize_kwargs = None):
         _, _, n_channels = image.shape
 
     if resize_kwargs is not None:
-        image = resize_image(image, **resize_kwargs)
+        image = _resize_image(image, **resize_kwargs)
 
     # Sanity check.
     expected_n_channels = 4 if transparency else 3
@@ -162,20 +163,27 @@ def load_image(path, transparency, resize_kwargs = None):
     return image
 
 
-def resize_image(image, height = None, width = None, scale_width = None, scale_height = None):
-    shrinking = None
+def _resize_image(image, height = None, width = None, scale_width = None, scale_height = None):
+    shrinking_width = None
+    shrinking_height = None
     use_scale = None
     if height is None and width is None and scale_width is not None and scale_height is not None:
-        shrinking = scale_width <= 1
+        shrinking_width = scale_width <= 1
+        shrinking_height = scale_height <= 1
         use_scale = True
     elif height is not None and width is not None and scale_width is None and scale_height is None:
-        shrinking = width <= image.shape[1]
+        shrinking_width = width <= image.shape[1]
+        shrinking_height = height <= image.shape[0]
         use_scale = False
     else:
         raise ValueError("this function expects either 'width' and 'height' or 'scale_width' and 'scale_height' to be provided at the same time")
 
-    return cv2.resize(image,
-                      None if use_scale else (width, height),
-                      fx = scale_width,
-                      fy = scale_height,
-                      interpolation = cv2.INTER_AREA if shrinking else cv2.INTER_CUBIC)
+    interpolation = utils.choose_best_interpolation(shrinking_width, shrinking_height)
+
+    return cv2.resize(
+        image,
+        None if use_scale else (width, height),
+        fx = scale_width,
+        fy = scale_height,
+        interpolation = interpolation
+    )
