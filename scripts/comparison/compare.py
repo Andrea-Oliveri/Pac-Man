@@ -38,12 +38,6 @@ def _find_viewport_and_scales(frame_generator_constructor, frames_to_search = 20
         )
     )
 
-    print()
-    print(viewport)
-    print(f"{scale_height:.10f}, {scale_width:.10f}")
-    print(maze_region)
-    print(maze_region.height, maze_region.width)
-
     for frame in frame_generator_constructor():
         frame = cv2.rectangle(frame, (viewport.start.col, viewport.start.row), (viewport.stop.col, viewport.stop.row), (0,255,0), 2)
         frame = cv2.rectangle(frame, (maze_region.start.col, maze_region.start.row), (maze_region.stop.col, maze_region.stop.row), (0,0,255), 1)
@@ -55,25 +49,20 @@ def _find_viewport_and_scales(frame_generator_constructor, frames_to_search = 20
 
 
 def _image_registration(img_src, rec_src, img_dst, rec_dst, pad_color):
-    def _get_vertices(rec):
+    def _get_vertices_x_y(rec):
         return np.float32([
-            (rec.start.row, rec.start.col),
-            (rec.start.row, rec.stop.col),
-            (rec.stop.row, rec.start.col),
+            (rec.start.col, rec.start.row),
+            (rec.start.col, rec.stop.row),
+            (rec.stop.col, rec.start.row),
         ])
 
     matrix = cv2.getAffineTransform(
-        _get_vertices(rec_src),
-        _get_vertices(rec_dst)
+        _get_vertices_x_y(rec_src),
+        _get_vertices_x_y(rec_dst)
     )
 
-    shrinking_width = matrix[0, 0] <= 1
-    shrinking_height = matrix[1, 1] <= 1
+    shrinking_width, shrinking_height, _ = np.sqrt(np.sum(np.pow(matrix, 2), axis = 0)) <= 1
     interpolation = utils.choose_best_interpolation(shrinking_width, shrinking_height)
-
-
-    # TODO: debug how to make sure that the right portion of the post-transformation image is kept.
-
 
     dst_height, dst_width, _ = img_dst.shape
     img_src = cv2.warpAffine(
@@ -86,19 +75,13 @@ def _image_registration(img_src, rec_src, img_dst, rec_dst, pad_color):
     )
 
 
-    mask_src = ~cv2.inRange(img_src, (0, 0, 0), (5, 5, 5))
-    mask_dst = ~cv2.inRange(img_dst, (0, 0, 0), (5, 5, 5))
 
-    overlapped = np.stack((mask_dst, mask_src, np.zeros_like(mask_src)), axis = -1)
+    # TODO: go to tweak_params.py and find a technique which allows to keep only real differences.
+    import pickle
+    pickle.dump([img_src, img_dst], open("frames.pkl", "wb"))
 
-    print(img_src.shape, img_src.dtype)
-    print(img_dst.shape, img_dst.dtype)
-    print(overlapped.shape, overlapped.dtype, overlapped.min(), overlapped.max())
 
-    stacked = np.concatenate((img_src, img_dst, overlapped), axis = 1)
-    cv2.imshow("", stacked)
-    cv2.waitKey()
-    cv2.destroyAllWindows()
+
 
 
 
