@@ -29,6 +29,7 @@ from src.activities.game import Game as _Game
 from src.graphics import Graphics
 from src.sounds import Sounds
 from src.graphics.painter import Painter
+from src.game_objects.score import _ScoreValues
 
 sys.path.pop(0)
 del _GAME_ROOT_DIR
@@ -36,15 +37,20 @@ del _GAME_ROOT_DIR
 # -----------------------------------------------------------------
 
 # -----------------------------------------------------------------
-# Mock game objects.
+# Patch game objects.
 # -----------------------------------------------------------------
-# Mock Sounds class with all methods replaced by no-op.
+# Patch Sounds class with all methods replaced by no-op.
 for name, _ in inspect.getmembers(Sounds, predicate=inspect.isfunction):
     setattr(Sounds, name, lambda *args, **kwargs: None)
 
-# Mock Painter class so that deepcopy actually returns a shallow copy.
+# Patch Painter class so that deepcopy actually returns a shallow copy.
 # This is needed because textures and other OpenGL context can't be safely deepcopied.
 Painter.__deepcopy__ = lambda self, memo: self
+
+# Patch _ScoreValues to not load high-score at start of simulation and not
+# store it at its end.
+_ScoreValues._high_score_load = lambda self: 0
+_ScoreValues._high_score_save = lambda self: None
 
 # Create minimal-implementation Window class to replace the one used in the real game.
 class Window(pyglet.window.Window):
