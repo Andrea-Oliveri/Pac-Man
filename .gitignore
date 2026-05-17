@@ -129,3 +129,5 @@ dmypy.json
 
 # Video files used for comparison.
 scripts/comparison/assets/videos/*
+!scripts/comparison/assets/videos/*.md
+!scripts/comparison/assets/videos/*.inp
