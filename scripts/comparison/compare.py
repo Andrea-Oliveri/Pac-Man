@@ -1,4 +1,5 @@
 from functools import partial
+from dataclasses import dataclass
 
 import cv2
 import numpy as np
@@ -6,6 +7,20 @@ import numpy as np
 from comparison_src.wrap_game_engine import GameFrames
 from comparison_src.wrap_videos import Video
 from comparison_src import analyse, utils
+
+
+
+from comparison_src.constants import Region
+
+UNKNOWN_RESULT = object()
+
+@dataclass
+class Results:
+    viewport: Region = UNKNOWN_RESULT
+    maze_region: Region = UNKNOWN_RESULT
+    scale_factors: dict[str: float] = UNKNOWN_RESULT
+
+
 
 
 def _draw_frame(frame):
@@ -38,13 +53,18 @@ def _find_viewport_and_scales(frame_generator_constructor, frames_to_search = 20
         )
     )
 
-    for frame in frame_generator_constructor():
-        frame = cv2.rectangle(frame, (viewport.start.col, viewport.start.row), (viewport.stop.col, viewport.stop.row), (0,255,0), 2)
-        frame = cv2.rectangle(frame, (maze_region.start.col, maze_region.start.row), (maze_region.stop.col, maze_region.stop.row), (0,0,255), 1)
-        _draw_frame(frame)
-    cv2.destroyAllWindows()
+    return Results(
+        viewport = viewport,
+        maze_region = maze_region,
+        scale_factors = {"scale_height": scale_height, "scale_width": scale_width}
+    )
 
-    return viewport, scale_height, scale_width, maze_region, frame
+
+def _find_levels():
+    # TODO: Need to apply viewport, perhaps also maze cropping for speed.
+    # TODO: add assert that scaled = 1
+    # TODO: whole script will assume no compression comparison video.
+    analyse.find_start_end_levels()
 
 
 
@@ -79,7 +99,6 @@ def _image_registration(img_src, rec_src, img_dst, rec_dst, pad_color):
     # TODO: go to tweak_params.py and find a technique which allows to keep only real differences.
     import pickle
     pickle.dump([img_src, img_dst], open("frames.pkl", "wb"))
-
 
 
 

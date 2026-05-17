@@ -31,7 +31,7 @@ def find_viewport(frames_generator, black_value_thr = 5):
 
 def find_scale_and_maze_region(frames_generator, scale_pixels_trial_range = 20, successful_match_thr = LEVEL_START_END_DETECTION_THR):
     # Load template_level_start. Must not have any alpha channel because if it does template match considers transparency in match.
-    template_level_start = _load_image(TEMPLATE_LEVEL_START_PATH, transparency = False)
+    template_level_start = utils.load_image(TEMPLATE_LEVEL_START_PATH, transparency = False)
     template_height, template_width, _ = template_level_start.shape
 
     # Confirm frames_generator has an active viewport, since otherwise we can't easily know the approximate size of the template in the frames.
@@ -49,7 +49,7 @@ def find_scale_and_maze_region(frames_generator, scale_pixels_trial_range = 20, 
                        min(theoretical_template_width + scale_pixels_trial_range, viewport.width + 1)):
         for height in range(max(theoretical_template_height - scale_pixels_trial_range, 1),
                             min(theoretical_template_height + scale_pixels_trial_range, viewport.height + 1)):
-            scaled_templates.append(_resize_image(template_level_start, width = width, height = height))
+            scaled_templates.append(utils.resize_image(template_level_start, width = width, height = height))
     results = _match_template_whole_video(frames_generator, scaled_templates)
     del theoretical_template_width, theoretical_template_height, width, height
 
@@ -70,6 +70,36 @@ def find_scale_and_maze_region(frames_generator, scale_pixels_trial_range = 20, 
         raise RuntimeError(f"Could not find scale of frames_generator using template provided. Best score was {best_result["score"]} which is worse than required {successful_match_thr}.")
 
     return scale_height, scale_width, maze_region
+
+
+def find_start_end_levels(frames_generator, template_level_start_path, template_level_end_path, level_start_end_detection_thr = LEVEL_START_END_DETECTION_THR):
+    # Load templates for level start and level end. Must not have any alpha channel because if it does template match considers transparency in match.
+    template_level_start = utils.load_image(template_level_start_path, transparency = False)
+    template_level_end   = utils.load_image(template_level_end_path  , transparency = False)
+
+    # Confirm frames_generator has an active viewport and scaling since otherwise the below algorithm will be wrong.
+    for attr_name in "viewport", "scaling_factors":
+        if getattr(frames_generator, attr_name) is None:
+            raise RuntimeError(f"Provided frames_generator does not have an active {attr_name}.")
+
+    # Search level start and end in each frame of the video.
+    results = _match_template_whole_video(frames_generator, [template_level_start, template_level_end])
+
+    # Find detection edges to identify when level starts and ends.
+    level_frame_ranges = []
+    current_start = None
+
+    for idx, (res_level_start, res_level_end) in enumerate(results):
+        start_detected = res_level_start.score <= level_start_end_detection_thr
+        end_detected   = res_level_end  .score <= level_start_end_detection_thr
+
+        if current_start is None and start_detected:
+            current_start = idx
+        elif current_start is not None and (end_detected or idx == len(results) - 1):
+            level_frame_ranges.append({"start": current_start, "end": idx})
+            current_start = None
+
+    return level_frame_ranges
 
 
 def _match_template_whole_video(frames_generator, sprites, batch_max_bytes = 1024**3):
@@ -142,48 +172,3 @@ def _analyse_frame(args):
         results.append(MatchResults(Position(row, col) + crop_position, min_val))
 
     return results
-
-
-def _load_image(path, transparency, resize_kwargs = None):
-    image = cv2.imread(path, cv2.IMREAD_UNCHANGED if transparency else cv2.IMREAD_COLOR)
-    _, _, n_channels = image.shape
-
-    if transparency and n_channels != 4:
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
-        _, _, n_channels = image.shape
-
-    if resize_kwargs is not None:
-        image = _resize_image(image, **resize_kwargs)
-
-    # Sanity check.
-    expected_n_channels = 4 if transparency else 3
-    if n_channels != expected_n_channels:
-        raise RuntimeError(f"Programming error caused image to be loaded with {n_channels} instead of {expected_n_channels} with transparency={transparency}")
-
-    return image
-
-
-def _resize_image(image, height = None, width = None, scale_width = None, scale_height = None):
-    shrinking_width = None
-    shrinking_height = None
-    use_scale = None
-    if height is None and width is None and scale_width is not None and scale_height is not None:
-        shrinking_width = scale_width <= 1
-        shrinking_height = scale_height <= 1
-        use_scale = True
-    elif height is not None and width is not None and scale_width is None and scale_height is None:
-        shrinking_width = width <= image.shape[1]
-        shrinking_height = height <= image.shape[0]
-        use_scale = False
-    else:
-        raise ValueError("this function expects either 'width' and 'height' or 'scale_width' and 'scale_height' to be provided at the same time")
-
-    interpolation = utils.choose_best_interpolation(shrinking_width, shrinking_height)
-
-    return cv2.resize(
-        image,
-        None if use_scale else (width, height),
-        fx = scale_width,
-        fy = scale_height,
-        interpolation = interpolation
-    )
